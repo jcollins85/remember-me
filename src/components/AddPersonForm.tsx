@@ -8,6 +8,7 @@ interface Props {
 
 export default function AddPersonForm({ onAdd }: Props) {
   const [name, setName] = useState("");
+  const [position, setPosition] = useState("");
   const [venue, setVenue] = useState("");
   const [description, setDescription] = useState("");
   const [tagsInput, setTagsInput] = useState("");
@@ -18,17 +19,18 @@ export default function AddPersonForm({ onAdd }: Props) {
     if (!name.trim()) return;
 
     const newPerson: Person = {
-      id: uuidv4(),
-      name,
-      venue,
-      description,
-      dateMet: new Date().toISOString(),
-      tags: tagsInput
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter((tag) => tag !== ""),
+        id: uuidv4(),
+        name,
+        position,
+        venue,
+        description,
+        tags: tagsInput
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter((tag) => tag !== ""),
+        dateMet: new Date().toISOString(),
     };
-
+      
     onAdd(newPerson);
     setName("");
     setVenue("");
@@ -46,6 +48,13 @@ export default function AddPersonForm({ onAdd }: Props) {
         className="w-full p-2 border rounded"
         required
       />
+        <input
+        type="text"
+        placeholder="Position / Role"
+        value={position}
+        onChange={(e) => setPosition(e.target.value)}
+        className="w-full p-2 border rounded"
+        />
       <input
         type="text"
         placeholder="Venue (optional)"

@@ -9,6 +9,7 @@ interface Props {
 
 export default function EditPersonForm({ person, onSave, onCancel }: Props) {
   const [name, setName] = useState(person.name);
+  const [position, setPosition] = useState(person.position || "");
   const [venue, setVenue] = useState(person.venue || "");
   const [description, setDescription] = useState(person.description || "");
   const [tagsInput, setTagsInput] = useState((person.tags || []).join(", "));
@@ -25,13 +26,14 @@ export default function EditPersonForm({ person, onSave, onCancel }: Props) {
     const updatedPerson: Person = {
         ...person,
         name,
+        position,
         venue,
         description,
         tags: tagsInput
-            .split(",")
-            .map((tag) => tag.trim())
-            .filter((tag) => tag !== ""),
-    };      
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter((tag) => tag !== ""),
+    };       
 
     onSave(updatedPerson);
   };
@@ -47,6 +49,13 @@ export default function EditPersonForm({ person, onSave, onCancel }: Props) {
         className="w-full p-2 border rounded"
         required
       />
+        <input
+        type="text"
+        placeholder="Position / Role"
+        value={position}
+        onChange={(e) => setPosition(e.target.value)}
+        className="w-full p-2 border rounded"
+        />
       <input
         type="text"
         value={venue}

@@ -7,7 +7,8 @@ import SearchBar from "./components/SearchBar";
 
 function App() {
   const [searchQuery, setSearchQuery] = useState("");
-
+  const [showNotification, setShowNotification] = useState(false);
+  
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const toggleGroup = (venue: string) => {
     setOpenGroups((prev) => ({
@@ -17,6 +18,16 @@ function App() {
   };
   
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [isFadingOut, setIsFadingOut] = useState(false);  
+
+  const closeAddModal = () => {
+    setIsFadingOut(true);
+    setTimeout(() => {
+      setShowAddModal(false);
+      setIsFadingOut(false);
+    }, 300); // match your fadeOut duration
+  };  
 
   const [people, setPeople] = useState<Person[]>(() => {
     const saved = localStorage.getItem("people");
@@ -38,6 +49,7 @@ function App() {
     const query = searchQuery.toLowerCase();
     return (
       person.name.toLowerCase().includes(query) ||
+      (person.position?.toLowerCase().includes(query) ?? false) ||
       (person.venue?.toLowerCase().includes(query) ?? false) ||
       (person.position?.toLowerCase().includes(query) ?? false) ||
       (person.description?.toLowerCase().includes(query) ?? false) ||
@@ -76,15 +88,57 @@ function App() {
   }, [people]);
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-3xl font-bold text-blue-600 text-center mb-6">
-        Remember Me
-      </h1>      
+    <div className="min-h-screen bg-neutral-50">
+      <div className="sticky top-0 z-40 bg-white border-b border-neutral-200 shadow-sm">
+        <img
+          src="/remember-me-header-banner.png"
+          alt="Remember Me banner"
+          className="w-full max-w-none"
+          style={{ aspectRatio: "4 / 1" }}
+        />
 
-      <SearchBar value={searchQuery} onChange={setSearchQuery} />
+        <div className="px-4 py-3">
+          <div className="max-w-md mx-auto">
+            <SearchBar value={searchQuery} onChange={setSearchQuery} />
+          </div>
+        </div>
+      </div>
 
-      <div className="grid gap-4 max-w-xl mx-auto">        
-        <AddPersonForm onAdd={(newPerson) => setPeople([newPerson, ...people])} />
+      <div className="p-6 grid gap-4 max-w-xl mx-auto">        
+        {showAddModal && (
+          <div
+            className={`fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-40 transition-opacity duration-300 ${
+              isFadingOut ? "animate-fadeOut" : "animate-fadeIn"
+            }`}
+            onClick={closeAddModal}
+          >
+            <div
+              className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <AddPersonForm
+                onAdd={(person) => {
+                  setPeople([person, ...people]);
+                  setShowNotification(true);
+                  closeAddModal();
+                  setTimeout(() => setShowNotification(false), 3000);
+                }}
+              />
+              <button
+                onClick={() => closeAddModal()}
+                className="mt-4 w-full text-sm text-gray-500 hover:text-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {showNotification && (
+          <div className="fixed bottom-24 right-6 bg-green-600 text-white px-4 py-2 rounded shadow z-50 animate-fadeIn">
+            Person added successfully!
+          </div>
+        )}
 
         {editingPerson && (
           <EditPersonForm
@@ -116,7 +170,7 @@ function App() {
                   {group.map((person) => (
                     <div
                       key={person.id}
-                      className="bg-white rounded-xl p-4 shadow hover:shadow-md transition relative"
+                      className="bg-white border border-neutral-200 rounded-xl p-4 shadow-sm hover:shadow-md transition relative"
                     >
                       {/* your edit/delete buttons and content */}
                       <button
@@ -137,6 +191,9 @@ function App() {
                       </button>
 
                       <h3 className="text-lg font-semibold">{person.name}</h3>
+                      {person.position && (
+                        <p className="text-sm text-gray-500">{person.position}</p>
+                      )}
                       {person.description && (
                         <p className="text-gray-700 text-sm mt-1">{person.description}</p>
                       )}
@@ -148,7 +205,7 @@ function App() {
                           {person.tags.map((tag, i) => (
                             <span
                               key={i}
-                              className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
+                              className="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full"
                             >
                               {tag}
                             </span>
@@ -162,9 +219,15 @@ function App() {
             </div>
           );
         })}
-
-
       </div>
+
+      <button
+        onClick={() => setShowAddModal(true)}
+        className="fixed bottom-6 right-6 bg-emerald-500 text-white text-3xl rounded-full w-14 h-14 shadow-lg hover:bg-emerald-600 transition z-50"
+        aria-label="Add Person"
+      >
+        ＋
+      </button>
     </div>
   );
 }
