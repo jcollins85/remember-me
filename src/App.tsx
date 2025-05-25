@@ -1,53 +1,62 @@
 import { useEffect, useState } from "react";
 import { samplePeople } from "./data";
 import { Person } from "./types";
+import DeleteConfirmModal from "./modals/DeleteConfirmModal";
 import { motion, AnimatePresence } from "framer-motion";
-import AddPersonForm from "./components/AddPersonForm";
-import EditPersonForm from "./components/EditPersonForm";
-import SearchBar from "./components/SearchBar";
+
+import Header from "./components/Header";
+import VenueGroupList from "./components/VenueGroupList";
+import AddPersonModal from "./modals/AddPersonModal";
+import EditPersonModal from "./modals/EditPersonModal";
+import Notification from "./components/Notification";
 
 function App() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showNotification, setShowNotification] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");  
   const [activeTags, setActiveTags] = useState<string[]>([]);
-  
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
-  const toggleGroup = (venue: string) => {
-    setOpenGroups((prev) => ({
-      ...prev,
-      [venue]: !prev[venue],
-    }));
-  };
-  
-  const [editingPerson, setEditingPerson] = useState<Person | null>(null);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [isFadingOut, setIsFadingOut] = useState(false);  
+  const [favoriteVenues, setFavoriteVenues] = useState<string[]>(() => {
+    const saved = localStorage.getItem("favoriteVenues");
+    return saved ? JSON.parse(saved) : [];
+  });
 
-  const closeAddModal = () => {
-    setIsFadingOut(true);
-    setTimeout(() => {
-      setShowAddModal(false);
-      setIsFadingOut(false);
-    }, 300); // match your fadeOut duration
-  };  
+  const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" | "info" } | null>(null);
+
+  const showNotification = (message: string, type: "success" | "error" | "info" = "success") => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
 
   const [people, setPeople] = useState<Person[]>(() => {
     const saved = localStorage.getItem("people");
     return saved ? JSON.parse(saved) : samplePeople;
   });
 
+  const [editingPerson, setEditingPerson] = useState<Person | null>(null);
+  const [personToDelete, setPersonToDelete] = useState<Person | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [personSort, setPersonSort] = useState("name-asc");
+  const [venueSort, setVenueSort] = useState("asc");
+
   useEffect(() => {
     localStorage.setItem("people", JSON.stringify(people));
-  }, [people]);  
-  
-  const handleDelete = (id: string, name: string) => {
-    const confirmed = window.confirm(`Are you sure you want to delete ${name}?`);
-    if (confirmed) {
-      setPeople((prev) => prev.filter((person) => person.id !== id));
-    }
+  }, [people]);
+
+  useEffect(() => {
+    localStorage.setItem("favoriteVenues", JSON.stringify(favoriteVenues));
+  }, [favoriteVenues]);
+
+  const toggleGroup = (venue: string) => {
+    setOpenGroups((prev) => ({
+      ...prev,
+      [venue]: !prev[venue],
+    }));
   };
-  
+
+  const handleDelete = (id: string, name: string) => {
+    setPersonToDelete({ id, name } as Person); // only id and name are needed for modal
+  };
+
   const filteredPeople = people.filter((person) => {
     const query = searchQuery.toLowerCase();
 
@@ -61,20 +70,18 @@ function App() {
     const matchesTag =
       activeTags.length === 0 ||
       (person.tags?.some((tag) => activeTags.includes(tag)) ?? false);
+
     return matchesSearch && matchesTag;
   });
 
   const groupedPeople = filteredPeople.reduce((groups: Record<string, Person[]>, person) => {
     const groupKey = person.venue || "Unknown Venue";
-    if (!groups[groupKey]) {
-      groups[groupKey] = [];
-    }
+    if (!groups[groupKey]) groups[groupKey] = [];
     groups[groupKey].push(person);
     return groups;
-  }, {});   
- 
+  }, {});
+
   useEffect(() => {
-    // Initialize openGroups when people list changes
     const groupKeys = Object.keys(
       people.reduce((acc, person) => {
         const key = person.venue || "Unknown Venue";
@@ -82,12 +89,12 @@ function App() {
         return acc;
       }, {} as Record<string, boolean>)
     );
-  
+
     setOpenGroups((prev) => {
-      const updated: Record<string, boolean> = { ...prev };
+      const updated = { ...prev };
       groupKeys.forEach((key) => {
         if (updated[key] === undefined) {
-          updated[key] = true; // default open
+          updated[key] = true;
         }
       });
       return updated;
@@ -95,239 +102,89 @@ function App() {
   }, [people]);
 
   useEffect(() => {
-    if (menuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    document.body.style.overflow = menuOpen ? "hidden" : "";
   }, [menuOpen]);
-  
+
   return (
     <div className="min-h-screen bg-neutral-50">
-      <div className="sticky top-0 z-50 bg-white border-b border-neutral-200 shadow-sm px-4 py-3">
-        {/* Top Row: Hamburger + Logo */}
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setMenuOpen(true)}
-            className="text-2xl text-emerald-600 focus:outline-none"
-            aria-label="Open menu"
-          >
-            ☰
-          </button>
+      <Header
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        activeTags={activeTags}
+        setActiveTags={setActiveTags}
+        venueSort={venueSort}
+        setVenueSort={setVenueSort}
+        personSort={personSort}
+        setPersonSort={setPersonSort}
+        onMenuOpen={() => setMenuOpen(true)}
+      />
 
-          <img
-            src="/remember-me-header-banner.png"
-            alt="Remember Me banner"
-            className="w-full h-[100px] object-contain"
-          />
-        </div>
-
-        {/* Search Bar Below */}
-        <div className="mt-4 max-w-md mx-auto">
-          <SearchBar value={searchQuery} onChange={setSearchQuery} />
-
-          {activeTags.length > 0 && (
-            <div className="mb-4 flex flex-wrap items-center gap-2 justify-center">
-              <span className="text-sm text-gray-600">Filtering by tag:</span>
-              {activeTags.map((tag) => (
-                <span
-                  key={tag}
-                  className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm flex items-center gap-1"
-                >
-                  {tag}
-                  <button
-                    onClick={() =>
-                      setActiveTags((prev) => prev.filter((t) => t !== tag))
-                    }
-                    className="text-red-500 ml-1 text-xs hover:underline"
-                  >
-                    ✕
-                  </button>
-                </span>
-              ))}
-              <button
-                onClick={() => setActiveTags([])}
-                className="text-sm text-red-500 hover:underline ml-2"
-              >
-                Clear All
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="p-6 grid gap-4 max-w-xl mx-auto">        
+      <div className="p-6 grid gap-4 max-w-xl mx-auto">
         {showAddModal && (
-          <div
-            className={`fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-40 transition-opacity duration-300 ${
-              isFadingOut ? "animate-fadeOut" : "animate-fadeIn"
-            }`}
-            onClick={closeAddModal}
-          >
-            <div
-              className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md mx-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <AddPersonForm
-                onAdd={(person) => {
-                  setPeople([person, ...people]);
-                  setShowNotification(true);
-                  closeAddModal();
-                  setTimeout(() => setShowNotification(false), 3000);
-                }}
-              />
-              <button
-                onClick={() => closeAddModal()}
-                className="mt-4 w-full text-sm text-gray-500 hover:text-gray-700"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
-        {showNotification && (
-          <div className="fixed bottom-24 right-6 bg-green-600 text-white px-4 py-2 rounded shadow z-50 animate-fadeIn">
-            Person added successfully!
-          </div>
+          <AddPersonModal
+            onAdd={(newPerson) => {
+              setPeople([newPerson, ...people]);
+              setShowAddModal(false);
+              showNotification("Person added successfully!", "success");
+            }}
+            onCancel={() => setShowAddModal(false)}
+          />
         )}
 
         {editingPerson && (
-          <div
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-center justify-center transition-opacity duration-300 animate-fadeIn"
-            onClick={() => setEditingPerson(null)}
-          >
-            <div
-              className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md mx-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <EditPersonForm
-                person={editingPerson}
-                onSave={(updated) => {
-                  setPeople((prev) =>
-                    prev.map((p) => (p.id === updated.id ? updated : p))
-                  );
-                  setEditingPerson(null);
-                }}                
-              />
-              <button
-                onClick={() => setEditingPerson(null)}
-                className="mt-4 w-full text-sm text-gray-500 hover:text-gray-700"
-              >
-                Cancel
-              </button>
-            </div>
+          <EditPersonModal
+            person={editingPerson}
+            onSave={(updated) => {
+              setPeople((prev) =>
+                prev.map((p) => (p.id === updated.id ? updated : p))
+              );
+              setEditingPerson(null);
+              showNotification("Person updated successfully!", "success");
+            }}
+            onCancel={() => setEditingPerson(null)}
+          />
+        )}
+
+        {Object.keys(groupedPeople).length === 0 && (
+          <div className="text-center text-gray-500 mt-12">
+            <p className="text-lg font-medium">No results found.</p>
+            {searchQuery || activeTags.length > 0 ? (
+              <p className="text-sm mt-2">Try adjusting your search or clearing filters.</p>
+            ) : (
+              <p className="text-sm mt-2">Add someone new to get started!</p>
+            )}
           </div>
         )}
 
-        {Object.entries(groupedPeople).map(([venue, group]) => {
-          const isOpen = openGroups[venue] ?? true; // default to open
-
-          return (
-            <div key={venue} className="mb-8">
-              <button
-                onClick={() => toggleGroup(venue)}
-                className="text-left w-full text-xl font-bold text-gray-700 mb-2 hover:underline"
-              >
-                {isOpen ? "▼" : "▶"} {venue}
-              </button>    
-              <motion.div
-                initial={false}
-                animate={{ height: isOpen ? "auto" : 0, opacity: isOpen ? 1 : 0 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="overflow-hidden"
-              >
-                <AnimatePresence mode="popLayout">
-                  <motion.div layout className="flex flex-col gap-4">
-                  {[...group]
-                    .sort((a, b) => {
-                      if (a.favorite && !b.favorite) return -1;
-                      if (!a.favorite && b.favorite) return 1;
-                      return a.name.localeCompare(b.name); // fallback sort
-                    })
-                    .map((person) => (
-                      <motion.div
-                        key={person.id}
-                        layout
-                        layoutId={`person-${person.id}`}
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -12 }}
-                        transition={{ duration: 0.25, ease: "easeInOut" }}
-                        className="bg-white border border-neutral-200 rounded-xl p-4 shadow-sm hover:shadow-md transition relative"
-                      >
-                        <button
-                          onClick={() => handleDelete(person.id, person.name)}
-                          className="absolute top-2 right-2 text-red-500 hover:text-red-700 text-sm"
-                          aria-label={`Delete ${person.name}`}
-                          title="Delete"
-                        >
-                          ❌
-                        </button>
-                        <button
-                          onClick={() => setEditingPerson(person)}
-                          className="absolute top-2 right-10 text-blue-500 hover:text-blue-700 text-sm"
-                          aria-label={`Edit ${person.name}`}
-                          title="Edit"
-                        >
-                          ✏️
-                        </button>
-
-                        <h3 className="text-lg font-semibold flex items-center gap-2">
-                          {person.name}
-                          <button
-                            onClick={() =>
-                              setPeople((prev) =>
-                                prev.map((p) =>
-                                  p.id === person.id ? { ...p, favorite: !p.favorite } : p
-                                )
-                              )
-                            }
-                            className="text-yellow-400 transition-transform duration-200 ease-in-out hover:scale-110"
-                            title={person.favorite ? "Unmark Favorite" : "Mark as Favorite"}
-                          >
-                            {person.favorite ? "★" : "☆"}
-                          </button>
-                        </h3>
-
-                        {person.position && (
-                          <p className="text-sm text-gray-500">{person.position}</p>
-                        )}
-                        {person.description && (
-                          <p className="text-gray-700 text-sm mt-1 whitespace-pre-line">
-                            {person.description}
-                          </p>
-                        )}
-                        <p className="text-xs text-gray-400 mt-2">
-                          Met on: {new Date(person.dateMet).toLocaleDateString()}
-                        </p>
-                        {person.tags && person.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mt-3">
-                            {person.tags.map((tag, i) => (
-                              <button
-                                key={i}
-                                onClick={() => {
-                                  setActiveTags((prev) =>
-                                    prev.includes(tag)
-                                      ? prev.filter((t) => t !== tag)
-                                      : [...prev, tag]
-                                  );
-                                }}
-                                className="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full hover:bg-emerald-200 transition"
-                              >
-                                {tag}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                </AnimatePresence>
-              </motion.div>              
-            </div>
-          );
-        })}
+        {Object.entries(groupedPeople)
+          .sort(([a], [b]) => {
+            const aFav = favoriteVenues.includes(a);
+            const bFav = favoriteVenues.includes(b);
+            if (aFav && !bFav) return -1;
+            if (!aFav && bFav) return 1;
+            return a.localeCompare(b);
+          })
+          .map(([venue, group]) => (
+            <VenueGroupList
+              key={venue}
+              venue={venue}
+              group={group}
+              isOpen={openGroups[venue] ?? true}
+              toggleGroup={toggleGroup}
+              personSort={personSort}
+              onEdit={setEditingPerson}
+              onDelete={handleDelete}
+              onToggleFavorite={(id) =>
+                setPeople((prev) =>
+                  prev.map((p) => (p.id === id ? { ...p, favorite: !p.favorite } : p))
+                )
+              }
+              activeTags={activeTags}
+              setActiveTags={setActiveTags}
+              favoriteVenues={favoriteVenues}
+              setFavoriteVenues={setFavoriteVenues}
+            />
+          ))}
       </div>
 
       <button
@@ -338,7 +195,6 @@ function App() {
         ＋
       </button>
 
-      {/* Backdrop */}
       {menuOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-30 z-40"
@@ -346,10 +202,9 @@ function App() {
         />
       )}
 
-      {/* Slideout Drawer (always rendered) */}
       <div
         className={`fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-50 p-4 transform transition-transform duration-300 ${
-          menuOpen ? 'translate-x-0' : '-translate-x-full'
+          menuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <h2 className="text-lg font-semibold text-emerald-600 mb-4">Menu</h2>
@@ -359,6 +214,23 @@ function App() {
         </ul>
       </div>
 
+      {notification && (
+        <Notification message={notification.message} type={notification.type} />
+      )}
+
+      {personToDelete && (
+        <DeleteConfirmModal
+          name={personToDelete.name}
+          onCancel={() => setPersonToDelete(null)}
+          onConfirm={() => {
+            setPeople((prev) =>
+              prev.filter((p) => p.id !== personToDelete.id)
+            );
+            showNotification(`${personToDelete.name} has been deleted.`, "info");
+            setPersonToDelete(null);
+          }}
+        />
+      )}
     </div>
   );
 }
