@@ -3,11 +3,10 @@ import { Person } from "../types";
 
 interface Props {
   person: Person;
-  onSave: (updated: Person) => void;
-  onCancel: () => void;
+  onSave: (updated: Person) => void;  
 }
 
-export default function EditPersonForm({ person, onSave, onCancel }: Props) {
+export default function EditPersonForm({ person, onSave}: Props) {
   const [name, setName] = useState(person.name);
   const [position, setPosition] = useState(person.position || "");
   const [venue, setVenue] = useState(person.venue || "");
@@ -31,8 +30,9 @@ export default function EditPersonForm({ person, onSave, onCancel }: Props) {
         description,
         tags: tagsInput
           .split(",")
-          .map((tag) => tag.trim())
-          .filter((tag) => tag !== ""),
+          .map((tag) => tag.trim().toLowerCase())
+          .filter((tag) => tag !== "")
+          .sort(),
     };       
 
     onSave(updatedPerson);
@@ -84,13 +84,6 @@ export default function EditPersonForm({ person, onSave, onCancel }: Props) {
           className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
         >
           Save
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 bg-gray-200 text-gray-800 py-2 rounded hover:bg-gray-300 transition"
-        >
-          Cancel
         </button>
       </div>
     </form>

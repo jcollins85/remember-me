@@ -26,8 +26,9 @@ export default function AddPersonForm({ onAdd }: Props) {
         description,
         tags: tagsInput
           .split(",")
-          .map((tag) => tag.trim())
-          .filter((tag) => tag !== ""),
+          .map((tag) => tag.trim().toLowerCase())
+          .filter((tag) => tag !== "")
+          .sort(),
         dateMet: new Date().toISOString(),
     };
       
