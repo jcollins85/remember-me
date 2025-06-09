@@ -1,91 +1,116 @@
-import { useEffect, useState } from "react";
+// src/App.tsx
+import React, { useState, useEffect, useMemo } from "react";
 import { samplePeople } from "./data";
-import { Person } from "./types";
-import DeleteConfirmModal from "./modals/DeleteConfirmModal";
-import { motion, AnimatePresence } from "framer-motion";
+import { Person, Venue } from "./types";
+import { useTags } from "./context/TagContext";
+import { useFilteredSortedPeople } from "./components/people/useFilteredSortedPeople";
+import { SortKey } from "./utils/sortHelpers";
+import { useVenueSort } from './components/venues/useVenueSort';
+import { useSearchSort } from './components/header/useSearchSort';
+import { usePeople } from './context/PeopleContext';
+import { useVenues } from "./context/VenueContext";
+import { UNCLASSIFIED } from "./constants";
+import { useNotification } from './context/NotificationContext';
 
-import Header from "./components/Header";
-import VenueGroupList from "./components/VenueGroupList";
-import AddPersonModal from "./modals/AddPersonModal";
-import EditPersonModal from "./modals/EditPersonModal";
-import Notification from "./components/Notification";
+import Header from "./components/header/Header";
+import VenueGroupList from "./components/venues/VenueGroupList";
+import AddPersonModal from "./components/people/AddPersonModal";
+import EditPersonModal from "./components/people/EditPersonModal";
+import Footer from "./components/common/Footer";
+import DeleteConfirmModal from "./components/people/DeleteConfirmModal";
+import Notification from './components/common/Notification';
 
 function App() {
-  const [searchQuery, setSearchQuery] = useState("");  
-  const [activeTags, setActiveTags] = useState<string[]>([]);
+  // ── UI state ──
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [favoriteVenues, setFavoriteVenues] = useState<string[]>(() => {
     const saved = localStorage.getItem("favoriteVenues");
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" | "info" } | null>(null);
+  // ── Tag context ──
+  const { tags, createTag, getTagIdByName, getTagNameById } = useTags();  
 
-  const showNotification = (message: string, type: "success" | "error" | "info" = "success") => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 3000);
-  };
+  // ── People state ──
+  const { people, addPerson, updatePerson, deletePerson } = usePeople();
 
-  const [people, setPeople] = useState<Person[]>(() => {
-    const saved = localStorage.getItem("people");
-    return saved ? JSON.parse(saved) : samplePeople;
-  });
-
+  // ── Modals/edit state ──
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
   const [personToDelete, setPersonToDelete] = useState<Person | null>(null);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [personSort, setPersonSort] = useState("name-asc");
-  const [venueSort, setVenueSort] = useState("asc");
+  const [showAddModal, setShowAddModal] = useState<boolean>(false);
 
-  useEffect(() => {
-    localStorage.setItem("people", JSON.stringify(people));
-  }, [people]);
+  // ── Sidebar menu ──
+  const [menuOpen, setMenuOpen] = useState<boolean>(false);
 
+  // ── Sorting prefs ──
+  const [venueSort, setVenueSort] = useState<"asc" | "desc">("asc");
+
+  const { notification, showNotification } = useNotification();
+  
+  const {
+    searchQuery,
+    setSearchQuery,
+    activeTags,
+    setActiveTags,
+    personSort,
+    setPersonSort
+  } = useSearchSort();
+
+  // ── Venue context & lookup ──
+  const { venues } = useVenues();
+  const venuesById = useMemo(
+    () => Object.fromEntries(venues.map((v) => [v.id, v])) as Record<string, Venue>,
+    [venues]
+  );  
+
+  // ── Filter & sort hook ──
+  const [sortField, sortDir] = personSort.split("-") as [SortKey, "asc" | "desc"];
+  const filteredPeople = useFilteredSortedPeople(
+    people,
+    searchQuery,
+    activeTags,
+    sortField,
+    sortDir === "asc"
+  );
+
+  // ── Persist favorites ──
   useEffect(() => {
     localStorage.setItem("favoriteVenues", JSON.stringify(favoriteVenues));
   }, [favoriteVenues]);
 
+  // ── Handlers ──
   const toggleGroup = (venue: string) => {
-    setOpenGroups((prev) => ({
-      ...prev,
-      [venue]: !prev[venue],
-    }));
+    setOpenGroups((prev) => ({ ...prev, [venue]: !prev[venue] }));
   };
 
   const handleDelete = (id: string, name: string) => {
-    setPersonToDelete({ id, name } as Person); // only id and name are needed for modal
+    setPersonToDelete({ id, name } as Person);
   };
 
-  const filteredPeople = people.filter((person) => {
-    const query = searchQuery.toLowerCase();
+  // ── Group by venueId (lookup name) ──
+  const groupedPeople = filteredPeople.reduce<Record<string, Person[]>>(
+    (groups, person) => {
+      // Lookup the venue’s name via your VenueContext map
+      const venueName = person.venueId
+        ? venuesById[person.venueId]?.name ?? UNCLASSIFIED
+        : UNCLASSIFIED;
 
-    const matchesSearch =
-      person.name.toLowerCase().includes(query) ||
-      (person.position?.toLowerCase().includes(query) ?? false) ||
-      (person.venue?.toLowerCase().includes(query) ?? false) ||
-      (person.description?.toLowerCase().includes(query) ?? false) ||
-      (person.tags?.some((tag) => tag.toLowerCase().includes(query)) ?? false);
+      if (!groups[venueName]) groups[venueName] = [];
+      groups[venueName].push(person);
+      return groups;
+    },
+    {}
+  );
 
-    const matchesTag =
-      activeTags.length === 0 ||
-      (person.tags?.some((tag) => activeTags.includes(tag)) ?? false);
-
-    return matchesSearch && matchesTag;
-  });
-
-  const groupedPeople = filteredPeople.reduce((groups: Record<string, Person[]>, person) => {
-    const groupKey = person.venue || "Unknown Venue";
-    if (!groups[groupKey]) groups[groupKey] = [];
-    groups[groupKey].push(person);
-    return groups;
-  }, {});
-
+  // ── Initialize openGroups keys ──
   useEffect(() => {
     const groupKeys = Object.keys(
       people.reduce((acc, person) => {
-        const key = person.venue || "Unknown Venue";
-        acc[key] = true;
+        // Lookup name by ID, or fall back to UNCLASSIFIED
+        const venueName = person.venueId
+          ? venuesById[person.venueId]?.name ?? UNCLASSIFIED
+          : UNCLASSIFIED;
+        acc[venueName] = true;
         return acc;
       }, {} as Record<string, boolean>)
     );
@@ -93,20 +118,25 @@ function App() {
     setOpenGroups((prev) => {
       const updated = { ...prev };
       groupKeys.forEach((key) => {
-        if (updated[key] === undefined) {
-          updated[key] = true;
-        }
+        if (updated[key] === undefined) updated[key] = true;
       });
       return updated;
     });
-  }, [people]);
+  }, [people, venuesById]);
 
+  // ── Prevent scrolling ──
   useEffect(() => {
-    document.body.style.overflow = menuOpen ? "hidden" : "";
-  }, [menuOpen]);
+    document.body.style.overflow =
+      menuOpen || showAddModal || editingPerson || personToDelete
+        ? "hidden"
+        : "";
+  }, [menuOpen, showAddModal, editingPerson, personToDelete]);
+
+  const venueNames = Object.keys(groupedPeople);
+  const sortedVenueNames = useVenueSort(venueNames, favoriteVenues, venueSort);  
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="flex flex-col min-h-screen bg-neutral-50">
       <Header
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -117,79 +147,74 @@ function App() {
         personSort={personSort}
         setPersonSort={setPersonSort}
         onMenuOpen={() => setMenuOpen(true)}
+        getTagNameById={getTagNameById}
       />
 
-      <div className="p-6 grid gap-4 max-w-xl mx-auto">
-        {showAddModal && (
-          <AddPersonModal
-            onAdd={(newPerson) => {
-              setPeople([newPerson, ...people]);
-              setShowAddModal(false);
-              showNotification("Person added successfully!", "success");
-            }}
-            onCancel={() => setShowAddModal(false)}
-          />
-        )}
+      <main className="flex-1 overflow-y-auto pb-24">
+        <div className="p-6 grid gap-4 max-w-xl mx-auto">
+          {showAddModal && (
+            <AddPersonModal
+              tags={tags}
+              people={people}
+              getTagIdByName={getTagIdByName}
+              getTagNameById={getTagNameById}
+              createTag={createTag}
+              onAdd={(newPerson) => {
+                addPerson(newPerson)
+                setShowAddModal(false);
+                showNotification("Person added successfully!", "success");
+              }}
+              onCancel={() => setShowAddModal(false)}
+            />
+          )}
 
-        {editingPerson && (
-          <EditPersonModal
-            person={editingPerson}
-            onSave={(updated) => {
-              setPeople((prev) =>
-                prev.map((p) => (p.id === updated.id ? updated : p))
-              );
-              setEditingPerson(null);
-              showNotification("Person updated successfully!", "success");
-            }}
-            onCancel={() => setEditingPerson(null)}
-          />
-        )}
+          {editingPerson && (
+            <EditPersonModal
+              tags={tags}
+              people={people}
+              getTagIdByName={getTagIdByName}
+              getTagNameById={getTagNameById}
+              createTag={createTag}
+              person={editingPerson}
+              onSave={(updated) => {
+                updatePerson(updated)
+                setEditingPerson(null);
+                showNotification("Person updated successfully!", "success");
+              }}
+              onCancel={() => setEditingPerson(null)}
+            />
+          )}
 
-        {Object.keys(groupedPeople).length === 0 && (
-          <div className="text-center text-gray-500 mt-12">
-            <p className="text-lg font-medium">No results found.</p>
-            {searchQuery || activeTags.length > 0 ? (
-              <p className="text-sm mt-2">Try adjusting your search or clearing filters.</p>
-            ) : (
-              <p className="text-sm mt-2">Add someone new to get started!</p>
-            )}
-          </div>
-        )}
-
-        {Object.entries(groupedPeople)
-          .sort(([a], [b]) => {
-            const aFav = favoriteVenues.includes(a);
-            const bFav = favoriteVenues.includes(b);
-            if (aFav && !bFav) return -1;
-            if (!aFav && bFav) return 1;
-            return a.localeCompare(b);
-          })
-          .map(([venue, group]) => (
+          {sortedVenueNames.map((venueName) => (
             <VenueGroupList
-              key={venue}
-              venue={venue}
-              group={group}
-              isOpen={openGroups[venue] ?? true}
-              toggleGroup={toggleGroup}
+              key={venueName}
+              venue={venueName}
+              group={groupedPeople[venueName] || []}
               personSort={personSort}
-              onEdit={setEditingPerson}
-              onDelete={handleDelete}
-              onToggleFavorite={(id) =>
-                setPeople((prev) =>
-                  prev.map((p) => (p.id === id ? { ...p, favorite: !p.favorite } : p))
-                )
-              }
               activeTags={activeTags}
               setActiveTags={setActiveTags}
+              getTagNameById={getTagNameById}
               favoriteVenues={favoriteVenues}
               setFavoriteVenues={setFavoriteVenues}
+              isOpen={openGroups[venueName] ?? true}
+              toggleGroup={toggleGroup}
+              onEdit={setEditingPerson}
+              onDelete={handleDelete}
+              onToggleFavorite={(personId) => {
+                // find the toggled person
+                const person = people.find((p) => p.id === personId);
+                if (!person) return;
+                // flip their favorite flag
+                updatePerson({ ...person, favorite: !person.favorite });
+              }}
             />
           ))}
-      </div>
+        </div>
+      </main>
 
       <button
         onClick={() => setShowAddModal(true)}
-        className="fixed bottom-6 right-6 bg-emerald-500 text-white text-3xl rounded-full w-14 h-14 shadow-lg hover:bg-emerald-600 transition z-50"
+        className="fixed bottom-14 right-6 bg-emerald-500 text-white text-3xl rounded-full w-14 h-14 shadow-lg hover:bg-emerald-600 transition z-40"
         aria-label="Add Person"
       >
         ＋
@@ -209,8 +234,16 @@ function App() {
       >
         <h2 className="text-lg font-semibold text-emerald-600 mb-4">Menu</h2>
         <ul className="space-y-3">
-          <li><button className="text-gray-700 hover:text-emerald-600">Placeholder Item 1</button></li>
-          <li><button className="text-gray-700 hover:text-emerald-600">Placeholder Item 2</button></li>
+          <li>
+            <button className="text-gray-700 hover:text-emerald-600">
+              Placeholder Item 1
+            </button>
+          </li>
+          <li>
+            <button className="text-gray-700 hover:text-emerald-600">
+              Placeholder Item 2
+            </button>
+          </li>
         </ul>
       </div>
 
@@ -223,14 +256,14 @@ function App() {
           name={personToDelete.name}
           onCancel={() => setPersonToDelete(null)}
           onConfirm={() => {
-            setPeople((prev) =>
-              prev.filter((p) => p.id !== personToDelete.id)
-            );
-            showNotification(`${personToDelete.name} has been deleted.`, "info");
+            deletePerson(personToDelete.id);            
             setPersonToDelete(null);
+            showNotification(`${personToDelete.name} deleted.`, "info");
           }}
         />
       )}
+
+      <Footer />
     </div>
   );
 }
