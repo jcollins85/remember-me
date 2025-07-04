@@ -1,29 +1,22 @@
-// src/components/venues/useVenueSort.ts
 import { useMemo } from 'react';
+import { sortVenues, VenueSortKey } from '../../utils/sortHelpers';
+import { Venue, Person } from '../../types';
 
 /**
- * Sort venue names based on favorites and alphabetical order.
- * @param venueNames Array of venue keys
- * @param favoriteVenues Array of favorite venue names
- * @param direction 'asc' or 'desc'
+ * Returns venues sorted by the selected key and order.
+ * @param venues Array of Venue objects.
+ * @param people Array of Person objects, used to compute recentVisit.
+ * @param sortBy Sort key: 'name' | 'recentVisit'.
+ * @param asc true for ascending order (A→Z or oldest-first), false for descending (Z→A or newest-first).
  */
 export function useVenueSort(
-  venueNames: string[],
-  favoriteVenues: string[],
-  direction: 'asc' | 'desc' = 'asc'
-): string[] {
-  return useMemo(() => {
-    return [...venueNames].sort((a, b) => {
-      // favorites first
-      const aFav = favoriteVenues.includes(a) ? 0 : 1;
-      const bFav = favoriteVenues.includes(b) ? 0 : 1;
-      if (aFav !== bFav) {
-        return aFav - bFav;
-      }
-      // then alphabetical
-      return direction === 'asc'
-        ? a.localeCompare(b)
-        : b.localeCompare(a);
-    });
-  }, [venueNames, favoriteVenues, direction]);
+  venues: Venue[],
+  people: Person[],
+  sortBy: VenueSortKey = 'recentVisit',
+  asc: boolean = false
+): Venue[] {
+  return useMemo(
+    () => sortVenues(venues, people, sortBy, asc),
+    [venues, people, sortBy, asc]
+  );
 }

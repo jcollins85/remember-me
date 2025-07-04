@@ -67,7 +67,7 @@ export default function VenueGroupList({
         >
           {isOpen ? "▼" : "▶"}
           <span className="flex items-center gap-1">
-            {venue}
+            {venue} <span className="text-sm text-gray-500">({group.length})</span>
             <span
               onClick={(e) => {
                 e.stopPropagation();

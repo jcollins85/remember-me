@@ -1,5 +1,5 @@
 // PersonCard.tsx
-import { Person } from "../types";
+import { Person } from "../../types";
 
 interface Props {
   person: Person;
@@ -52,7 +52,7 @@ export default function PersonCard({
             Date Met: {new Date(person.dateMet).toLocaleDateString()}
           </p>
           {person.description && (
-            <p className="text-sm text-gray-700 mt-2">{person.description}</p>
+            <p className="whitespace-pre-wrap text-sm text-gray-700 mt-2">{person.description}</p>
           )}
         </div>
 

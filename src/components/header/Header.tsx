@@ -1,19 +1,25 @@
-// Header.tsx
 import { useState } from "react";
 import SortControls from "./SortControls";
 import SearchBar from "./SearchBar";
+import type { Dispatch, SetStateAction } from 'react';
+import type { SortKey, VenueSortKey } from '../../utils/sortHelpers';
+
+type Direction  = 'asc' | 'desc';
+type SortString = `${SortKey}-${Direction}`;
 
 interface Props {
   searchQuery: string;
   setSearchQuery: (val: string) => void;
-  activeTags: string[]; // array of tag IDs
-  setActiveTags: React.Dispatch<React.SetStateAction<string[]>>;
-  venueSort: "asc" | "desc";
-  setVenueSort: React.Dispatch<React.SetStateAction<"asc" | "desc">>;
-  personSort: string;
-  setPersonSort: (val: string) => void;
+  activeTags: string[];
+  setActiveTags: Dispatch<SetStateAction<string[]>>;
+  venueSortKey: VenueSortKey;
+  venueSortDir: Direction;
+  setVenueSortKey: Dispatch<SetStateAction<VenueSortKey>>;
+  setVenueSortDir: Dispatch<SetStateAction<Direction>>;
+  personSort: SortString;
+  setPersonSort: Dispatch<SetStateAction<SortString>>;
   onMenuOpen: () => void;
-  getTagNameById: (id: string) => string; // NEW: to convert ID→name
+  getTagNameById: (id: string) => string;
 }
 
 export default function Header({
@@ -21,8 +27,10 @@ export default function Header({
   setSearchQuery,
   activeTags,
   setActiveTags,
-  venueSort,
-  setVenueSort,
+  venueSortKey,
+  venueSortDir,
+  setVenueSortKey,
+  setVenueSortDir,
   personSort,
   setPersonSort,
   onMenuOpen,
@@ -57,7 +65,7 @@ export default function Header({
           {activeTags.length > 0 && (
             <div className="mt-4 flex flex-wrap items-center gap-2 justify-center">
               <span className="text-sm text-gray-600">Active tag:</span>
-              {activeTags.map((tagId: string) => {
+              {activeTags.map((tagId) => {
                 const tagName = getTagNameById(tagId);
                 return (
                   <span
@@ -67,9 +75,7 @@ export default function Header({
                     {tagName}
                     <button
                       onClick={() =>
-                        setActiveTags((prev: string[]) =>
-                          prev.filter((t) => t !== tagId)
-                        )
+                        setActiveTags((prev) => prev.filter((t) => t !== tagId))
                       }
                       className="text-red-500 ml-1 text-xs hover:underline"
                     >
@@ -100,8 +106,10 @@ export default function Header({
           {showControls && (
             <div className="mt-4">
               <SortControls
-                venueSort={venueSort}
-                setVenueSort={setVenueSort}
+                venueSortKey={venueSortKey}
+                venueSortDir={venueSortDir}
+                setVenueSortKey={setVenueSortKey}
+                setVenueSortDir={setVenueSortDir}
                 personSort={personSort}
                 setPersonSort={setPersonSort}
               />

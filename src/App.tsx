@@ -1,38 +1,41 @@
 // src/App.tsx
 import React, { useState, useEffect, useMemo } from "react";
-import { samplePeople } from "./data";
 import { Person, Venue } from "./types";
+
 import { useTags } from "./context/TagContext";
-import { useFilteredSortedPeople } from "./components/people/useFilteredSortedPeople";
-import { SortKey } from "./utils/sortHelpers";
-import { useVenueSort } from './components/venues/useVenueSort';
-import { useSearchSort } from './components/header/useSearchSort';
 import { usePeople } from './context/PeopleContext';
 import { useVenues } from "./context/VenueContext";
-import { UNCLASSIFIED } from "./constants";
 import { useNotification } from './context/NotificationContext';
 
+import { useGroupedPeople } from './hooks/useGroupedPeople';
+import { useFavoriteSections } from './hooks/useFavouriteSections';
+import { useFavorites } from './hooks/useFavourites';
+
+import VenueSections from './components/venues/VenueSections';
+import ModalManager from './components/common/ModalManager';
 import Header from "./components/header/Header";
-import VenueGroupList from "./components/venues/VenueGroupList";
-import AddPersonModal from "./components/people/AddPersonModal";
-import EditPersonModal from "./components/people/EditPersonModal";
+import { useFilteredSortedPeople } from "./components/people/useFilteredSortedPeople";
+import { useVenueSort } from './components/venues/useVenueSort';
+import { useSearchSort } from './components/header/useSearchSort';
 import Footer from "./components/common/Footer";
-import DeleteConfirmModal from "./components/people/DeleteConfirmModal";
 import Notification from './components/common/Notification';
 
-function App() {
-  // ── UI state ──
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
-  const [favoriteVenues, setFavoriteVenues] = useState<string[]>(() => {
-    const saved = localStorage.getItem("favoriteVenues");
-    return saved ? JSON.parse(saved) : [];
-  });
+import { SortKey, VenueSortKey } from "./utils/sortHelpers";
 
+import { UNCLASSIFIED } from "./constants";
+
+function App() {
   // ── Tag context ──
   const { tags, createTag, getTagIdByName, getTagNameById } = useTags();  
+  
+  // ── UI state ──
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   // ── People state ──
   const { people, addPerson, updatePerson, deletePerson } = usePeople();
+
+  // ── Favorites state (persisted) ──
+  const [favoriteVenues, setFavoriteVenues] = useFavorites('favoriteVenues');
 
   // ── Modals/edit state ──
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
@@ -42,18 +45,20 @@ function App() {
   // ── Sidebar menu ──
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
 
-  // ── Sorting prefs ──
-  const [venueSort, setVenueSort] = useState<"asc" | "desc">("asc");
+  // ── Sorting prefs ──  
+  const [venueSortKey, setVenueSortKey] = useState<VenueSortKey>("recentVisit");
+  const [venueSortDir, setVenueSortDir] = useState<"asc" | "desc">("desc");
+
 
   const { notification, showNotification } = useNotification();
+
+  const [showFavSection, setShowFavSection] = useState(true);
+  const [showAllSection, setShowAllSection] = useState(true);
   
   const {
-    searchQuery,
-    setSearchQuery,
-    activeTags,
-    setActiveTags,
-    personSort,
-    setPersonSort
+    searchQuery, setSearchQuery,
+    activeTags,  setActiveTags,
+    personSort,  setPersonSort
   } = useSearchSort();
 
   // ── Venue context & lookup ──
@@ -73,34 +78,24 @@ function App() {
     sortDir === "asc"
   );
 
-  // ── Persist favorites ──
-  useEffect(() => {
-    localStorage.setItem("favoriteVenues", JSON.stringify(favoriteVenues));
-  }, [favoriteVenues]);
-
   // ── Handlers ──
-  const toggleGroup = (venue: string) => {
-    setOpenGroups((prev) => ({ ...prev, [venue]: !prev[venue] }));
+  const toggleGroup = (venueName: string) => {
+    setOpenGroups((prev: Record<string, boolean>) => {
+      // default false if undefined
+      const isOpen = prev[venueName] ?? false;
+      return {
+        ...prev,
+        [venueName]: !isOpen,
+      };
+    });
   };
 
   const handleDelete = (id: string, name: string) => {
     setPersonToDelete({ id, name } as Person);
   };
 
-  // ── Group by venueId (lookup name) ──
-  const groupedPeople = filteredPeople.reduce<Record<string, Person[]>>(
-    (groups, person) => {
-      // Lookup the venue’s name via your VenueContext map
-      const venueName = person.venueId
-        ? venuesById[person.venueId]?.name ?? UNCLASSIFIED
-        : UNCLASSIFIED;
-
-      if (!groups[venueName]) groups[venueName] = [];
-      groups[venueName].push(person);
-      return groups;
-    },
-    {}
-  );
+  // ── Group by venue via new hook ──
+  const groupedPeople = useGroupedPeople(filteredPeople, venuesById);
 
   // ── Initialize openGroups keys ──
   useEffect(() => {
@@ -132,8 +127,18 @@ function App() {
         : "";
   }, [menuOpen, showAddModal, editingPerson, personToDelete]);
 
-  const venueNames = Object.keys(groupedPeople);
-  const sortedVenueNames = useVenueSort(venueNames, favoriteVenues, venueSort);  
+  const sortedVenues = useVenueSort(
+    venues,
+    people,
+    venueSortKey,
+    venueSortDir === "asc"
+  );
+  
+  const sortedVenueNames = sortedVenues
+    .map((v) => v.name)
+    .filter((name) => groupedPeople[name]);
+
+  const { favorites: favoriteGroups, others: otherGroups } = useFavoriteSections(sortedVenueNames, favoriteVenues);
 
   return (
     <div className="flex flex-col min-h-screen bg-neutral-50">
@@ -142,8 +147,10 @@ function App() {
         setSearchQuery={setSearchQuery}
         activeTags={activeTags}
         setActiveTags={setActiveTags}
-        venueSort={venueSort}
-        setVenueSort={setVenueSort}
+        venueSortKey={venueSortKey}
+        venueSortDir={venueSortDir}
+        setVenueSortKey={setVenueSortKey}
+        setVenueSortDir={setVenueSortDir}
         personSort={personSort}
         setPersonSort={setPersonSort}
         onMenuOpen={() => setMenuOpen(true)}
@@ -152,63 +159,55 @@ function App() {
 
       <main className="flex-1 overflow-y-auto pb-24">
         <div className="p-6 grid gap-4 max-w-xl mx-auto">
-          {showAddModal && (
-            <AddPersonModal
-              tags={tags}
-              people={people}
-              getTagIdByName={getTagIdByName}
-              getTagNameById={getTagNameById}
-              createTag={createTag}
-              onAdd={(newPerson) => {
-                addPerson(newPerson)
-                setShowAddModal(false);
-                showNotification("Person added successfully!", "success");
-              }}
-              onCancel={() => setShowAddModal(false)}
-            />
-          )}
+          <ModalManager
+            showAdd={showAddModal}
+            onAddCancel={() => setShowAddModal(false)}
+            onAdd={(newPerson) => {
+              addPerson(newPerson);
+              setShowAddModal(false);
+              showNotification("Person added successfully!", "success");
+            }}
+            tags={tags}
+            people={people}
+            getTagIdByName={getTagIdByName}
+            getTagNameById={getTagNameById}
+            createTag={createTag}
 
-          {editingPerson && (
-            <EditPersonModal
-              tags={tags}
-              people={people}
-              getTagIdByName={getTagIdByName}
-              getTagNameById={getTagNameById}
-              createTag={createTag}
-              person={editingPerson}
-              onSave={(updated) => {
-                updatePerson(updated)
-                setEditingPerson(null);
-                showNotification("Person updated successfully!", "success");
-              }}
-              onCancel={() => setEditingPerson(null)}
-            />
-          )}
+            editingPerson={editingPerson}
+            onEditCancel={() => setEditingPerson(null)}
+            onEdit={(updated) => {
+              updatePerson(updated);
+              setEditingPerson(null);
+              showNotification("Person updated successfully!", "success");
+            }}
 
-          {sortedVenueNames.map((venueName) => (
-            <VenueGroupList
-              key={venueName}
-              venue={venueName}
-              group={groupedPeople[venueName] || []}
-              personSort={personSort}
-              activeTags={activeTags}
-              setActiveTags={setActiveTags}
-              getTagNameById={getTagNameById}
-              favoriteVenues={favoriteVenues}
-              setFavoriteVenues={setFavoriteVenues}
-              isOpen={openGroups[venueName] ?? true}
-              toggleGroup={toggleGroup}
-              onEdit={setEditingPerson}
-              onDelete={handleDelete}
-              onToggleFavorite={(personId) => {
-                // find the toggled person
-                const person = people.find((p) => p.id === personId);
-                if (!person) return;
-                // flip their favorite flag
-                updatePerson({ ...person, favorite: !person.favorite });
-              }}
-            />
-          ))}
+            personToDelete={personToDelete}
+            onDeleteCancel={() => setPersonToDelete(null)}
+            onDeleteConfirm={(id) => {
+              deletePerson(id);
+              setPersonToDelete(null);
+              showNotification(`${personToDelete?.name} deleted.`, "info");
+            }}
+          />
+
+          <VenueSections
+            groupedPeople={groupedPeople}
+            favoriteVenues={favoriteVenues}
+            sortedVenueNames={sortedVenueNames}
+            personSort={personSort}
+            activeTags={activeTags}
+            setActiveTags={setActiveTags}
+            getTagNameById={getTagNameById}
+            openGroups={openGroups}
+            toggleGroup={toggleGroup}
+            setFavoriteVenues={setFavoriteVenues}
+            onEdit={setEditingPerson}
+            onDelete={handleDelete}
+            onToggleFavorite={(id) => {
+              const p = people.find(p => p.id === id);
+              if (p) updatePerson({ ...p, favorite: !p.favorite });
+            }}
+          /> 
         </div>
       </main>
 
@@ -249,18 +248,6 @@ function App() {
 
       {notification && (
         <Notification message={notification.message} type={notification.type} />
-      )}
-
-      {personToDelete && (
-        <DeleteConfirmModal
-          name={personToDelete.name}
-          onCancel={() => setPersonToDelete(null)}
-          onConfirm={() => {
-            deletePerson(personToDelete.id);            
-            setPersonToDelete(null);
-            showNotification(`${personToDelete.name} deleted.`, "info");
-          }}
-        />
       )}
 
       <Footer />

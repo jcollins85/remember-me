@@ -5,6 +5,7 @@ export interface Venue {
   name: string;
   locationTag?: string;
   coords?: { lat: number; lon: number };
+  favorite: boolean; 
 }
 
 export interface Person {

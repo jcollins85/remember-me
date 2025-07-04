@@ -1,47 +1,72 @@
-// SortControls.tsx
 import React from "react";
+import type { SortKey, VenueSortKey } from "../../utils/sortHelpers";
+
+type Direction = "asc" | "desc";
+type PersonSortString = `${SortKey}-${Direction}`;
 
 interface Props {
-  venueSort: "asc" | "desc";
-  setVenueSort: React.Dispatch<React.SetStateAction<"asc" | "desc">>;
-  personSort: string;
-  setPersonSort: (val: string) => void;
+  venueSortKey: VenueSortKey;
+  venueSortDir: Direction;
+  setVenueSortKey: (key: VenueSortKey) => void;
+  setVenueSortDir: (dir: Direction) => void;
+  personSort: PersonSortString;
+  setPersonSort: (val: PersonSortString) => void;
 }
 
 export default function SortControls({
-  venueSort,
-  setVenueSort,
+  venueSortKey,
+  venueSortDir,
+  setVenueSortKey,
+  setVenueSortDir,
   personSort,
   setPersonSort,
 }: Props) {
   return (
-    <div className="mt-3 flex flex-col sm:flex-row justify-center gap-3 sm:gap-6 text-sm bg-white/60 backdrop-blur border border-neutral-200 shadow-sm rounded-lg px-4 py-3">
-      <div className="flex items-center gap-2">
-        <label className="text-gray-600 font-medium whitespace-nowrap">Sort Venues:</label>
-        <select
-          value={venueSort}
-          onChange={(e) => setVenueSort(e.target.value as "asc" | "desc")}
-          className="border border-neutral-300 rounded px-2 py-1 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 transition"
-        >
-          <option value="asc">A–Z</option>
-          <option value="desc">Z–A</option>
-        </select>
-      </div>
+    <div className="mt-4 bg-white border border-neutral-200 rounded-lg px-4 py-3 shadow-sm">
+      <div className="flex flex-col gap-4">
+        {/* Venue Sort */}
+        <div className="flex items-center gap-2">
+          <label htmlFor="venue-sort" className="text-gray-600 font-medium whitespace-nowrap">
+            Sort Venues:
+          </label>
+          <select
+            id="venue-sort"
+            value={`${venueSortKey}-${venueSortDir}`}
+            onChange={(e) => {
+              const [key, dir] = e.target.value.split("-") as [VenueSortKey, Direction];
+              setVenueSortKey(key);
+              setVenueSortDir(dir);
+            }}
+            className="px-2 py-1 bg-gray-100 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300"
+          >
+            <option value="name-asc">Name A → Z</option>
+            <option value="name-desc">Name Z → A</option>
+            <option value="recentVisit-desc">Recent Visit (Newest)</option>
+            <option value="recentVisit-asc">Recent Visit (Oldest)</option>
+            <option value="knownCount-desc">Most Known</option>
+            <option value="knownCount-asc">Least Known</option>
+          </select>
+        </div>
 
-      <div className="flex items-center gap-2">
-        <label className="text-gray-600 font-medium whitespace-nowrap">Sort People:</label>
-        <select
-          value={personSort}
-          onChange={(e) => setPersonSort(e.target.value)}
-          className="border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300"
-        >
-          <option value="name-asc">Name (A–Z)</option>
-          <option value="name-desc">Name (Z–A)</option>
-          <option value="position-asc">Position (A–Z)</option>
-          <option value="position-desc">Position (Z–A)</option>
-          <option value="date-newest">Date Met (Newest First)</option>
-          <option value="date-oldest">Date Met (Oldest First)</option>
-        </select>
+        {/* People Sort */}
+        <div className="flex items-center gap-2">
+          <label htmlFor="person-sort" className="text-gray-600 font-medium whitespace-nowrap">
+            Sort People:
+          </label>
+          <select
+            id="person-sort"
+            value={personSort}
+            onChange={(e) => setPersonSort(e.target.value as PersonSortString)}
+            className="px-2 py-1 bg-gray-100 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300"
+          >
+            <option value="name-asc">Name A → Z</option>
+            <option value="name-desc">Name Z → A</option>
+            <option value="dateMet-desc">Date Met (Newest)</option>
+            <option value="dateMet-asc">Date Met (Oldest)</option>
+            <option value="updatedAt-desc">Last Updated (Newest)</option>
+            <option value="updatedAt-asc">Last Updated (Oldest)</option>
+          </select>
+        </div>
       </div>
     </div>
   );
