@@ -1,12 +1,12 @@
 import React from 'react';
-import CollapsibleSection from '../common/CollapsibleSection';
 import VenueGroupList from './VenueGroupList';
 import type { Person } from '../../types';
 
 interface Props {
   groupedPeople: Record<string, Person[]>;
   favoriteVenues: string[];
-  sortedVenueNames: string[];
+  visibleVenueNames: string[];
+  viewMode: "all" | "favs";
   personSort: string;
   activeTags: string[];
   setActiveTags: React.Dispatch<React.SetStateAction<string[]>>;
@@ -22,7 +22,8 @@ interface Props {
 export default function VenueSections({
   groupedPeople,
   favoriteVenues,
-  sortedVenueNames,
+  visibleVenueNames,
+  viewMode,
   personSort,
   activeTags,
   setActiveTags,
@@ -34,55 +35,39 @@ export default function VenueSections({
   onDelete,
   onToggleFavorite,
 }: Props) {
-  // split favorites vs others
-  const favoriteGroups = sortedVenueNames.filter(name => favoriteVenues.includes(name));
-  const otherGroups    = sortedVenueNames.filter(name => !favoriteVenues.includes(name));
+  const emptyMessage =
+    viewMode === "favs"
+      ? "No favourite venues yet. Tap the star next to a venue to pin it here."
+      : "No venues to show. Try adding a person or clearing filters.";
+
+  if (visibleVenueNames.length === 0) {
+    return (
+      <div className="rounded-lg border border-dashed border-neutral-300 bg-white/70 p-6 text-center text-sm text-neutral-500">
+        {emptyMessage}
+      </div>
+    );
+  }
 
   return (
-    <>
-      {favoriteGroups.length > 0 && (
-        <CollapsibleSection title="★ Favorite Venues" defaultOpen>
-          {favoriteGroups.map(venueName => (
-            <VenueGroupList
-              key={venueName}
-              venue={venueName}
-              group={groupedPeople[venueName]}
-              personSort={personSort}
-              activeTags={activeTags}
-              setActiveTags={setActiveTags}
-              getTagNameById={getTagNameById}
-              favoriteVenues={favoriteVenues}
-              setFavoriteVenues={setFavoriteVenues}
-              isOpen={openGroups[venueName] ?? true}
-              toggleGroup={toggleGroup}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onToggleFavorite={onToggleFavorite}
-            />
-          ))}
-        </CollapsibleSection>
-      )}
-
-      <CollapsibleSection title="All Venues" defaultOpen={false}>
-        {otherGroups.map(venueName => (
-          <VenueGroupList
-            key={venueName}
-            venue={venueName}
-            group={groupedPeople[venueName]}
-            personSort={personSort}
-            activeTags={activeTags}
-            setActiveTags={setActiveTags}
-            getTagNameById={getTagNameById}
-            favoriteVenues={favoriteVenues}
-            setFavoriteVenues={setFavoriteVenues}
-            isOpen={openGroups[venueName] ?? true}
-            toggleGroup={toggleGroup}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onToggleFavorite={onToggleFavorite}
-          />
-        ))}
-      </CollapsibleSection>
-    </>
+    <div className="space-y-6">
+      {visibleVenueNames.map((venueName) => (
+        <VenueGroupList
+          key={venueName}
+          venue={venueName}
+          group={groupedPeople[venueName]}
+          personSort={personSort}
+          activeTags={activeTags}
+          setActiveTags={setActiveTags}
+          getTagNameById={getTagNameById}
+          favoriteVenues={favoriteVenues}
+          setFavoriteVenues={setFavoriteVenues}
+          isOpen={openGroups[venueName] ?? true}
+          toggleGroup={toggleGroup}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onToggleFavorite={onToggleFavorite}
+        />
+      ))}
+    </div>
   );
 }

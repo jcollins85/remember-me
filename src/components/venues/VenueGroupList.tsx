@@ -63,7 +63,8 @@ export default function VenueGroupList({
       <div className="flex items-center justify-between mb-2">
         <button
           onClick={() => toggleGroup(venue)}
-          className="text-xl font-bold text-gray-700 hover:underline flex items-center gap-2 mb-2"
+          className="text-left text-xl font-bold text-gray-700 flex items-center gap-2 mb-2"
+          aria-label={`Toggle ${venue}`}
         >
           {isOpen ? "▼" : "▶"}
           <span className="flex items-center gap-1">

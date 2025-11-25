@@ -24,6 +24,8 @@ import { SortKey, VenueSortKey } from "./utils/sortHelpers";
 
 import { UNCLASSIFIED } from "./constants";
 
+type VenueView = "all" | "favs";
+
 function App() {
   // ── Tag context ──
   const { tags, createTag, getTagIdByName, getTagNameById } = useTags();  
@@ -48,12 +50,10 @@ function App() {
   // ── Sorting prefs ──  
   const [venueSortKey, setVenueSortKey] = useState<VenueSortKey>("recentVisit");
   const [venueSortDir, setVenueSortDir] = useState<"asc" | "desc">("desc");
+  const [venueView, setVenueView] = useState<VenueView>("all");
 
 
   const { notification, showNotification } = useNotification();
-
-  const [showFavSection, setShowFavSection] = useState(true);
-  const [showAllSection, setShowAllSection] = useState(true);
   
   const {
     searchQuery, setSearchQuery,
@@ -124,7 +124,7 @@ function App() {
     document.body.style.overflow =
       menuOpen || showAddModal || editingPerson || personToDelete
         ? "hidden"
-        : "";
+        : "auto";
   }, [menuOpen, showAddModal, editingPerson, personToDelete]);
 
   const sortedVenues = useVenueSort(
@@ -138,7 +138,10 @@ function App() {
     .map((v) => v.name)
     .filter((name) => groupedPeople[name]);
 
-  const { favorites: favoriteGroups, others: otherGroups } = useFavoriteSections(sortedVenueNames, favoriteVenues);
+  const favoriteSections = useFavoriteSections(sortedVenueNames, favoriteVenues);
+  const favoriteVenueNames = favoriteSections.favorites;
+  const visibleVenueNames =
+    venueView === "favs" ? favoriteVenueNames : sortedVenueNames;
 
   return (
     <div className="flex flex-col min-h-screen bg-neutral-50">
@@ -155,9 +158,12 @@ function App() {
         setPersonSort={setPersonSort}
         onMenuOpen={() => setMenuOpen(true)}
         getTagNameById={getTagNameById}
+        venueView={venueView}
+        setVenueView={setVenueView}
+        favoriteVenueCount={favoriteVenueNames.length}
       />
 
-      <main className="flex-1 overflow-y-auto pb-24">
+      <main className="flex-1 pb-24">
         <div className="p-6 grid gap-4 max-w-xl mx-auto">
           <ModalManager
             showAdd={showAddModal}
@@ -184,16 +190,18 @@ function App() {
             personToDelete={personToDelete}
             onDeleteCancel={() => setPersonToDelete(null)}
             onDeleteConfirm={(id) => {
+              const deletedName = personToDelete?.name ?? "Person";
               deletePerson(id);
               setPersonToDelete(null);
-              showNotification(`${personToDelete?.name} deleted.`, "info");
+              showNotification(`${deletedName} deleted.`, "info");
             }}
           />
 
           <VenueSections
             groupedPeople={groupedPeople}
             favoriteVenues={favoriteVenues}
-            sortedVenueNames={sortedVenueNames}
+            visibleVenueNames={visibleVenueNames}
+            viewMode={venueView}
             personSort={personSort}
             activeTags={activeTags}
             setActiveTags={setActiveTags}

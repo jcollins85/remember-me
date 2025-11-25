@@ -1,6 +1,5 @@
 import React from 'react';
-import AddPersonModal from '../people/AddPersonModal';
-import EditPersonModal from '../people/EditPersonModal';
+import PersonModal from '../people/PersonModal';
 import DeleteConfirmModal from '../people/DeleteConfirmModal';
 import type { Person, Tag } from '../../types';
 
@@ -45,26 +44,28 @@ export default function ModalManager({
   return (
     <>      
       {showAdd && (
-        <AddPersonModal
+        <PersonModal
+          mode="add"
           tags={tags}
           people={people}
           getTagIdByName={getTagIdByName}
           getTagNameById={getTagNameById}
           createTag={createTag}
-          onAdd={(p) => onAdd(p)}
+          onSubmit={(p) => onAdd(p)}
           onCancel={onAddCancel}
         />
       )}
 
       {editingPerson && (
-        <EditPersonModal
+        <PersonModal
+          mode="edit"
+          person={editingPerson}
           tags={tags}
           people={people}
           getTagIdByName={getTagIdByName}
           getTagNameById={getTagNameById}
           createTag={createTag}
-          person={editingPerson}
-          onSave={(p) => onEdit(p)}
+          onSubmit={(p) => onEdit(p)}
           onCancel={onEditCancel}
         />
       )}
