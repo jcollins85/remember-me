@@ -24,10 +24,10 @@ export default function CollapsibleSection({
       <button
         type="button"
         onClick={() => setIsOpen((open) => !open)}
-        className="flex items-center justify-between w-full bg-gray-100 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-300"
+        className="flex items-center justify-between w-full bg-white/70 px-4 py-3 rounded-2xl shadow-sm text-[var(--color-text-primary)]"
       >
-        <span className="font-semibold text-lg">{title}</span>
-        <span className="text-xl">{isOpen ? '▾' : '▸'}</span>
+        <span className="font-semibold text-base">{title}</span>
+        <span className="text-xl text-[var(--color-text-secondary)]">{isOpen ? '▾' : '▸'}</span>
       </button>
       {isOpen && <div className="mt-2 space-y-4">{children}</div>}
     </section>

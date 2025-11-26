@@ -1,5 +1,6 @@
 // PersonCard.tsx
 import { Person } from "../../types";
+import { Pencil, Star, Trash2 } from "lucide-react";
 
 interface Props {
   person: Person;
@@ -31,28 +32,28 @@ export default function PersonCard({
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md">
+    <div className="glass-panel p-4 border border-white/40">
       <div className="flex justify-between items-start">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-1">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
             {person.name}
             <button
               onClick={() => onToggleFavorite(person.id)}
               title="Toggle favorite"
-              className="text-yellow-500 text-lg"
+              className={`p-1 rounded-full border ${person.favorite ? "bg-[var(--color-accent-muted)] text-[var(--color-accent)] border-[var(--color-accent)]" : "bg-white text-[var(--color-text-secondary)] border-white/70"}`}
             >
-              {person.favorite ? "★" : "☆"}
+              <Star size={16} fill={person.favorite ? "currentColor" : "transparent"} />
             </button>
           </h3>
 
           {person.position && (
-            <p className="text-sm text-gray-600">{person.position}</p>
+            <p className="text-sm text-[var(--color-text-secondary)]">{person.position}</p>
           )}
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-[var(--color-text-secondary)] mt-1">
             Date Met: {new Date(person.dateMet).toLocaleDateString()}
           </p>
           {person.description && (
-            <p className="whitespace-pre-wrap text-sm text-gray-700 mt-2">{person.description}</p>
+            <p className="whitespace-pre-wrap text-sm text-[var(--color-text-primary)]/80 mt-2">{person.description}</p>
           )}
         </div>
 
@@ -60,17 +61,17 @@ export default function PersonCard({
         <div className="flex gap-2 ml-4">
           <button
             onClick={() => onEdit(person)}
-            className="text-blue-500 hover:text-blue-600 text-lg"
+            className="p-2 rounded-full text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition"
             title="Edit"
           >
-            ✏️
+            <Pencil size={16} />
           </button>
           <button
             onClick={() => onDelete(person.id, person.name)}
-            className="text-red-500 hover:text-red-600 text-lg"
+            className="p-2 rounded-full text-red-500 hover:text-red-600 transition"
             title="Delete"
           >
-            ❌
+            <Trash2 size={16} />
           </button>
         </div>
       </div>
@@ -85,10 +86,10 @@ export default function PersonCard({
               <button
                 key={tagId}
                 onClick={() => toggleTagFilter(tagId)}
-                className={`px-2 py-1 rounded-full text-sm transition ${
+                className={`px-3 py-1 rounded-full text-sm transition border ${
                   isActive
-                    ? "bg-emerald-700 text-white"
-                    : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                    ? "bg-[var(--color-accent)] text-white shadow-sm border-[var(--color-accent)]"
+                    : "bg-[var(--color-accent-muted)] text-[var(--color-text-primary)] border-[var(--color-accent-muted)]/80 hover:bg-[var(--color-accent-muted)]/80"
                 }`}
                 title={
                   isActive

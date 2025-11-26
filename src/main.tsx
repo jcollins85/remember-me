@@ -7,17 +7,20 @@ import { PeopleProvider } from './context/PeopleContext';
 import { VenueProvider } from './context/VenueContext';
 import { NotificationProvider } from './context/NotificationContext';
 import './index.css';
+import { ThemeProvider } from './theme/ThemeContext';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <TagProvider>
-      <PeopleProvider>
-        <VenueProvider>
-          <NotificationProvider>
-            <App />
-          </NotificationProvider>
-        </VenueProvider>
-      </PeopleProvider>
-    </TagProvider>
+    <ThemeProvider>
+      <TagProvider>
+        <PeopleProvider>
+          <VenueProvider>
+            <NotificationProvider>
+              <App />
+            </NotificationProvider>
+          </VenueProvider>
+        </PeopleProvider>
+      </TagProvider>
+    </ThemeProvider>
   </React.StrictMode>
 );

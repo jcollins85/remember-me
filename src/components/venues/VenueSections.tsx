@@ -42,8 +42,12 @@ export default function VenueSections({
 
   if (visibleVenueNames.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-neutral-300 bg-white/70 p-6 text-center text-sm text-neutral-500">
-        {emptyMessage}
+      <div className="glass-panel px-6 py-10 text-center text-[var(--color-text-secondary)] space-y-3">
+        <div className="w-12 h-12 mx-auto rounded-full bg-[var(--color-accent-muted)] flex items-center justify-center text-[var(--color-accent)] text-xl">
+          ☁️
+        </div>
+        <p className="text-lg font-semibold text-[var(--color-text-primary)]">Nothing to show yet</p>
+        <p className="text-sm">{emptyMessage}</p>
       </div>
     );
   }

@@ -58,10 +58,10 @@ export default function SortControls({
                 setVenueSortDir(dir);
                 onClose?.();
               }}
-              className={`px-2.5 py-1 rounded-full text-[12px] border transition-colors ${
+              className={`px-3 py-1 rounded-full text-[12px] border transition ${
                 isActive
-                  ? "bg-emerald-500 text-white border-emerald-500 shadow-level1"
-                  : "bg-white/70 text-neutral-600 border-neutral-200 hover:bg-white"
+                  ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)] shadow-level1"
+                  : "bg-white/70 text-[var(--color-text-secondary)] border-white/70 hover:bg-white"
               }`}
             >
               {label}
@@ -77,10 +77,10 @@ export default function SortControls({
                 setPersonSort(value);
                 onClose?.();
               }}
-              className={`px-2.5 py-1 rounded-full text-[12px] border transition-colors ${
+              className={`px-3 py-1 rounded-full text-[12px] border transition ${
                 isActive
-                  ? "bg-slate-900 text-white border-slate-900 shadow-level1"
-                  : "bg-white/70 text-neutral-600 border-neutral-200 hover:bg-white"
+                  ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)] shadow-level1"
+                  : "bg-white/70 text-[var(--color-text-secondary)] border-white/70 hover:bg-white"
               }`}
             >
               {label}

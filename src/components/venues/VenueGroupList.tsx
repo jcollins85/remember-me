@@ -2,6 +2,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Person } from "../../types";
 import PersonCard from "../people/PersonCard";
+import { ChevronDown, ChevronRight, Star } from "lucide-react";
 
 interface VenueGroupListProps {
   venue: string;
@@ -59,33 +60,36 @@ export default function VenueGroupList({
   const isFavorite = favoriteVenues.includes(venue);
 
   return (
-    <div className="mb-8">
+    <div className="mb-8 glass-panel border border-white/30 px-4 py-3 rounded-3xl shadow-level1">
       <div className="flex items-center justify-between mb-2">
         <button
           onClick={() => toggleGroup(venue)}
-          className="text-left text-xl font-bold text-gray-700 flex items-center gap-2 mb-2"
+          className="text-left text-lg font-semibold text-[var(--color-text-primary)] flex items-center gap-2"
           aria-label={`Toggle ${venue}`}
         >
-          {isOpen ? "▼" : "▶"}
-          <span className="flex items-center gap-1">
-            {venue} <span className="text-sm text-gray-500">({group.length})</span>
-            <span
-              onClick={(e) => {
-                e.stopPropagation();
-                setFavoriteVenues((prev) =>
-                  prev.includes(venue)
-                    ? prev.filter((v) => v !== venue)
-                    : [...prev, venue]
-                );
-              }}
-              className="text-yellow-400 text-lg cursor-pointer hover:scale-110 transition"
-              title={
-                isFavorite ? "Unmark Favorite Venue" : "Mark as Favorite Venue"
-              }
-            >
-              {isFavorite ? "★" : "☆"}
-            </span>
+          <span className="text-sm text-[var(--color-text-secondary)]">
+            {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </span>
+          {venue}
+          <span className="text-sm text-[var(--color-text-secondary)]">({group.length})</span>
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setFavoriteVenues((prev) =>
+              prev.includes(venue)
+                ? prev.filter((v) => v !== venue)
+                : [...prev, venue]
+            );
+          }}
+          className={`w-9 h-9 flex items-center justify-center rounded-full border ${
+            isFavorite
+              ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)]"
+              : "bg-white/80 text-[var(--color-text-secondary)] border-white/80"
+          }`}
+          title={isFavorite ? "Unmark Favorite Venue" : "Mark as Favorite Venue"}
+        >
+          <Star size={16} fill={isFavorite ? "currentColor" : "transparent"} />
         </button>
       </div>
 

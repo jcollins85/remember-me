@@ -169,11 +169,15 @@ export default function PersonForm({
     onSubmit(person);
   };
 
+  const labelClass = "block text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] mb-2";
+  const inputClass =
+    "w-full px-3 py-2 rounded-2xl border border-white/70 bg-white/90 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] shadow-level1";
+
   return (
     <form id="person-form" onSubmit={handleSubmit} className="space-y-6">
       {/* Name */}
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="name" className={labelClass}>
           Name <span className="text-red-500">*</span>
         </label>
         <input
@@ -182,9 +186,7 @@ export default function PersonForm({
           value={name}
           onChange={(e) => setName(e.target.value)}
           onBlur={() => setTouchedName(true)}
-          className={`w-full p-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 ${
-            touchedName && !name.trim() ? 'border-red-500' : 'border-gray-300'
-          }`}
+          className={`${inputClass} ${touchedName && !name.trim() ? "border-red-400" : ""}`}
           required
         />
         {touchedName && !name.trim() && (
@@ -194,7 +196,7 @@ export default function PersonForm({
 
       {/* Date Met */}
       <div>
-        <label htmlFor="date-met" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="date-met" className={labelClass}>
           Date Met
         </label>
         <input
@@ -202,7 +204,7 @@ export default function PersonForm({
           type="date"
           value={dateMet}
           onChange={(e) => setDateMet(e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
+          className={inputClass}
         />
         {formErrors.dateMet && (
           <p className="text-red-500 text-xs mt-1">{formErrors.dateMet}</p>
@@ -210,7 +212,7 @@ export default function PersonForm({
       </div>
 
       {/* Location */}
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-3">
         <button
           type="button"
           onClick={() => {
@@ -221,16 +223,16 @@ export default function PersonForm({
               setLocationTag(`${lat.toFixed(4)}, ${lon.toFixed(4)}`);
             });
           }}
-          className="px-3 py-1 bg-emerald-500 text-white rounded text-sm"
+          className="px-4 py-2 rounded-full bg-[var(--color-accent)] text-white text-xs font-semibold shadow hover:brightness-110 transition"
         >
           Use Current Location
         </button>
-        {coords && <span className="text-sm text-gray-600">{locationTag}</span>}
+        {coords && <span className="text-sm text-[var(--color-text-secondary)]">{locationTag}</span>}
       </div>
 
       {/* Position */}
       <div>
-        <label htmlFor="position" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="position" className={labelClass}>
           Position / Role
         </label>
         <input
@@ -238,13 +240,13 @@ export default function PersonForm({
           type="text"
           value={position}
           onChange={(e) => setPosition(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300"
+          className={inputClass}
         />
       </div>
 
       {/* Venue */}
       <div>
-        <label htmlFor="venue" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="venue" className={labelClass}>
           Venue (optional)
         </label>
         <input
@@ -252,7 +254,7 @@ export default function PersonForm({
           type="text"
           value={venue}
           onChange={(e) => onVenueChange(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300"
+          className={inputClass}
         />
         {venueTouched && venue.length > 50 && (
           <p className="text-red-500 text-xs mt-1">Venue name is too long</p>
@@ -268,7 +270,7 @@ export default function PersonForm({
               key={name}
               type="button"
               onClick={() => onVenueSelect(name)}
-              className="inline-block mr-3 px-2 py-1 rounded-full text-sm bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+              className="inline-block mr-3 px-3 py-1 rounded-full text-sm bg-[var(--color-accent-muted)] text-[var(--color-text-primary)] border border-[var(--color-accent-muted)] hover:bg-[var(--color-accent-muted)]/80"
             >
               {name}
             </button>
@@ -278,32 +280,32 @@ export default function PersonForm({
 
       {/* Description */}
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="description" className={labelClass}>
           Description (optional)
         </label>
         <textarea
           id="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300"
+          className={`${inputClass} min-h-[120px]`}
           rows={3}
         />
       </div>
 
       {/* Tags */}
       <div>
-        <label htmlFor="tag-input" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="tag-input" className={labelClass}>
           Tags
         </label>
         <div role="list" className="overflow-x-auto whitespace-nowrap mb-2 px-1 pb-2">
           {currentTags.length > 0 ? (
             currentTags.map((tagName) => (
-              <span key={tagName} className="inline-block mr-3 bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full text-sm">
+              <span key={tagName} className="inline-flex items-center mr-3 bg-[var(--color-accent-muted)] text-[var(--color-text-primary)] px-3 py-1 rounded-full text-sm">
                 {tagName}
                 <button
                   type="button"
                   onClick={() => removeTag(tagName)}
-                  className="ml-1 text-red-500 hover:underline"
+                  className="ml-2 text-red-500 hover:text-red-600"
                   aria-label={`Remove tag ${tagName}`}
                 >
                   ×
@@ -311,7 +313,7 @@ export default function PersonForm({
               </span>
             ))
           ) : (
-            <span className="inline-block mr-3 text-gray-400 text-sm italic">
+            <span className="inline-block mr-3 text-[var(--color-text-secondary)] text-sm italic">
               no tags added
             </span>
           )}
@@ -326,9 +328,9 @@ export default function PersonForm({
           onKeyDown={onInputKeyDown}
           onBlur={handleTagBlur} 
           autoComplete="off"
-          className="w-full p-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300"
+          className={inputClass}
         />
-        <div className="text-xs text-gray-500 text-right mt-1">{currentInput.length} / 25</div>
+        <div className="text-xs text-[var(--color-text-secondary)] text-right mt-1">{currentInput.length} / 25</div>
         <div className="overflow-x-auto whitespace-nowrap mt-2 px-1 pb-2">
           {suggestions.map((tag, idx) => (
             <button
@@ -341,18 +343,16 @@ export default function PersonForm({
                 commitTag(tag.name);
                 resetInput(); 
               }}
-              className={
-                `inline-block mr-3 px-2 py-1 rounded-full text-sm bg-emerald-100 text-emerald-700 hover:bg-emerald-200${
-                  idx === highlightedIndex ? ' ring-2 ring-emerald-600' : ''
-                }`
-              }
+              className={`inline-block mr-3 px-3 py-1 rounded-full text-sm bg-[var(--color-accent-muted)] text-[var(--color-text-primary)] border border-[var(--color-accent-muted)] hover:bg-[var(--color-accent-muted)]/80 ${
+                idx === highlightedIndex ? "ring-2 ring-[var(--color-accent)]" : ""
+              }`}
             >
               {tag.name}
             </button>
           ))}
         </div>
         {error && <div className="text-red-500 text-xs mt-1">{error}</div>}
-        {liveMsg && <div className="text-sm text-gray-600 mt-1">{liveMsg}</div>}
+        {liveMsg && <div className="text-sm text-[var(--color-text-secondary)] mt-1">{liveMsg}</div>}
         {formErrors.tags && (
           <p className="text-red-500 text-xs mt-1">{formErrors.tags}</p>
         )}
@@ -364,8 +364,10 @@ export default function PersonForm({
           <button
             type="submit"
             disabled={!name.trim()}
-            className={`flex-1 py-2 rounded-md text-white text-center transition ${
-              name.trim() ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-gray-300 cursor-not-allowed'
+            className={`flex-1 py-2 rounded-full text-white text-center font-semibold transition ${
+              name.trim()
+                ? "bg-[var(--color-accent)] hover:brightness-110 shadow"
+                : "bg-[var(--color-accent-muted)]/50 text-[var(--color-text-secondary)]/70 cursor-not-allowed"
             }`}
           >
             Save
@@ -374,7 +376,7 @@ export default function PersonForm({
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-100 transition"
+              className="flex-1 py-2 border border-white/70 rounded-full text-sm text-[var(--color-text-secondary)] hover:bg-white transition"
             >
               Cancel
             </button>

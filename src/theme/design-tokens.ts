@@ -3,28 +3,31 @@
 
 export const tokens = {
   color: {
-    // Base
-    background: '#FFFFFF',             // page background
-    surface: 'rgba(255,255,255,0.8)',   // glassmorphic panels
-    textPrimary: '#1F2937',             // primary text
-    textSecondary: '#4B5563',           // secondary text
+    // Base neutrals
+    background: '#F5F7FB',              // soft off-white canvas
+    surface: 'rgba(255,255,255,0.85)',  // frosted glass panels
+    surfaceAlt: 'rgba(248,249,253,0.9)',
+    textPrimary: '#101828',
+    textSecondary: '#4B5563',
 
     // Accents
-    accent: '#3B82F6',                 // Sapphire Blue (primary CTA)
-    accentSecondary: '#34D399',        // Mint Green (secondary highlights)
+    accent: '#2563EB',                  // cobalt blue
+    accentSecondary: '#14B8A6',         // teal highlight
+    accentMuted: '#E0EAFF',
 
     // Semantic
-    success: '#10B981',                // success states
-    warning: '#FBBF24',                // warnings
-    error: '#EF4444',                  // errors
-    info: '#3B82F6',                   // info / reuse accent
+    success: '#22C55E',
+    warning: '#FACC15',
+    error: '#EF4444',
+    info: '#0EA5E9',
   },
 
   typography: {
-    header1: '2rem',    // 32px
-    header2: '1.5rem',  // 24px
-    body: '1rem',       // 16px
-    caption: '0.875rem' // 14px
+    header1: '2.125rem',   // 34px
+    header2: '1.5rem',     // 24px
+    body: '1rem',          // 16px
+    caption: '0.875rem',   // 14px
+    ui: '0.8125rem',       // 13px subtle UI text
   },
 
   spacing: {
@@ -32,11 +35,19 @@ export const tokens = {
     sm: '8px',
     md: '16px',
     lg: '24px',
-    xl: '32px'
+    xl: '32px',
+    xxl: '48px',
   },
 
   elevation: {
-    level1: '0 1px 2px rgba(0, 0, 0, 0.05)',
-    level2: '0 4px 6px rgba(0, 0, 0, 0.1)'
-  }
+    level1: '0 10px 25px rgba(15, 23, 42, 0.08)',
+    level2: '0 20px 45px rgba(15, 23, 42, 0.12)'
+  },
+
+  radius: {
+    sm: '10px',
+    md: '16px',
+    lg: '24px',
+    pill: '999px',
+  },
 };

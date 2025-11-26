@@ -3,26 +3,29 @@
 /* ─────────────────────────────────────────────────────── */
 :root {
   /* Base colors */
-  --color-background: #FFFFFF;
-  --color-surface: rgba(255,255,255,0.8);
-  --color-text-primary: #1F2937;
+  --color-background: #F5F7FB;
+  --color-surface: rgba(255,255,255,0.85);
+  --color-surface-alt: rgba(248,249,253,0.9);
+  --color-text-primary: #101828;
   --color-text-secondary: #4B5563;
 
   /* Accent colors */
-  --color-accent: #3B82F6;
-  --color-accent-secondary: #34D399;
+  --color-accent: #2563EB;
+  --color-accent-secondary: #14B8A6;
+  --color-accent-muted: #E0EAFF;
 
   /* Semantic colors */
-  --color-success: #10B981;
-  --color-warning: #FBBF24;
+  --color-success: #22C55E;
+  --color-warning: #FACC15;
   --color-error: #EF4444;
-  --color-info: #3B82F6;
+  --color-info: #0EA5E9;
 
   /* Typography */
-  --font-size-h1: 2rem;
+  --font-size-h1: 2.125rem;
   --font-size-h2: 1.5rem;
   --font-size-body: 1rem;
   --font-size-caption: 0.875rem;
+  --font-size-ui: 0.8125rem;
 
   /* Spacing */
   --space-xs: 4px;
@@ -30,14 +33,107 @@
   --space-md: 16px;
   --space-lg: 24px;
   --space-xl: 32px;
+  --space-xxl: 48px;
 
   /* Elevation (shadows) */
-  --shadow-level1: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-level2: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-level1: 0 10px 25px rgba(15, 23, 42, 0.08);
+  --shadow-level2: 0 20px 45px rgba(15, 23, 42, 0.12);
+
+  /* Radius */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+
+  /* Background gradient + blobs */
+  --background-gradient: linear-gradient(180deg, #f6f8fe 0%, #eef2ff 40%, #dbe5ff 100%);
+  --bg-blob-a: rgba(37,99,235,0.18);
+  --bg-blob-b: rgba(20,184,166,0.2);
+  --bg-blob-c: rgba(79,70,229,0.15);
+}
+
+[data-theme="coral"] {
+  --color-background: #FFF7F3;
+  --color-surface: rgba(255,255,255,0.85);
+  --color-surface-alt: rgba(255,248,243,0.9);
+  --color-text-primary: #311411;
+  --color-text-secondary: #7A4D42;
+  --color-accent: #F97316;
+  --color-accent-secondary: #DB2777;
+  --color-accent-muted: #FFE1D2;
+  --background-gradient: linear-gradient(180deg, #fff1e8 0%, #ffe2d2 50%, #ffd3f0 100%);
+  --bg-blob-a: rgba(249,115,22,0.2);
+  --bg-blob-b: rgba(219,39,119,0.18);
+  --bg-blob-c: rgba(244,114,182,0.18);
+}
+
+[data-theme="midnight"] {
+  --color-background: #0F172A;
+  --color-surface: rgba(15,23,42,0.8);
+  --color-surface-alt: rgba(30,41,59,0.85);
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #CBD5F5;
+  --color-accent: #6366F1;
+  --color-accent-secondary: #14B8A6;
+  --color-accent-muted: #3730A3;
+  --background-gradient: linear-gradient(180deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%);
+  --bg-blob-a: rgba(99,102,241,0.3);
+  --bg-blob-b: rgba(14,184,166,0.25);
+  --bg-blob-c: rgba(56,189,248,0.2);
+}
+
+[data-theme="pink"] {
+  --color-background: #FFF2FB;
+  --color-surface: rgba(255,255,255,0.9);
+  --color-surface-alt: rgba(255,240,248,0.95);
+  --color-text-primary: #2B132B;
+  --color-text-secondary: #6B4068;
+  --color-accent: #EC4899;
+  --color-accent-secondary: #C026D3;
+  --color-accent-muted: #FFD1EB;
+  --background-gradient: linear-gradient(180deg, #fff4fb 0%, #ffe3f3 45%, #ffd8f5 100%);
+  --bg-blob-a: rgba(236,72,153,0.25);
+  --bg-blob-b: rgba(192,38,211,0.22);
+  --bg-blob-c: rgba(248,113,113,0.18);
 }
 
 html, body, #root { height: 100%; }
 body { overflow-y: auto; }
+body {
+  background: var(--background-gradient);
+  color: var(--color-text-primary);
+  font-family: 'Inter', 'SF Pro Display', 'Segoe UI', sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 20%, var(--bg-blob-a), transparent 45%),
+    radial-gradient(circle at 80% 0%, var(--bg-blob-b), transparent 40%),
+    radial-gradient(circle at 80% 80%, var(--bg-blob-c), transparent 45%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.glass-panel {
+  background: var(--color-surface);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-level1);
+  backdrop-filter: blur(20px);
+}
+
+.pill-chip {
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.35);
+  box-shadow: var(--shadow-level1);
+  backdrop-filter: blur(10px);
+}
 
 /* ─────────────────────────────────────────────────────── */
 

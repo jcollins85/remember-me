@@ -4,16 +4,17 @@ interface NotificationProps {
 }
 
 export default function Notification({ message, type = "success" }: NotificationProps) {
-  const bgColor =
+  const background =
     type === "success"
-      ? "bg-green-600"
+      ? "var(--color-success)"
       : type === "error"
-      ? "bg-red-600"
-      : "bg-blue-600";
+      ? "var(--color-error)"
+      : "var(--color-info)";
 
   return (
     <div
-      className={`${bgColor} text-white fixed bottom-24 right-6 px-4 py-2 rounded shadow z-50 animate-fadeIn`}
+      className="text-white fixed bottom-24 right-6 px-4 py-2 rounded-full shadow z-50 animate-fadeIn font-medium text-[var(--font-size-ui)]"
+      style={{ background }}
     >
       {message}
     </div>

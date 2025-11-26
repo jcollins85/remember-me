@@ -19,6 +19,7 @@ import { useVenueSort } from './components/venues/useVenueSort';
 import { useSearchSort } from './components/header/useSearchSort';
 import Footer from "./components/common/Footer";
 import Notification from './components/common/Notification';
+import SettingsPanel from "./components/settings/SettingsPanel";
 
 import { SortKey, VenueSortKey } from "./utils/sortHelpers";
 
@@ -44,8 +45,8 @@ function App() {
   const [personToDelete, setPersonToDelete] = useState<Person | null>(null);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
 
-  // ── Sidebar menu ──
-  const [menuOpen, setMenuOpen] = useState<boolean>(false);
+  // ── Settings panel ──
+  const [showSettings, setShowSettings] = useState(false);
 
   // ── Sorting prefs ──  
   const [venueSortKey, setVenueSortKey] = useState<VenueSortKey>("recentVisit");
@@ -122,10 +123,10 @@ function App() {
   // ── Prevent scrolling ──
   useEffect(() => {
     document.body.style.overflow =
-      menuOpen || showAddModal || editingPerson || personToDelete
+      showSettings || showAddModal || editingPerson || personToDelete
         ? "hidden"
         : "auto";
-  }, [menuOpen, showAddModal, editingPerson, personToDelete]);
+  }, [showSettings, showAddModal, editingPerson, personToDelete]);
 
   const sortedVenues = useVenueSort(
     venues,
@@ -144,7 +145,7 @@ function App() {
     venueView === "favs" ? favoriteVenueNames : sortedVenueNames;
 
   return (
-    <div className="flex flex-col min-h-screen bg-neutral-50">
+    <div className="flex flex-col min-h-screen bg-[var(--color-background)] text-[var(--color-text-primary)]">
       <Header
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -156,11 +157,12 @@ function App() {
         setVenueSortDir={setVenueSortDir}
         personSort={personSort}
         setPersonSort={setPersonSort}
-        onMenuOpen={() => setMenuOpen(true)}
+        onOpenSettings={() => setShowSettings(true)}
         getTagNameById={getTagNameById}
         venueView={venueView}
         setVenueView={setVenueView}
         favoriteVenueCount={favoriteVenueNames.length}
+        totalVenueCount={sortedVenueNames.length}
       />
 
       <main className="flex-1 pb-24">
@@ -221,38 +223,13 @@ function App() {
 
       <button
         onClick={() => setShowAddModal(true)}
-        className="fixed bottom-14 right-6 bg-emerald-500 text-white text-3xl rounded-full w-14 h-14 shadow-lg hover:bg-emerald-600 transition z-40"
+        className="fixed bottom-14 right-6 bg-[var(--color-accent)] text-white text-3xl rounded-full w-14 h-14 shadow-lg hover:brightness-110 transition z-40"
         aria-label="Add Person"
       >
         ＋
       </button>
 
-      {menuOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-30 z-40"
-          onClick={() => setMenuOpen(false)}
-        />
-      )}
-
-      <div
-        className={`fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-50 p-4 transform transition-transform duration-300 ${
-          menuOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <h2 className="text-lg font-semibold text-emerald-600 mb-4">Menu</h2>
-        <ul className="space-y-3">
-          <li>
-            <button className="text-gray-700 hover:text-emerald-600">
-              Placeholder Item 1
-            </button>
-          </li>
-          <li>
-            <button className="text-gray-700 hover:text-emerald-600">
-              Placeholder Item 2
-            </button>
-          </li>
-        </ul>
-      </div>
+      <SettingsPanel open={showSettings} onClose={() => setShowSettings(false)} />
 
       {notification && (
         <Notification message={notification.message} type={notification.type} />

@@ -35,12 +35,12 @@ export default function PersonModal({
       onClick={onCancel}
     >
       <div
-        className="bg-white w-full max-w-md m-4 rounded-xl shadow-xl flex flex-col max-h-[90vh] overflow-hidden"
+        className="w-full max-w-md m-4 flex flex-col max-h-[90vh] overflow-hidden bg-white rounded-2xl shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* HEADER */}
         <div className="flex-none sticky top-0 z-10 bg-white border-b px-6 py-4">
-          <h2 className="text-xl font-semibold text-emerald-700">{title}</h2>
+          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">{title}</h2>
         </div>
 
         {/* BODY */}
@@ -60,18 +60,18 @@ export default function PersonModal({
         </div>
 
         {/* FOOTER */}
-        <div className="flex-none sticky bottom-0 z-10 bg-white border-t px-6 py-4 flex justify-end gap-2">
+        <div className="flex-none sticky bottom-0 z-10 bg-white/90 border-t px-6 py-4 flex justify-end gap-2">
           <button
             type="submit"
             form="person-form"
-            className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
+            className="px-4 py-2 rounded-full bg-[var(--color-accent)] text-white text-sm font-semibold shadow-level1 hover:brightness-105 transition"
           >
             Save
           </button>
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-100"
+            className="px-4 py-2 rounded-full border border-white/70 text-sm text-[var(--color-text-secondary)] hover:bg-white transition"
           >
             Cancel
           </button>
