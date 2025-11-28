@@ -55,24 +55,28 @@ export const sampleVenues: Venue[] = [
     name: "The Tipsy Owl",
     locationTag: "Toronto, ON",
     coords: { lat: 43.6475, lon: -79.3800 },
+    favorite: false,
   },
   {
     id: uuidv4(),
     name: "Blue Bayou",
     locationTag: "Toronto, ON",
     coords: { lat: 43.6450, lon: -79.3900 },
+    favorite: false,
   },
   {
     id: uuidv4(),
     name: "Craft & Vine",
     locationTag: "Toronto, ON",
     coords: { lat: 43.6441, lon: -79.3897 },
+    favorite: false,
   },
   {
     id: uuidv4(),
     name: "The Garden Lounge",
     locationTag: "Toronto, ON",
     coords: { lat: 43.6480, lon: -79.3850 },
+    favorite: false,
   },
 ];
 

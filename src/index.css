@@ -135,6 +135,12 @@ body::before {
   backdrop-filter: blur(10px);
 }
 
+/* Prevent iOS zoom on form fields */
+input,
+textarea {
+  font-size: 16px;
+}
+
 /* ─────────────────────────────────────────────────────── */
 
 /* Tailwind layers */
