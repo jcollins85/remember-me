@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import { useTagInput } from "../../hooks/useTagInput";
 import { useVenueInput } from "../../hooks/useVenueInput";
 import { validatePersonForm, ValidationErrors } from "../../utils/validation";
+import { useNotification } from "../../context/NotificationContext";
 
 interface Props {
   initialData?: Partial<Person>;
@@ -32,6 +33,8 @@ export default function PersonForm({
   createTag,
   hideActions = false,
 }: Props) {
+  const showLocationControls = false;
+  const { showNotification } = useNotification();
   // ── Basic fields ──
   const [name, setName] = useState(initialData.name || "");
   const [position, setPosition] = useState(initialData.position || "");
@@ -109,9 +112,40 @@ export default function PersonForm({
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(
     initialData.coords ?? null
   );
+  const [manualLat, setManualLat] = useState(
+    initialData.coords ? initialData.coords.lat.toFixed(4) : ""
+  );
+  const [manualLon, setManualLon] = useState(
+    initialData.coords ? initialData.coords.lon.toFixed(4) : ""
+  );
   const [locationTag, setLocationTag] = useState<string>(
     initialData.locationTag ?? ""
   );
+  useEffect(() => {
+    if (coords && !Number.isNaN(coords.lat) && !Number.isNaN(coords.lon)) {
+      const latString = coords.lat.toFixed(4);
+      const lonString = coords.lon.toFixed(4);
+      setManualLat(latString);
+      setManualLon(lonString);
+      setLocationTag(`${latString}, ${lonString}`);
+    }
+  }, [coords]);
+  const updateCoordsFromManual = (latStr: string, lonStr: string) => {
+    const latVal = parseFloat(latStr);
+    const lonVal = parseFloat(lonStr);
+    if (
+      !latStr ||
+      !lonStr ||
+      Number.isNaN(latVal) ||
+      Number.isNaN(lonVal)
+    ) {
+      setCoords(null);
+      setLocationTag("");
+      return;
+    }
+    setCoords({ lat: latVal, lon: lonVal });
+    setLocationTag(`${latVal.toFixed(4)}, ${lonVal.toFixed(4)}`);
+  };
 
   // ── Prevent blur on suggestion click ──
   const ignoreBlurRef = useRef(false);
@@ -130,6 +164,10 @@ export default function PersonForm({
       dateMet,
       venue,
       tags: currentTags,
+      position,
+      description,
+      latitude: manualLat,
+      longitude: manualLon,
     });
     if (!isValid) {
       setFormErrors(errors);
@@ -212,23 +250,105 @@ export default function PersonForm({
       </div>
 
       {/* Location */}
-      <div className="flex items-center space-x-3">
-        <button
-          type="button"
-          onClick={() => {
-            if (!navigator.geolocation) return alert('Geolocation not supported');
-            navigator.geolocation.getCurrentPosition((pos) => {
-              const { latitude: lat, longitude: lon } = pos.coords;
-              setCoords({ lat, lon });
-              setLocationTag(`${lat.toFixed(4)}, ${lon.toFixed(4)}`);
-            });
-          }}
-          className="px-4 py-2 rounded-full bg-[var(--color-accent)] text-white text-xs font-semibold shadow hover:brightness-110 transition"
-        >
-          Use Current Location
-        </button>
-        {coords && <span className="text-sm text-[var(--color-text-secondary)]">{locationTag}</span>}
+      {showLocationControls && (
+      <div className="space-y-3">
+        <p className="text-xs text-[var(--color-text-secondary)]">
+          Save where you met by capturing coordinates. You can tap to open them in Maps later.
+        </p>
+        <div className="flex items-center space-x-3">
+          <button
+            type="button"
+            onClick={() => {
+              if (!navigator.geolocation) {
+                showNotification("Geolocation not supported on this device.", "error");
+                return;
+              }
+              navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                  const { latitude: lat, longitude: lon } = pos.coords;
+                  setCoords({ lat, lon });
+                  setLocationTag(`${lat.toFixed(4)}, ${lon.toFixed(4)}`);
+                  showNotification("Location captured", "success");
+                },
+                () => {
+                  showNotification("Couldn't access your location.", "error");
+                }
+              );
+            }}
+            className="px-4 py-2 rounded-full bg-[var(--color-accent)] text-white text-xs font-semibold shadow hover:brightness-110 transition"
+          >
+            Use current location
+          </button>
+          {coords && (
+            <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
+              <span>{locationTag}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (coords) {
+                    navigator.clipboard
+                      ?.writeText(`${coords.lat}, ${coords.lon}`)
+                      .then(() => showNotification("Coordinates copied", "info"))
+                      .catch(() =>
+                        showNotification("Unable to copy coordinates.", "error")
+                      );
+                  }
+                }}
+                className="px-2 py-1 rounded-full border border-white/70 text-xs hover:bg-white"
+              >
+                Copy
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (coords) {
+                    window.open(`https://maps.google.com/?q=${coords.lat},${coords.lon}`, '_blank');
+                  }
+                }}
+                className="px-2 py-1 rounded-full border border-white/70 text-xs hover:bg-white"
+              >
+                Open in Maps
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass} htmlFor="latitude">Latitude</label>
+            <input
+              id="latitude"
+              type="number"
+              step="0.0001"
+              value={manualLat}
+              onChange={(e) => {
+                const value = e.target.value;
+                setManualLat(value);
+                updateCoordsFromManual(value, manualLon);
+              }}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="longitude">Longitude</label>
+            <input
+              id="longitude"
+              type="number"
+              step="0.0001"
+              value={manualLon}
+              onChange={(e) => {
+                const value = e.target.value;
+                setManualLon(value);
+                updateCoordsFromManual(manualLat, value);
+              }}
+              className={inputClass}
+            />
+          </div>
+        </div>
+        {formErrors.coords && (
+          <p className="text-red-500 text-xs">{formErrors.coords}</p>
+        )}
       </div>
+      )}
 
       {/* Position */}
       <div>
@@ -242,6 +362,9 @@ export default function PersonForm({
           onChange={(e) => setPosition(e.target.value)}
           className={inputClass}
         />
+        {formErrors.position && (
+          <p className="text-red-500 text-xs mt-1">{formErrors.position}</p>
+        )}
       </div>
 
       {/* Venue */}
@@ -290,6 +413,9 @@ export default function PersonForm({
           className={`${inputClass} min-h-[120px]`}
           rows={3}
         />
+        {formErrors.description && (
+          <p className="text-red-500 text-xs mt-1">{formErrors.description}</p>
+        )}
       </div>
 
       {/* Tags */}
