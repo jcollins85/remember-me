@@ -60,8 +60,8 @@ export default function SortControls({
               }}
               className={`px-3 py-1 rounded-full text-[12px] border transition ${
                 isActive
-                  ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)] shadow-level1"
-                  : "bg-white/70 text-[var(--color-text-secondary)] border-white/70 hover:bg-white"
+                  ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)]"
+                  : "bg-white text-[var(--color-text-secondary)] border-white/70 hover:bg-white/90"
               }`}
             >
               {label}
@@ -79,8 +79,8 @@ export default function SortControls({
               }}
               className={`px-3 py-1 rounded-full text-[12px] border transition ${
                 isActive
-                  ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)] shadow-level1"
-                  : "bg-white/70 text-[var(--color-text-secondary)] border-white/70 hover:bg-white"
+                  ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)]"
+                  : "bg-white text-[var(--color-text-secondary)] border-white/70 hover:bg-white/90"
               }`}
             >
               {label}
@@ -88,9 +88,17 @@ export default function SortControls({
           );
         });
 
+  const label =
+    variant === "venue" ? "Sort venues by" : "Sort people by";
+
   return (
-    <div className="flex flex-wrap gap-2 text-[13px] border border-white/50 rounded-2xl px-3 py-2 bg-white/70">
-      {chips}
+    <div className="rounded-2xl border border-white/60 bg-white/85 px-3 py-3 space-y-2">
+      <p className="text-[11px] uppercase tracking-wide text-[var(--color-text-secondary)]">
+        {label}
+      </p>
+      <div className="flex flex-wrap gap-2 text-[13px]">
+        {chips}
+      </div>
     </div>
   );
 }

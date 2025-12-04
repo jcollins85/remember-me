@@ -1,7 +1,9 @@
 // VenueGroupList.tsx
+import { Fragment } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Person } from "../../types";
 import PersonCard from "../people/PersonCard";
+import { UNCLASSIFIED } from "../../constants";
 import { ChevronDown, ChevronRight, Star } from "lucide-react";
 
 interface VenueGroupListProps {
@@ -18,6 +20,7 @@ interface VenueGroupListProps {
   getTagNameById: (id: string) => string;
   favoriteVenues: string[];
   setFavoriteVenues: React.Dispatch<React.SetStateAction<string[]>>;
+  searchQuery: string;
 }
 
 export default function VenueGroupList({
@@ -34,8 +37,10 @@ export default function VenueGroupList({
   favoriteVenues,
   setFavoriteVenues,
   getTagNameById,
+  searchQuery,
 }: VenueGroupListProps) {
-  const sortedGroup = [...group].sort((a, b) => {
+  const groupList = Array.isArray(group) ? group : [];
+  const sortedGroup = [...groupList].sort((a, b) => {
     if (a.favorite && !b.favorite) return -1;
     if (!a.favorite && b.favorite) return 1;
 
@@ -57,11 +62,16 @@ export default function VenueGroupList({
     }
   });
 
-  const isFavorite = favoriteVenues.includes(venue);
+  const isUnclassified = venue === UNCLASSIFIED;
+  const isFavorite = isUnclassified ? false : favoriteVenues.includes(venue);
 
   return (
-    <div className="mb-8 glass-panel border border-white/30 px-4 py-3 rounded-3xl shadow-level1">
-      <div className="flex items-center justify-between mb-2">
+    <div
+      className={`mb-2.5 glass-panel border border-white/30 px-4 py-3 rounded-3xl shadow-level1 ${
+        isUnclassified ? "border-dashed" : ""
+      }`}
+    >
+      <div className="flex items-center justify-between gap-3 py-1">
         <button
           onClick={() => toggleGroup(venue)}
           className="text-left text-lg font-semibold text-[var(--color-text-primary)] flex items-center gap-2"
@@ -71,27 +81,35 @@ export default function VenueGroupList({
             {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </span>
           {venue}
-          <span className="text-sm text-[var(--color-text-secondary)]">({group.length})</span>
+          <span className="text-sm text-[var(--color-text-secondary)]">({groupList.length})</span>
         </button>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setFavoriteVenues((prev) =>
-              prev.includes(venue)
-                ? prev.filter((v) => v !== venue)
-                : [...prev, venue]
-            );
-          }}
-          className={`w-9 h-9 flex items-center justify-center rounded-full border ${
-            isFavorite
-              ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)]"
-              : "bg-white/80 text-[var(--color-text-secondary)] border-white/80"
-          }`}
-          title={isFavorite ? "Unmark Favorite Venue" : "Mark as Favorite Venue"}
-        >
-          <Star size={16} fill={isFavorite ? "currentColor" : "transparent"} />
-        </button>
+        {!isUnclassified && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setFavoriteVenues((prev) =>
+                prev.includes(venue)
+                  ? prev.filter((v) => v !== venue)
+                  : [...prev, venue]
+              );
+            }}
+            className={`w-9 h-9 flex items-center justify-center rounded-full border ${
+              isFavorite
+                ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)]"
+                : "bg-white/80 text-[var(--color-text-secondary)] border-white/80"
+            }`}
+            title={isFavorite ? "Unmark Favorite Venue" : "Mark as Favorite Venue"}
+          >
+            <Star size={16} fill={isFavorite ? "currentColor" : "transparent"} />
+          </button>
+        )}
       </div>
+
+      {isUnclassified && (
+        <p className="text-xs text-[var(--color-text-secondary)] mb-2">
+          Assign a venue to move people out of Unclassified.
+        </p>
+      )}
 
       <motion.div
         initial={false}
@@ -100,27 +118,32 @@ export default function VenueGroupList({
         className="overflow-hidden"
       >
         <AnimatePresence mode="popLayout">
-          <motion.div layout className="flex flex-col gap-4">
-            {sortedGroup.map((person) => (
-              <motion.div
-                key={person.id}
-                layout
-                layoutId={`person-${person.id}`}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.25, ease: "easeInOut" }}
-              >
-                <PersonCard
-                  person={person}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                  onToggleFavorite={onToggleFavorite}
-                  getTagNameById={getTagNameById}
-                  activeTags={activeTags}
-                  setActiveTags={setActiveTags}
-                />
-              </motion.div>
+          <motion.div layout className="flex flex-col">
+            {sortedGroup.map((person, idx) => (
+              <Fragment key={person.id}>
+                <motion.div
+                  layout
+                  layoutId={`person-${person.id}`}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                >
+                  <PersonCard
+                    person={person}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    onToggleFavorite={onToggleFavorite}
+                    getTagNameById={getTagNameById}
+                    activeTags={activeTags}
+                    setActiveTags={setActiveTags}
+                    searchQuery={searchQuery}
+                  />
+                </motion.div>
+                {idx < sortedGroup.length - 1 && (
+                  <div className="mx-2 my-3 border-t border-[var(--color-accent-muted)]" />
+                )}
+              </Fragment>
             ))}
           </motion.div>
         </AnimatePresence>

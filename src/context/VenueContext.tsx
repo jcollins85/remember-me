@@ -1,18 +1,31 @@
-import React, { createContext, ReactNode, useContext } from 'react';
+import React, { createContext, ReactNode, useContext, useCallback } from 'react';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { sampleVenues } from '../data';
 import { Venue } from '../types';
+import { useNotification } from './NotificationContext';
 
 interface VenueContextType {
   venues: Venue[];
   addVenue: (v: Venue) => void;
   updateVenue: (v: Venue) => void;
+  replaceVenues: (venues: Venue[]) => void;
 }
 
 const VenueContext = createContext<VenueContextType | undefined>(undefined);
 
 export const VenueProvider = ({ children }: { children: ReactNode }) => {
-  const [venues, setVenues] = useLocalStorage<Venue[]>('venues', sampleVenues);
+  const { showNotification } = useNotification();
+  const handleStorageError = useCallback(
+    (action: 'read' | 'write') => {
+      const verb = action === 'read' ? 'loading' : 'saving';
+      showNotification(`Problem ${verb} venues. Changes may not persist.`, 'error');
+    },
+    [showNotification]
+  );
+
+  const [venues, setVenues] = useLocalStorage<Venue[]>('venues', sampleVenues, {
+    onError: handleStorageError,
+  });
 
   const addVenue = (venue: Venue) =>
     setVenues(prev => [...prev, venue]);
@@ -20,8 +33,12 @@ export const VenueProvider = ({ children }: { children: ReactNode }) => {
   const updateVenue = (venue: Venue) =>
     setVenues(prev => prev.map(v => v.id === venue.id ? venue : v));
 
+  const replaceVenues = (next: Venue[]) => {
+    setVenues(() => [...next]);
+  };
+
   return (
-    <VenueContext.Provider value={{ venues, addVenue, updateVenue }}>
+    <VenueContext.Provider value={{ venues, addVenue, updateVenue, replaceVenues }}>
       {children}
     </VenueContext.Provider>
   );

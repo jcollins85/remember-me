@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useDeferredValue } from "react";
 import { Person, Venue } from "./types";
 
 import { useTags } from "./context/TagContext";
@@ -10,6 +10,7 @@ import { useNotification } from './context/NotificationContext';
 import { useGroupedPeople } from './hooks/useGroupedPeople';
 import { useFavoriteSections } from './hooks/useFavouriteSections';
 import { useFavorites } from './hooks/useFavourites';
+import { useAchievements } from "./hooks/useAchievements";
 
 import VenueSections from './components/venues/VenueSections';
 import ModalManager from './components/common/ModalManager';
@@ -19,23 +20,26 @@ import { useVenueSort } from './components/venues/useVenueSort';
 import { useSearchSort } from './components/header/useSearchSort';
 import Footer from "./components/common/Footer";
 import Notification from './components/common/Notification';
+import NotificationPanel from "./components/notifications/NotificationPanel";
 import SettingsPanel from "./components/settings/SettingsPanel";
+import ProfilePanel from "./components/profile/ProfilePanel";
 
 import { SortKey, VenueSortKey } from "./utils/sortHelpers";
 
 import { UNCLASSIFIED } from "./constants";
+import { samplePeople, sampleTags, sampleVenues } from "./data";
 
 type VenueView = "all" | "favs";
 
 function App() {
   // ── Tag context ──
-  const { tags, createTag, getTagIdByName, getTagNameById } = useTags();  
+  const { tags, createTag, getTagIdByName, getTagNameById, replaceTags } = useTags();  
   
   // ── UI state ──
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   // ── People state ──
-  const { people, addPerson, updatePerson, deletePerson } = usePeople();
+  const { people, addPerson, updatePerson, deletePerson, replacePeople } = usePeople();
 
   // ── Favorites state (persisted) ──
   const [favoriteVenues, setFavoriteVenues] = useFavorites('favoriteVenues');
@@ -47,6 +51,8 @@ function App() {
 
   // ── Settings panel ──
   const [showSettings, setShowSettings] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [showNotificationsPanel, setShowNotificationsPanel] = useState(false);
 
   // ── Sorting prefs ──  
   const [venueSortKey, setVenueSortKey] = useState<VenueSortKey>("recentVisit");
@@ -54,16 +60,23 @@ function App() {
   const [venueView, setVenueView] = useState<VenueView>("all");
 
 
-  const { notification, showNotification } = useNotification();
+  const {
+    notification,
+    showNotification,
+    notifications,
+    markAllAsRead,
+    markAsRead,
+  } = useNotification();
   
   const {
     searchQuery, setSearchQuery,
     activeTags,  setActiveTags,
     personSort,  setPersonSort
   } = useSearchSort();
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
   // ── Venue context & lookup ──
-  const { venues } = useVenues();
+  const { venues, replaceVenues } = useVenues();
   const venuesById = useMemo(
     () => Object.fromEntries(venues.map((v) => [v.id, v])) as Record<string, Venue>,
     [venues]
@@ -73,7 +86,7 @@ function App() {
   const [sortField, sortDir] = personSort.split("-") as [SortKey, "asc" | "desc"];
   const filteredPeople = useFilteredSortedPeople(
     people,
-    searchQuery,
+    deferredSearchQuery,
     activeTags,
     sortField,
     sortDir === "asc"
@@ -93,6 +106,46 @@ function App() {
 
   const handleDelete = (id: string, name: string) => {
     setPersonToDelete({ id, name } as Person);
+  };
+
+  const handleResetData = () => {
+    if (
+      !window.confirm(
+        "Reset to sample data? This will overwrite all people, venues, tags, and favourites."
+      )
+    ) {
+      return;
+    }
+
+    const clonedPeople = samplePeople.map((person) => ({
+      ...person,
+      tags: person.tags ? [...person.tags] : [],
+      coords: person.coords ? { ...person.coords } : undefined,
+    }));
+    const clonedVenues = sampleVenues.map((venue) => ({
+      ...venue,
+      coords: venue.coords ? { ...venue.coords } : undefined,
+    }));
+    const clonedTags = sampleTags.map((tag) => ({ ...tag }));
+
+    replacePeople(clonedPeople);
+    replaceVenues(clonedVenues);
+    replaceTags(clonedTags);
+    setFavoriteVenues([]);
+
+    showNotification("App data reset to sample set.", "info");
+  };
+
+  const handleClearAchievements = () => {
+    if (
+      !window.confirm(
+        "Clear achievement progress? Existing milestones will need to be re-earned."
+      )
+    ) {
+      return;
+    }
+    resetAchievements();
+    showNotification("Achievements cleared.", "info");
   };
 
   // ── Group by venue via new hook ──
@@ -123,10 +176,15 @@ function App() {
   // ── Prevent scrolling ──
   useEffect(() => {
     document.body.style.overflow =
-      showSettings || showAddModal || editingPerson || personToDelete
+      showSettings ||
+      showProfile ||
+      showNotificationsPanel ||
+      showAddModal ||
+      editingPerson ||
+      personToDelete
         ? "hidden"
         : "auto";
-  }, [showSettings, showAddModal, editingPerson, personToDelete]);
+  }, [showSettings, showProfile, showNotificationsPanel, showAddModal, editingPerson, personToDelete]);
 
   const sortedVenues = useVenueSort(
     venues,
@@ -144,6 +202,60 @@ function App() {
   const visibleVenueNames =
     venueView === "favs" ? favoriteVenueNames : sortedVenueNames;
 
+  const { achievements, stats, resetAchievements } = useAchievements(
+    people,
+    venues,
+    favoriteVenues,
+    (achievement) => {
+      showNotification(`Achievement unlocked: ${achievement.title}`, "info");
+    }
+  );
+
+  const usageInsights = useMemo(() => {
+    const venueUsage = people.reduce<Record<string, number>>((acc, person) => {
+      const venueName = person.venueId
+        ? venuesById[person.venueId]?.name ?? UNCLASSIFIED
+        : UNCLASSIFIED;
+      acc[venueName] = (acc[venueName] || 0) + 1;
+      return acc;
+    }, {});
+    const topVenueEntry = Object.entries(venueUsage).sort((a, b) => b[1] - a[1])[0];
+    const topVenue = topVenueEntry
+      ? { name: topVenueEntry[0], count: topVenueEntry[1] }
+      : undefined;
+
+    const tagUsage = people.reduce<Record<string, number>>((acc, person) => {
+      person.tags?.forEach((tagId) => {
+        const tagName = getTagNameById(tagId);
+        if (!tagName) return;
+        acc[tagName] = (acc[tagName] || 0) + 1;
+      });
+      return acc;
+    }, {});
+    const topTagEntry = Object.entries(tagUsage).sort((a, b) => b[1] - a[1])[0];
+    const topTag = topTagEntry
+      ? { name: topTagEntry[0], count: topTagEntry[1] }
+      : undefined;
+
+    const favoritesCount = people.filter((person) => person.favorite).length;
+
+    const lastMet = [...people]
+      .filter((person) => person.dateMet)
+      .sort((a, b) => new Date(b.dateMet).getTime() - new Date(a.dateMet).getTime())[0];
+    const lastInteraction = lastMet
+      ? { name: lastMet.name, date: lastMet.dateMet }
+      : undefined;
+
+    return {
+      topVenue,
+      topTag,
+      favoritesCount,
+      lastInteraction,
+    };
+  }, [people, venuesById, getTagNameById]);
+
+  const unreadNotifications = notifications.filter((entry) => !entry.read).length;
+
   return (
     <div className="flex flex-col min-h-screen bg-[var(--color-background)] text-[var(--color-text-primary)]">
       <Header
@@ -158,22 +270,28 @@ function App() {
         personSort={personSort}
         setPersonSort={setPersonSort}
         onOpenSettings={() => setShowSettings(true)}
+        onOpenNotifications={() => {
+          setShowNotificationsPanel(true);
+          markAllAsRead();
+        }}
+        onOpenProfile={() => setShowProfile(true)}
         getTagNameById={getTagNameById}
         venueView={venueView}
         setVenueView={setVenueView}
         favoriteVenueCount={favoriteVenueNames.length}
         totalVenueCount={sortedVenueNames.length}
+        unreadNotifications={unreadNotifications}
       />
 
-      <main className="flex-1 pb-24">
-        <div className="p-6 grid gap-4 max-w-xl mx-auto">
+      <main className="flex-1 pb-24 w-full">
+        <div className="p-4 sm:p-6 md:p-8 grid gap-4 max-w-3xl mx-auto w-full">
           <ModalManager
             showAdd={showAddModal}
             onAddCancel={() => setShowAddModal(false)}
             onAdd={(newPerson) => {
               addPerson(newPerson);
               setShowAddModal(false);
-              showNotification("Person added successfully!", "success");
+              showNotification(`${newPerson.name} added`, "success");
             }}
             tags={tags}
             people={people}
@@ -186,7 +304,7 @@ function App() {
             onEdit={(updated) => {
               updatePerson(updated);
               setEditingPerson(null);
-              showNotification("Person updated successfully!", "success");
+              showNotification(`${updated.name} updated`, "success");
             }}
 
             personToDelete={personToDelete}
@@ -195,7 +313,7 @@ function App() {
               const deletedName = personToDelete?.name ?? "Person";
               deletePerson(id);
               setPersonToDelete(null);
-              showNotification(`${deletedName} deleted.`, "info");
+              showNotification(`${deletedName} deleted`, "info");
             }}
           />
 
@@ -217,6 +335,7 @@ function App() {
               const p = people.find(p => p.id === id);
               if (p) updatePerson({ ...p, favorite: !p.favorite });
             }}
+            searchQuery={searchQuery}
           /> 
         </div>
       </main>
@@ -229,7 +348,32 @@ function App() {
         ＋
       </button>
 
-      <SettingsPanel open={showSettings} onClose={() => setShowSettings(false)} />
+      <SettingsPanel
+        open={showSettings}
+        onClose={() => setShowSettings(false)}
+        favoriteVenues={favoriteVenues}
+        setFavoriteVenues={setFavoriteVenues}
+        onResetData={handleResetData}
+        onClearAchievements={handleClearAchievements}
+      />
+
+      <NotificationPanel
+        open={showNotificationsPanel}
+        onClose={() => setShowNotificationsPanel(false)}
+        notifications={notifications}
+        onMarkAllRead={markAllAsRead}
+        onMarkRead={(id) => {
+          markAsRead(id);
+        }}
+      />
+
+      <ProfilePanel
+        open={showProfile}
+        onClose={() => setShowProfile(false)}
+        achievements={achievements}
+        stats={stats}
+        insights={usageInsights}
+      />
 
       {notification && (
         <Notification message={notification.message} type={notification.type} />

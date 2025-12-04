@@ -6,6 +6,8 @@
   --color-background: #F5F7FB;
   --color-surface: rgba(255,255,255,0.85);
   --color-surface-alt: rgba(248,249,253,0.9);
+  --color-card: rgba(255,255,255,0.9);
+  --color-card-border: rgba(215,219,235,0.8);
   --color-text-primary: #101828;
   --color-text-secondary: #4B5563;
 
@@ -13,6 +15,8 @@
   --color-accent: #2563EB;
   --color-accent-secondary: #14B8A6;
   --color-accent-muted: #E0EAFF;
+  --color-pill-bg: rgba(255,255,255,0.4);
+  --color-pill-border: rgba(255,255,255,0.6);
 
   /* Semantic colors */
   --color-success: #22C55E;
@@ -69,17 +73,21 @@
 
 [data-theme="midnight"] {
   --color-background: #0F172A;
-  --color-surface: rgba(15,23,42,0.8);
-  --color-surface-alt: rgba(30,41,59,0.85);
+  --color-surface: rgba(15,23,42,0.92);
+  --color-surface-alt: rgba(30,41,59,0.95);
+  --color-card: rgba(28,37,62,0.92);
+  --color-card-border: rgba(148,163,184,0.35);
   --color-text-primary: #F8FAFC;
   --color-text-secondary: #CBD5F5;
-  --color-accent: #6366F1;
+  --color-accent: #A855F7;
   --color-accent-secondary: #14B8A6;
-  --color-accent-muted: #3730A3;
-  --background-gradient: linear-gradient(180deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%);
-  --bg-blob-a: rgba(99,102,241,0.3);
-  --bg-blob-b: rgba(14,184,166,0.25);
-  --bg-blob-c: rgba(56,189,248,0.2);
+  --color-accent-muted: rgba(168,85,247,0.25);
+  --color-pill-bg: rgba(148,163,184,0.2);
+  --color-pill-border: rgba(148,163,184,0.35);
+  --background-gradient: linear-gradient(180deg, #050816 0%, #11152b 50%, #1f294a 100%);
+  --bg-blob-a: rgba(99,102,241,0.2);
+  --bg-blob-b: rgba(14,184,166,0.2);
+  --bg-blob-c: rgba(234, 179, 8, 0.15);
 }
 
 [data-theme="pink"] {
@@ -121,7 +129,7 @@ body::before {
 
 .glass-panel {
   background: var(--color-surface);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--color-card-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-level1);
   backdrop-filter: blur(20px);
@@ -129,8 +137,8 @@ body::before {
 
 .pill-chip {
   border-radius: var(--radius-pill);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid var(--color-pill-border);
+  background: var(--color-pill-bg);
   box-shadow: var(--shadow-level1);
   backdrop-filter: blur(10px);
 }
@@ -139,6 +147,7 @@ body::before {
 input,
 textarea {
   font-size: 16px;
+  border-radius: 999px;
 }
 
 /* ─────────────────────────────────────────────────────── */

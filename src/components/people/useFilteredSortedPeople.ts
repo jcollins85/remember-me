@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useVenues } from '../../context/VenueContext';
 import { Person } from '../../types';
 import { matchesSearch, matchesTagsAND } from '../../utils/filterHelpers';
+import { useTags } from '../../context/TagContext';
 import { sortPeople, SortKey } from '../../utils/sortHelpers';
 
 /**
@@ -17,6 +18,7 @@ export function useFilteredSortedPeople(
   sortAsc: boolean = true
 ): Person[] {
   const { venues } = useVenues();
+  const { getTagNameById } = useTags();
   const venuesById = useMemo(
     () =>
       Object.fromEntries(venues.map((v) => [v.id, v.name])) as Record<string, string>,
@@ -30,7 +32,7 @@ export function useFilteredSortedPeople(
     // 1. Filter by search query (person fields OR venue name)
     if (query) {
       filtered = filtered.filter((person) => {
-        const personMatches = matchesSearch(person, searchQuery);
+        const personMatches = matchesSearch(person, searchQuery, getTagNameById);
         const venueName = person.venueId ? venuesById[person.venueId]?.toLowerCase() : '';
         const venueMatches = venueName.includes(query);
         return personMatches || venueMatches;

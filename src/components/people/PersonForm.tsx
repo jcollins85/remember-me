@@ -19,6 +19,7 @@ interface Props {
   getTagNameById: (id: string) => string;
   createTag: (name: string) => Tag;
   hideActions?: boolean;
+  onSubmittingChange?: (submitting: boolean) => void;
 }
 
 export default function PersonForm({
@@ -32,6 +33,7 @@ export default function PersonForm({
   getTagNameById,
   createTag,
   hideActions = false,
+  onSubmittingChange,
 }: Props) {
   const showLocationControls = false;
   const { showNotification } = useNotification();
@@ -46,6 +48,10 @@ export default function PersonForm({
     initialData.venueId
       ? venues.find((v) => v.id === initialData.venueId)?.name || ""
       : "";
+  const venueUsage = venues.reduce((acc, venue) => {
+    acc[venue.id] = people.filter((p) => p.venueId === venue.id).length;
+    return acc;
+  }, {} as Record<string, number>);
   const {
     value: venue,
     touched: venueTouched,
@@ -58,11 +64,18 @@ export default function PersonForm({
     venues,
     addVenue,
     mode,
+    venueUsage,
   });
 
   // ── Form validation ──
   const [touchedName, setTouchedName] = useState(false);
   const [formErrors, setFormErrors] = useState<ValidationErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  useEffect(() => {
+    return () => {
+      onSubmittingChange?.(false);
+    };
+  }, [onSubmittingChange]);
 
   // ── Tag hook ──
   const {
@@ -79,6 +92,7 @@ export default function PersonForm({
       commit: commitTag,
       remove: removeTag,
       resetInput,
+      clearInput,
     },
   } = useTagInput({
     initialTags:
@@ -153,6 +167,7 @@ export default function PersonForm({
   // ── Submit handler ──
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     // Name required
     if (!name.trim()) {
       setTouchedName(true);
@@ -204,7 +219,14 @@ export default function PersonForm({
       favorite: initialData.favorite ?? false,
     };
 
-    onSubmit(person);
+    setIsSubmitting(true);
+    onSubmittingChange?.(true);
+    try {
+      onSubmit(person);
+    } finally {
+      setIsSubmitting(false);
+      onSubmittingChange?.(false);
+    }
   };
 
   const labelClass = "block text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] mb-2";
@@ -457,7 +479,11 @@ export default function PersonForm({
           className={inputClass}
         />
         <div className="text-xs text-[var(--color-text-secondary)] text-right mt-1">{currentInput.length} / 25</div>
-        <div className="overflow-x-auto whitespace-nowrap mt-2 px-1 pb-2">
+        <div
+          className="overflow-x-auto whitespace-nowrap mt-3 px-3 pb-2"
+          onWheel={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+        >
           {suggestions.map((tag, idx) => (
             <button
               key={tag.id}
@@ -467,7 +493,7 @@ export default function PersonForm({
               }}
               onClick={() => {
                 commitTag(tag.name);
-                resetInput(); 
+                clearInput(); 
               }}
               className={`inline-block mr-3 px-3 py-1 rounded-full text-sm bg-[var(--color-accent-muted)] text-[var(--color-text-primary)] border border-[var(--color-accent-muted)] hover:bg-[var(--color-accent-muted)]/80 ${
                 idx === highlightedIndex ? "ring-2 ring-[var(--color-accent)]" : ""
@@ -476,6 +502,35 @@ export default function PersonForm({
               {tag.name}
             </button>
           ))}
+          {(() => {
+            const pendingTag = currentInput
+              .trim()
+              .toLowerCase()
+              .replace(/[^a-z0-9-\s]/g, "")
+              .replace(/\s{2,}/g, " ");
+            if (
+              pendingTag &&
+              !currentTags.includes(pendingTag) &&
+              !tags.some((tag) => tag.name === pendingTag)
+            ) {
+              return (
+                <button
+                  type="button"
+                  onPointerDown={() => {
+                    ignoreBlurRef.current = true;
+                  }}
+                  onClick={() => {
+                    commitTag(pendingTag);
+                    clearInput();
+                  }}
+                  className="inline-block mr-3 px-3 py-1 rounded-full text-sm border border-dashed border-[var(--color-accent)] text-[var(--color-accent)] bg-white/70 hover:bg-white"
+                >
+                  Create “{pendingTag}”
+                </button>
+              );
+            }
+            return null;
+          })()}
         </div>
         {error && <div className="text-red-500 text-xs mt-1">{error}</div>}
         {liveMsg && <div className="text-sm text-[var(--color-text-secondary)] mt-1">{liveMsg}</div>}

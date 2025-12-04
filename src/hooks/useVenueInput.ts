@@ -8,6 +8,7 @@ interface UseVenueInputArgs {
   venues: Venue[];
   addVenue: (venue: Venue) => void;
   mode: 'add' | 'edit';
+  venueUsage?: Record<string, number>;
 }
 
 /**
@@ -18,6 +19,7 @@ export function useVenueInput({
   venues,
   addVenue,
   mode,
+  venueUsage = {},
 }: UseVenueInputArgs) {
   const [value, setValue] = useState<string>(initialName);
   const [touched, setTouched] = useState<boolean>(false);
@@ -33,14 +35,24 @@ export function useVenueInput({
 
   // Generate suggestions based on current value
   useEffect(() => {
-    const names = venues.map((v) => v.name);
+    const names = venues
+      .map((v) => ({
+        name: v.name,
+        count: venueUsage[v.id] ?? 0,
+      }));
     const q = value.trim().toLowerCase();
     setSuggestions(
       q
-        ? names.filter((n) => n.toLowerCase().includes(q)).slice(0, 5)
-        : names.slice(0, 5)
+        ? names
+            .filter((entry) => entry.name.toLowerCase().includes(q))
+            .slice(0, 5)
+            .map((entry) => entry.name)
+        : names
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5)
+            .map((entry) => entry.name)
     );
-  }, [value, venues]);
+  }, [value, venues, venueUsage]);
 
   const onChange = (newValue: string) => {
     setValue(newValue);

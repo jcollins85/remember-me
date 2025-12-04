@@ -1,3 +1,4 @@
+import { useState } from "react";
 import PersonForm from "./PersonForm";
 import { Person, Tag } from "../../types";
 
@@ -27,11 +28,12 @@ export default function PersonModal({
   createTag,
 }: Props) {
   const title = mode === "add" ? "Add Person" : "Edit Person";
+  const [isSaving, setIsSaving] = useState(false);
   const initialData = mode === "edit" ? person : undefined;
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center overflow-y-auto"
+      className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center overflow-y-auto overscroll-contain"
       onClick={onCancel}
     >
       <div
@@ -56,6 +58,7 @@ export default function PersonModal({
             getTagNameById={getTagNameById}
             createTag={createTag}
             hideActions
+            onSubmittingChange={setIsSaving}
           />
         </div>
 
@@ -64,9 +67,10 @@ export default function PersonModal({
           <button
             type="submit"
             form="person-form"
-            className="px-4 py-2 rounded-full bg-[var(--color-accent)] text-white text-sm font-semibold shadow-level1 hover:brightness-105 transition"
+            disabled={isSaving}
+            className="px-4 py-2 rounded-full bg-[var(--color-accent)] text-white text-sm font-semibold shadow-level1 hover:brightness-105 transition disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Save
+            {isSaving ? "Saving…" : "Save"}
           </button>
           <button
             type="button"

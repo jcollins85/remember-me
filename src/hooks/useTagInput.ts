@@ -50,10 +50,10 @@ export function useTagInput({
     if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
     timeoutRef.current = window.setTimeout(() => {
       const q = input.trim().toLowerCase();
-      const usage = allTags
-        .filter(t => t.name.includes(q))
-        .slice(0, 5);
-      setSuggestions(q ? usage : allTags.slice(0, 5));
+      const baseList = q
+        ? allTags.filter((t) => t.name.includes(q))
+        : [...allTags].sort((a, b) => b.count - a.count);
+      setSuggestions(baseList.slice(0, 5));
       setHighlightedIndex(null);
     }, 200);
     return () => { if (timeoutRef.current) window.clearTimeout(timeoutRef.current) };
@@ -92,8 +92,12 @@ export function useTagInput({
     setTags(prev => prev.filter(t => t !== name));
   };
 
-  const resetInput = () => {
+  const clearInput = () => {
     setInput("");
+  };
+
+  const resetInput = () => {
+    clearInput();
     setSuggestions([]);
     setHighlightedIndex(null);
   };  
@@ -105,6 +109,6 @@ export function useTagInput({
     highlightedIndex,
     error,
     liveMsg,
-    handlers: { onInputChange, onInputKeyDown, onInputBlur, commit, remove, resetInput },
+    handlers: { onInputChange, onInputKeyDown, onInputBlur, commit, remove, resetInput, clearInput },
   };
 }

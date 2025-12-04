@@ -16,11 +16,14 @@ interface HeaderProps {
   personSort: `${SortKey}-${"asc"|"desc"}`;
   setPersonSort: Dispatch<SetStateAction<`${SortKey}-${"asc"|"desc"}`>>;
   onOpenSettings: () => void;
+  onOpenProfile: () => void;
   getTagNameById: (id: string) => string;
   venueView: "all" | "favs";
   setVenueView: Dispatch<SetStateAction<"all" | "favs">>;
   favoriteVenueCount: number;
   totalVenueCount: number;
+  onOpenNotifications: () => void;
+  unreadNotifications: number;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -35,10 +38,13 @@ const Header: React.FC<HeaderProps> = ({
   personSort,
   setPersonSort,
   onOpenSettings,
+  onOpenNotifications,
+  onOpenProfile,
   venueView,
   setVenueView,
   favoriteVenueCount,
   totalVenueCount,
+  unreadNotifications,
 }) => {
   const [openSheet, setOpenSheet] = useState<null | "venue" | "people">(null);
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -64,9 +70,15 @@ const Header: React.FC<HeaderProps> = ({
   ];
 
   useEffect(() => {
+    const COLLAPSE_AT = 80;
+    const EXPAND_AT = 20;
     const handleScroll = () => {
-      const shouldCollapse = window.scrollY > 40;
-      setIsTopCollapsed((prev) => (prev === shouldCollapse ? prev : shouldCollapse));
+      const y = window.scrollY;
+      setIsTopCollapsed((prev) => {
+        if (!prev && y > COLLAPSE_AT) return true;
+        if (prev && y < EXPAND_AT) return false;
+        return prev;
+      });
     };
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -81,24 +93,33 @@ const Header: React.FC<HeaderProps> = ({
           isTopCollapsed ? "py-0 h-0" : "py-2"
         } bg-white/70 backdrop-blur-[30px] border-b border-white/40 shadow-level1 flex items-center justify-between transition-all duration-300 ${
           isTopCollapsed ? "-translate-y-2 opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
-        }`}
+        } dark:bg-[var(--color-surface)] dark:border-[var(--color-card-border)]`}
       >
         <button aria-label="Settings" onClick={onOpenSettings} className="p-2 rounded-md hover:bg-white/50">
           <Settings size={20} className="text-textPrimary" />
         </button>
         <img src="/remember-me-header-banner.png" alt="Remember Me" className="h-10 object-contain" />
         <div className="flex items-center gap-2">
-          <button aria-label="Alerts" className="p-2 rounded-md hover:bg-white/50">
+          <button
+            aria-label="Notifications"
+            className="p-2 rounded-md hover:bg-white/50 relative"
+            onClick={onOpenNotifications}
+          >
             <Bell size={20} className="text-textPrimary" />
+            {unreadNotifications > 0 && (
+              <span className="absolute -top-1 -right-1 bg-[var(--color-accent)] text-white text-[10px] leading-none px-1.5 py-0.5 rounded-full">
+                {unreadNotifications > 9 ? "9+" : unreadNotifications}
+              </span>
+            )}
           </button>
-          <button aria-label="Profile" className="p-2 rounded-md hover:bg-white/50">
+          <button aria-label="Profile" className="p-2 rounded-md hover:bg-white/50" onClick={onOpenProfile}>
             <User size={20} className="text-textPrimary" />
           </button>
         </div>
       </div>
 
       {/* ── Utility Tier ─────────────────────────────────────────── */}
-      <div className="bg-white/65 backdrop-blur-[30px] border-b border-white/40 shadow-level1">
+      <div className="bg-white/65 backdrop-blur-[30px] border-b border-white/40 shadow-level1 dark:bg-[var(--color-surface-alt)] dark:border-[var(--color-card-border)]">
         <div className="px-4 pt-3">
           {/* Search with icon INSIDE the field */}
           <div className="relative w-full max-w-xl mx-auto">
@@ -108,7 +129,7 @@ const Header: React.FC<HeaderProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by person, tag or venue…"
-              className="w-full h-12 pl-10 pr-12 rounded-2xl bg-white/80 backdrop-blur-sm border border-white/70 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] shadow-level1"
+              className="w-full h-12 pl-10 pr-12 rounded-full bg-white/80 backdrop-blur-sm border border-white/70 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] shadow-level1 dark:bg-[var(--color-card)] dark:border-[var(--color-card-border)]"
             />
             {searchQuery && (
               <button
@@ -128,7 +149,7 @@ const Header: React.FC<HeaderProps> = ({
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition pill-chip ${
                   openSheet === "venue"
                     ? "border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-accent)] shadow-level1"
-                    : "text-[var(--color-text-primary)]"
+                    : "text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)]"
                 }`}
               >
                 Venues · {venueSortKey === "name" ? "Name" : venueSortKey === "recentVisit" ? "Recent" : "Known"}
@@ -139,7 +160,7 @@ const Header: React.FC<HeaderProps> = ({
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition pill-chip ${
                   openSheet === "people"
                     ? "border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-accent)] shadow-level1"
-                    : "text-[var(--color-text-primary)]"
+                    : "text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)]"
                 }`}
               >
                 People · {personSort.replace("dateMet", "Met").replace("updatedAt", "Updated").replace("asc", " ↑").replace("desc", " ↓")}
@@ -152,7 +173,7 @@ const Header: React.FC<HeaderProps> = ({
               }`}
             >
               {openSheet && (
-                <div className="mt-2 bg-white/90 backdrop-blur-lg border border-white/40 px-4 py-3 rounded-2xl shadow-level2">
+                <div className="mt-2 bg-white/90 backdrop-blur-lg border border-white/40 px-4 py-3 rounded-2xl shadow-level2 dark:bg-[var(--color-card)] dark:border-[var(--color-card-border)]">
                   <SortControls
                     variant={openSheet}
                     venueSortKey={venueSortKey}

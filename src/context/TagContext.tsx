@@ -1,14 +1,16 @@
 // src/context/TagContext.tsx
-import React, { createContext, ReactNode, useContext } from 'react';
+import React, { createContext, ReactNode, useContext, useCallback } from 'react';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { sampleTags } from '../data';
 import { Tag } from '../types';
+import { useNotification } from './NotificationContext';
 
 interface TagContextType {
   tags: Tag[];
   createTag: (name: string) => Tag;
   getTagNameById: (id: string) => string;
   getTagIdByName: (name: string) => string | null;
+  replaceTags: (next: Tag[]) => void;
 }
 
 const TagContext = createContext<TagContextType | undefined>(undefined);
@@ -18,8 +20,18 @@ interface TagProviderProps {
 }
 
 export const TagProvider = ({ children }: TagProviderProps) => {
+  const { showNotification } = useNotification();
+  const handleStorageError = useCallback(
+    (action: 'read' | 'write') => {
+      const verb = action === 'read' ? 'loading' : 'saving';
+      showNotification(`Problem ${verb} tags. Changes may not persist.`, 'error');
+    },
+    [showNotification]
+  );
   // Persist tags in localStorage
-  const [tags, setTags] = useLocalStorage<Tag[]>('tags', sampleTags);
+  const [tags, setTags] = useLocalStorage<Tag[]>('tags', sampleTags, {
+    onError: handleStorageError,
+  });
 
   // Get a tag name by its id, fallback to empty string
   const getTagNameById = (id: string): string => {
@@ -50,8 +62,12 @@ export const TagProvider = ({ children }: TagProviderProps) => {
     return newTag;
   };
 
+  const replaceTags = (next: Tag[]) => {
+    setTags(() => [...next]);
+  };
+
   return (
-    <TagContext.Provider value={{ tags, createTag, getTagNameById, getTagIdByName }}>
+    <TagContext.Provider value={{ tags, createTag, getTagNameById, getTagIdByName, replaceTags }}>
       {children}
     </TagContext.Provider>
   );

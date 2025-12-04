@@ -1,10 +1,15 @@
-import React, { useContext } from "react";
+import React, { useContext, useRef, useState } from "react";
 import { ThemeContext, ThemeKey } from "../../theme/ThemeContext";
-import { SunMedium, Palette, Moon, Heart } from "lucide-react";
+import { SunMedium, Palette, Moon, Heart, Download, Upload, Lock } from "lucide-react";
+import { useDataBackup } from "../../hooks/useDataBackup";
 
 interface SettingsPanelProps {
   open: boolean;
   onClose: () => void;
+  favoriteVenues: string[];
+  setFavoriteVenues: React.Dispatch<React.SetStateAction<string[]>>;
+  onResetData: () => void;
+  onClearAchievements: () => void;
 }
 
 const themes: Array<{
@@ -39,8 +44,49 @@ const themes: Array<{
   },
 ];
 
-export default function SettingsPanel({ open, onClose }: SettingsPanelProps) {
+export default function SettingsPanel({
+  open,
+  onClose,
+  favoriteVenues,
+  setFavoriteVenues,
+  onResetData,
+  onClearAchievements,
+}: SettingsPanelProps) {
   const { theme, setTheme } = useContext(ThemeContext);
+  const { exportBackup, importBackupFromFile } = useDataBackup(
+    favoriteVenues,
+    setFavoriteVenues
+  );
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleExport = () => {
+    setIsExporting(true);
+    try {
+      exportBackup();
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setIsImporting(true);
+    try {
+      await importBackupFromFile(file);
+    } finally {
+      setIsImporting(false);
+      event.target.value = "";
+    }
+  };
 
   if (!open) return null;
 
@@ -50,9 +96,21 @@ export default function SettingsPanel({ open, onClose }: SettingsPanelProps) {
       onClick={onClose}
     >
       <div
-        className="glass-panel w-full max-w-md p-6 space-y-5"
+        className="glass-panel w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col relative"
         onClick={(e) => e.stopPropagation()}
       >
+        <button
+          className="absolute top-3 right-3 h-9 w-9 rounded-full border border-white/70 text-[var(--color-text-secondary)] hover:bg-white flex items-center justify-center"
+          onClick={onClose}
+          aria-label="Close settings"
+        >
+          ×
+        </button>
+
+        <div
+          className="overflow-y-auto px-6 pb-6 pt-6 space-y-5"
+          style={{ scrollbarGutter: "stable" }}
+        >
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">
@@ -62,13 +120,6 @@ export default function SettingsPanel({ open, onClose }: SettingsPanelProps) {
               Settings
             </h3>
           </div>
-          <button
-            className="h-8 w-8 rounded-full border border-white/70 text-[var(--color-text-secondary)] hover:bg-white"
-            onClick={onClose}
-            aria-label="Close settings"
-          >
-            ×
-          </button>
         </div>
 
         <div className="space-y-3">
@@ -99,6 +150,74 @@ export default function SettingsPanel({ open, onClose }: SettingsPanelProps) {
               );
             })}
           </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
+                Data Backup
+                <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-[var(--color-accent-muted)] text-[var(--color-accent)]">
+                  Premium
+                </span>
+              </p>
+              <p className="text-xs text-[var(--color-text-secondary)]">
+                Export or import all venues, people, and tags when you switch devices.
+              </p>
+            </div>
+            <Lock size={16} className="text-[var(--color-accent)]" />
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={handleExport}
+              disabled={isExporting}
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-white/80 bg-white/70 px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-white disabled:opacity-60"
+            >
+              <Download size={16} />
+              {isExporting ? "Exporting…" : "Export JSON"}
+            </button>
+            <button
+              onClick={handleImportClick}
+              disabled={isImporting}
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] px-4 py-3 text-sm font-semibold hover:bg-[var(--color-accent-muted)] disabled:opacity-60"
+            >
+              <Upload size={16} />
+              {isImporting ? "Importing…" : "Import JSON"}
+            </button>
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+            Data Tools
+          </p>
+          <p className="text-xs text-[var(--color-text-secondary)]">
+            Restore the app to its sample dataset or clear achievement progress for testing.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <button
+              onClick={onResetData}
+              className="px-4 py-3 rounded-2xl border border-white/80 bg-white/70 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-white transition"
+            >
+              Reset sample data
+            </button>
+            <button
+              onClick={onClearAchievements}
+              className="px-4 py-3 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] text-sm font-semibold hover:bg-[var(--color-accent-muted)] transition"
+            >
+              Clear achievements
+            </button>
+          </div>
+        </div>
         </div>
       </div>
     </div>

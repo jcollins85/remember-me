@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 
 // Define available theme keys
-export type ThemeKey = 'light' | 'coral' | 'midnight';
+export type ThemeKey = 'light' | 'coral' | 'midnight' | 'pink';
 
 interface ThemeContextProps {
   theme: ThemeKey;
@@ -23,7 +23,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const getInitialTheme = (): ThemeKey => {
     if (typeof window === 'undefined') return 'light';
     const stored = localStorage.getItem('theme') as ThemeKey | null;
-    if (stored && ['light', 'coral', 'midnight'].includes(stored)) {
+    if (stored && ['light', 'coral', 'midnight', 'pink'].includes(stored)) {
       return stored;
     }
     const mqlDark = window.matchMedia('(prefers-color-scheme: dark)');
@@ -33,7 +33,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     return 'light';
   };
 
-  const [theme, setTheme] = useState<ThemeKey>(getInitialTheme);
+  const [theme, setTheme] = useState<ThemeKey>(() => getInitialTheme());
 
   // Apply theme and persist
   useEffect(() => {

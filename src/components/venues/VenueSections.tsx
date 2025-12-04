@@ -17,6 +17,7 @@ interface Props {
   onEdit: (p: Person) => void;
   onDelete: (id: string, name: string) => void;
   onToggleFavorite: (id: string) => void;
+  searchQuery: string;
 }
 
 export default function VenueSections({
@@ -34,6 +35,7 @@ export default function VenueSections({
   onEdit,
   onDelete,
   onToggleFavorite,
+  searchQuery,
 }: Props) {
   const emptyMessage =
     viewMode === "favs"
@@ -53,12 +55,12 @@ export default function VenueSections({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="grid gap-6 md:grid-cols-2">
       {visibleVenueNames.map((venueName) => (
         <VenueGroupList
           key={venueName}
           venue={venueName}
-          group={groupedPeople[venueName]}
+          group={groupedPeople[venueName] ?? []}
           personSort={personSort}
           activeTags={activeTags}
           setActiveTags={setActiveTags}
@@ -70,6 +72,7 @@ export default function VenueSections({
           onEdit={onEdit}
           onDelete={onDelete}
           onToggleFavorite={onToggleFavorite}
+          searchQuery={searchQuery}
         />
       ))}
     </div>

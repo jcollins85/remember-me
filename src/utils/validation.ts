@@ -36,7 +36,9 @@ export function validatePersonForm(data: {
   }
 
   // Date Met cannot be in future
-  if (data.dateMet && data.dateMet > today) {
+  if (!data.dateMet) {
+    errors.dateMet = 'Date Met is required';
+  } else if (data.dateMet > today) {
     errors.dateMet = 'Date Met cannot be in the future';
   }
 

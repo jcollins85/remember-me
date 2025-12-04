@@ -1,6 +1,12 @@
 // src/hooks/useLocalStorage.ts
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 
+type StorageAction = 'read' | 'write';
+
+interface Options {
+  onError?: (action: StorageAction, error: unknown) => void;
+}
+
 /**
  * A hook that synchronizes state with localStorage.
  *
@@ -9,7 +15,8 @@ import { useState, useEffect, Dispatch, SetStateAction } from 'react';
  */
 export default function useLocalStorage<T>(
   key: string,
-  initialValue: T | (() => T)
+  initialValue: T | (() => T),
+  options: Options = {}
 ): [T, Dispatch<SetStateAction<T>>] {
   // State to store our value
   const [storedValue, setStoredValue] = useState<T>(() => {
@@ -24,6 +31,7 @@ export default function useLocalStorage<T>(
         : initialValue;
     } catch (error) {
       console.warn(`useLocalStorage: Error reading key "${key}":`, error);
+      options.onError?.('read', error);
       return typeof initialValue === 'function'
         ? (initialValue as () => T)()
         : initialValue;
@@ -36,8 +44,9 @@ export default function useLocalStorage<T>(
       window.localStorage.setItem(key, valueToStore);
     } catch (error) {
       console.warn(`useLocalStorage: Error setting key "${key}":`, error);
+      options.onError?.('write', error);
     }
-  }, [key, storedValue]);
+  }, [key, storedValue, options]);
 
   return [storedValue, setStoredValue];
 }

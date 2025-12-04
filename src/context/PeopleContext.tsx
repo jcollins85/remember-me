@@ -1,14 +1,16 @@
 // src/context/PeopleContext.tsx
-import React, { createContext, ReactNode, useContext } from 'react';
+import React, { createContext, ReactNode, useContext, useCallback } from 'react';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { Person } from '../types';
 import { samplePeople } from '../data';
+import { useNotification } from './NotificationContext';
 
 interface PeopleContextType {
   people: Person[];
   addPerson: (person: Person) => void;
   updatePerson: (person: Person) => void;
   deletePerson: (id: string) => void;
+  replacePeople: (people: Person[]) => void;
 }
 
 const PeopleContext = createContext<PeopleContextType | undefined>(undefined);
@@ -18,8 +20,20 @@ interface PeopleProviderProps {
 }
 
 export const PeopleProvider = ({ children }: PeopleProviderProps) => {
+  const { showNotification } = useNotification();
+  const handleStorageError = useCallback(
+    (action: 'read' | 'write') => {
+      const verb = action === 'read' ? 'loading' : 'saving';
+      showNotification(`Problem ${verb} people data. Changes may not persist.`, 'error');
+    },
+    [showNotification]
+  );
   // Persist people array in localStorage, seeded from sample data
-  const [people, setPeople] = useLocalStorage<Person[]>('people', samplePeople);
+  const [people, setPeople] = useLocalStorage<Person[]>(
+    'people',
+    samplePeople,
+    { onError: handleStorageError }
+  );
 
   const addPerson = (person: Person) => {
     setPeople((prev) => [person, ...prev]);
@@ -33,9 +47,13 @@ export const PeopleProvider = ({ children }: PeopleProviderProps) => {
     setPeople((prev) => prev.filter((p) => p.id !== id));
   };
 
+  const replacePeople = (next: Person[]) => {
+    setPeople(() => [...next]);
+  };
+
   return (
     <PeopleContext.Provider
-      value={{ people, addPerson, updatePerson, deletePerson }}
+      value={{ people, addPerson, updatePerson, deletePerson, replacePeople }}
     >
       {children}
     </PeopleContext.Provider>
