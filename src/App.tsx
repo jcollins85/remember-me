@@ -19,7 +19,6 @@ import Header from "./components/header/Header";
 import { useFilteredSortedPeople } from "./components/people/useFilteredSortedPeople";
 import { useVenueSort } from './components/venues/useVenueSort';
 import { useSearchSort } from './components/header/useSearchSort';
-import Footer from "./components/common/Footer";
 import Notification from './components/common/Notification';
 import NotificationPanel from "./components/notifications/NotificationPanel";
 import SettingsPanel from "./components/settings/SettingsPanel";
@@ -257,6 +256,34 @@ function App() {
 
   const unreadNotifications = notifications.filter((entry) => !entry.read).length;
 
+  useEffect(() => {
+    const usage = new Map<string, number>();
+    people.forEach((person) => {
+      person.tags?.forEach((tagId) => {
+        usage.set(tagId, (usage.get(tagId) ?? 0) + 1);
+      });
+    });
+    let changed = false;
+    const cleaned = tags.filter((tag) => {
+      const count = usage.get(tag.id) ?? 0;
+      if (count === 0) {
+        changed = true;
+        return false;
+      }
+      return true;
+    });
+    const normalized = cleaned.map((tag) => {
+      const count = usage.get(tag.id) ?? 0;
+      if (tag.count !== count) {
+        changed = true;
+      }
+      return { ...tag, count };
+    });
+    if (changed) {
+      replaceTags(normalized);
+    }
+  }, [people, tags, replaceTags]);
+
   return (
     <div className="flex flex-col min-h-screen bg-[var(--color-background)] text-[var(--color-text-primary)]">
       <Header
@@ -343,7 +370,7 @@ function App() {
 
       <button
         onClick={() => setShowAddModal(true)}
-        className="fixed bottom-14 right-6 bg-[var(--color-accent)] text-white text-3xl rounded-full w-14 h-14 shadow-lg hover:brightness-110 transition z-40"
+        className="fixed bottom-6 sm:bottom-8 md:bottom-10 right-6 bg-[var(--color-accent)] text-white text-3xl rounded-full w-14 h-14 hover:brightness-110 transition z-40"
         aria-label="Add Person"
       >
         ＋
@@ -385,8 +412,6 @@ function App() {
           />
         )}
       </AnimatePresence>
-
-      <Footer />
     </div>
   );
 }

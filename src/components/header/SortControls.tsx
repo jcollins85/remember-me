@@ -92,7 +92,7 @@ export default function SortControls({
     variant === "venue" ? "Sort venues by" : "Sort people by";
 
   return (
-    <div className="rounded-2xl border border-white/60 bg-white/85 px-3 py-3 space-y-2">
+    <div className="rounded-2xl border border-white/60 bg-white px-4 py-3 space-y-2 text-left">
       <p className="text-[11px] uppercase tracking-wide text-[var(--color-text-secondary)]">
         {label}
       </p>

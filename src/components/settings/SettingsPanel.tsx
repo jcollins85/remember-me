@@ -1,7 +1,7 @@
 import React, { useContext, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ThemeContext, ThemeKey } from "../../theme/ThemeContext";
-import { SunMedium, Palette, Moon, Heart, Download, Upload, Lock } from "lucide-react";
+import { SunMedium, Palette, Moon, Heart, Download, Upload, Lock, X, Palette as PaletteIcon, CloudUpload, Wrench } from "lucide-react";
 import { useDataBackup } from "../../hooks/useDataBackup";
 
 interface SettingsPanelProps {
@@ -104,14 +104,14 @@ export default function SettingsPanel({
           >
             <button
               type="button"
-              className="absolute top-3 right-3 h-9 w-9 rounded-full border border-white/70 text-[var(--color-text-secondary)] hover:bg-white flex items-center justify-center"
+              className="absolute top-3 right-3 h-9 w-9 rounded-full bg-white/85 text-[var(--color-text-primary)] shadow-[0_8px_18px_rgba(15,23,42,0.15)] hover:bg-white flex items-center justify-center"
               onClick={(event) => {
                 event.stopPropagation();
                 onClose();
               }}
               aria-label="Close settings"
             >
-              ×
+              <X size={16} />
             </button>
 
             <div
@@ -125,9 +125,15 @@ export default function SettingsPanel({
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <p className="text-sm font-semibold text-[var(--color-text-primary)]">Theme</p>
-                <div className="grid gap-3">
+              <section className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <PaletteIcon size={16} className="text-[var(--color-accent)]" />
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">Theme</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">Pick the palette that suits your vibe.</p>
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-[var(--color-card)]/95 grid gap-3 shadow-level1/40 mt-1.5">
                   {themes.map((item) => {
                     const isActive = item.key === theme;
                     return (
@@ -149,72 +155,99 @@ export default function SettingsPanel({
                     );
                   })}
                 </div>
-              </div>
+              </section>
 
-              <div className="space-y-3">
-                <div className="flex items-start justify-between gap-3">
+              <section className="space-y-2 border-t border-white/40 pt-4">
+                <div className="flex items-center gap-2">
+                  <CloudUpload size={16} className="text-[var(--color-accent)]" />
                   <div>
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
-                      Data Backup
-                      <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-[var(--color-accent-muted)] text-[var(--color-accent)]">
-                        Premium
-                      </span>
-                    </p>
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">Data backup</p>
                     <p className="text-xs text-[var(--color-text-secondary)]">
                       Export or import all venues, people, and tags when you switch devices.
                     </p>
                   </div>
-                  <Lock size={16} className="text-[var(--color-accent)]" />
                 </div>
+                <div className="rounded-2xl bg-[var(--color-card)]/95 space-y-3 shadow-level1/40 mt-1.5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-[var(--color-accent-muted)] text-[var(--color-accent)]">
+                        Premium
+                      </span>
+                    </div>
+                    <Lock size={16} className="text-[var(--color-accent)]" />
+                  </div>
 
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <button
-                    onClick={handleExport}
-                    disabled={isExporting}
-                    className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-white/80 bg-white/70 px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-white disabled:opacity-60"
-                  >
-                    <Download size={16} />
-                    {isExporting ? "Exporting…" : "Export JSON"}
-                  </button>
-                  <button
-                    onClick={handleImportClick}
-                    disabled={isImporting}
-                    className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] px-4 py-3 text-sm font-semibold hover:bg-[var(--color-accent-muted)] disabled:opacity-60"
-                  >
-                    <Upload size={16} />
-                    {isImporting ? "Importing…" : "Import JSON"}
-                  </button>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      onClick={handleExport}
+                      disabled={isExporting}
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-white/80 bg-white px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-white/90 disabled:opacity-60"
+                    >
+                      <Download size={16} />
+                      {isExporting ? "Exporting…" : "Export JSON"}
+                    </button>
+                    <button
+                      onClick={handleImportClick}
+                      disabled={isImporting}
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] px-4 py-3 text-sm font-semibold hover:bg-[var(--color-accent-muted)] disabled:opacity-60"
+                    >
+                      <Upload size={16} />
+                      {isImporting ? "Importing…" : "Import JSON"}
+                    </button>
+                  </div>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="application/json"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
                 </div>
+              </section>
 
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="application/json"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-              </div>
-
-              <div className="space-y-3">
-                <p className="text-sm font-semibold text-[var(--color-text-primary)]">Data Tools</p>
-                <p className="text-xs text-[var(--color-text-secondary)]">
-                  Restore the app to its sample dataset or clear achievement progress for testing.
-                </p>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <button
-                    onClick={onResetData}
-                    className="px-4 py-3 rounded-2xl border border-white/80 bg-white/70 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-white transition"
-                  >
-                    Reset sample data
-                  </button>
-                  <button
-                    onClick={onClearAchievements}
-                    className="px-4 py-3 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] text-sm font-semibold hover:bg-[var(--color-accent-muted)] transition"
-                  >
-                    Clear achievements
-                  </button>
+              <section className="space-y-2 border-t border-white/40 pt-4">
+                <div className="flex items-center gap-2">
+                  <Wrench size={16} className="text-[var(--color-accent)]" />
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">Data tools</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">
+                      Quickly restore sample data or clear achievements.
+                    </p>
+                  </div>
                 </div>
-              </div>
+                <div className="rounded-2xl bg-[var(--color-card)]/95 space-y-3 shadow-level1/40 mt-1.5">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <button
+                      onClick={onResetData}
+                      className="px-4 py-3 rounded-2xl border border-white/80 bg-white text-sm font-semibold text-[var(--color-text-primary)] hover:bg-white/90 transition"
+                    >
+                      Reset sample data
+                    </button>
+                    <button
+                      onClick={onClearAchievements}
+                      className="px-4 py-3 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] text-sm font-semibold hover:bg-[var(--color-accent-muted)] transition"
+                    >
+                      Clear achievements
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              <section className="space-y-2 border-t border-white/40 pt-4 text-[var(--color-text-secondary)]">
+                <p className="text-[11px] uppercase tracking-wide">About</p>
+                <div className="rounded-2xl bg-[var(--color-card)]/95 text-xs space-y-1 shadow-level1/40 mt-1.5">
+                  <p>Version 0.0.1 · Made by Remember Me</p>
+                  <div className="flex gap-4 text-[var(--color-text-secondary)]">
+                    <button className="underline-offset-2 hover:underline" type="button">
+                      Privacy
+                    </button>
+                    <button className="underline-offset-2 hover:underline" type="button">
+                      Terms
+                    </button>
+                  </div>
+                </div>
+              </section>
             </div>
           </motion.div>
         </motion.div>

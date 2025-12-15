@@ -7,14 +7,12 @@ A modern contact/venue tracker with a glassmorphism-inspired UI. You can organiz
 - **Tailwind CSS** for styling, tuned with design tokens.
 - **Framer Motion** for section/card animations.
 - **Context + custom hooks** (People/Tags/Venues, achievements, data backup) for state.
-- **Google Analytics (GA4)** support via `VITE_GA_ID` env var.
-
 ## Running Locally
 ```bash
 npm install
 npm run dev
 ```
-Visit `http://localhost:5173` in your browser. Set `VITE_GA_ID` in `.env` if you want analytics events locally.
+Visit `http://localhost:5173` in your browser.
 
 ## Data & Persistence
 - People/venues/tags are stored in `localStorage` via the context hooks.
@@ -35,6 +33,3 @@ Visit `http://localhost:5173` in your browser. Set `VITE_GA_ID` in `.env` if you
 ## Styling Philosophy
 - Glass outer shells (cards, modals) with flat/tinted inner cards to avoid stacked shadows.
 - Tag and venue chips reflect app colors; most-used tags/venues appear first.
-
-## Analytics
-Set `VITE_GA_ID` in `.env` to enable GA4 tracking (page views + achievement unlocks). Leave unset to skip analytics entirely.

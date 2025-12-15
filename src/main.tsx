@@ -8,9 +8,6 @@ import { VenueProvider } from './context/VenueContext';
 import { NotificationProvider } from './context/NotificationContext';
 import './index.css';
 import { ThemeProvider } from './theme/ThemeContext';
-import { initAnalytics } from './lib/analytics';
-
-initAnalytics(import.meta.env.VITE_GA_ID);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

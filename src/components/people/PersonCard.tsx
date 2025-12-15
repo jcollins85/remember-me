@@ -59,10 +59,10 @@ export default function PersonCard({
   };
 
   return (
-    <div className="bg-[var(--color-card)] rounded-2xl p-4">
+    <div className="bg-[var(--color-card)] rounded-3xl p-5 shadow-level1/60">
       <div className="flex justify-between items-start gap-4">
         <div>
-          <h3 className="text-lg font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
+          <h3 className="text-xl font-semibold tracking-tight text-[var(--color-text-primary)] flex items-center gap-2">
             <Highlight text={person.name} query={searchQuery} />
             <button
               onClick={() => onToggleFavorite(person.id)}
@@ -103,15 +103,15 @@ export default function PersonCard({
           </h3>
 
           {person.position && (
-            <p className="text-sm text-[var(--color-text-secondary)]">
+            <p className="text-[15px] text-[var(--color-text-secondary)] mt-1">
               <Highlight text={person.position} query={searchQuery} />
             </p>
           )}
-          <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+          <p className="text-xs text-[var(--color-text-secondary)] mt-1.5 tracking-wide uppercase">
             Date Met: {new Date(person.dateMet).toLocaleDateString()}
           </p>
           {person.description && (
-            <p className="whitespace-pre-wrap text-sm text-[var(--color-text-primary)]/80 mt-2">
+            <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-[var(--color-text-primary)]/85 mt-3">
               <Highlight text={person.description} query={searchQuery} />
             </p>
           )}
@@ -135,16 +135,17 @@ export default function PersonCard({
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mt-3">
-        {person.tags && person.tags.length > 0 ? (
-          person.tags.map((tagId) => {
+      {person.tags && person.tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-4">
+          {person.tags.map((tagId) => {
             const tagName = getTagNameById(tagId);
             const isActive = activeTags.includes(tagId);
+            if (!tagName) return null;
             return (
-              <button
+              <motion.button
                 key={tagId}
                 onClick={() => toggleTagFilter(tagId)}
-                className={`px-3 py-1 rounded-full text-sm transition border ${
+                className={`px-3 py-1 rounded-full text-sm border ${
                   isActive
                     ? "bg-[var(--color-accent)] text-white shadow-sm border-[var(--color-accent)]"
                     : "bg-[var(--color-accent-muted)] text-[var(--color-text-primary)] border-[var(--color-accent-muted)]/80 hover:bg-[var(--color-accent-muted)]/80"
@@ -154,17 +155,20 @@ export default function PersonCard({
                     ? `Remove filter "${tagName}"`
                     : `Filter by "${tagName}"`
                 }
+                whileTap={{ scale: 0.94 }}
+                animate={
+                  isActive
+                    ? { scale: [0.95, 1.1, 1], boxShadow: ["0 0 0 rgba(0,0,0,0)", "0 8px 16px rgba(0,0,0,0.15)", "0 0 0 rgba(0,0,0,0)"] }
+                    : { scale: [1.05, 0.96, 1], boxShadow: "0 0 0 rgba(0,0,0,0)" }
+                }
+                transition={{ duration: 0.3 }}
               >
                 <Highlight text={tagName} query={searchQuery} />
-              </button>
+              </motion.button>
             );
-          })
-        ) : (
-          <span className="text-xs text-[var(--color-text-secondary)] italic">
-            no tags yet
-          </span>
-        )}
-      </div>
+          })}
+        </div>
+      )}
     </div>
   );
 }

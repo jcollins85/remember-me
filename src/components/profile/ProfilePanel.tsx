@@ -88,7 +88,7 @@ export default function ProfilePanel({
           >
             <button
               type="button"
-              className="absolute top-3 right-3 h-9 w-9 rounded-full border border-white/70 text-[var(--color-text-secondary)] hover:bg-white flex items-center justify-center"
+              className="absolute top-3 right-3 h-9 w-9 rounded-full bg-white/85 text-[var(--color-text-primary)] shadow-[0_8px_18px_rgba(15,23,42,0.15)] hover:bg-white flex items-center justify-center"
               onClick={(event) => {
                 event.stopPropagation();
                 onClose();
@@ -102,17 +102,12 @@ export default function ProfilePanel({
               className="overflow-y-auto px-6 pb-6 pt-6 space-y-6"
               style={{ scrollbarGutter: "stable" }}
             >
-              <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-2xl bg-[var(--color-accent-muted)] flex items-center justify-center text-[var(--color-accent)] text-2xl shadow-level1">
-                  <UserRound size={28} />
-                </div>
-                <div>
-                  <p className="text-sm uppercase text-[var(--color-text-secondary)] tracking-wide">Your Profile</p>
-                  <h2 className="text-2xl font-semibold">Remember Me</h2>
-                  <p className="text-xs text-[var(--color-text-secondary)]">
-                    {stats.peopleCount} people · {stats.venuesWithPeople} venues · {stats.uniqueTagCount} tags used
-                  </p>
-                </div>
+              <div className="space-y-1">
+                <p className="text-sm uppercase text-[var(--color-text-secondary)] tracking-wide">Your Profile</p>
+                <h2 className="text-2xl font-semibold">Remember Me</h2>
+                <p className="text-xs text-[var(--color-text-secondary)]">
+                  {stats.peopleCount} people · {stats.venuesWithPeople} venues · {stats.uniqueTagCount} tags used
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-center">
@@ -132,7 +127,7 @@ export default function ProfilePanel({
                 ))}
               </div>
 
-              <div className="space-y-3">
+              <section className="space-y-3 border-t border-white/40 pt-4">
                 <div className="flex items-center gap-2">
                   <TrendingUp size={18} className="text-[var(--color-accent)]" />
                   <div>
@@ -187,9 +182,9 @@ export default function ProfilePanel({
                     </div>
                   </div>
                 </div>
-              </div>
+              </section>
 
-              <div className="space-y-2 pb-2">
+              <section className="space-y-2 pb-2 border-t border-white/40 pt-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Award size={18} className="text-[var(--color-accent)]" />
                   <div>
@@ -305,7 +300,7 @@ export default function ProfilePanel({
                     );
                   })}
                 </div>
-              </div>
+              </section>
             </div>
           </motion.div>
         </motion.div>

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo } from "react";
 import type { Person, Venue } from "../types";
 import useLocalStorage from "./useLocalStorage";
-import { trackEvent } from "../lib/analytics";
 
 type AchievementType = "people" | "venues" | "tags" | "favorites";
 
@@ -316,11 +315,6 @@ export function useAchievements(
           if (onAchievementEarned) {
             onAchievementEarned(unlockedAchievement);
           }
-          trackEvent("achievement_unlocked", {
-            achievement_id: achievement.id,
-            achievement_type: achievement.type,
-            achievement_title: achievement.title,
-          });
         }
       });
       return changed ? next : prev;
