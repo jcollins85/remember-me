@@ -93,14 +93,38 @@ export default function VenueGroupList({
                   : [...prev, venue]
               );
             }}
-            className={`w-9 h-9 flex items-center justify-center rounded-full border ${
+            className={`w-9 h-9 flex items-center justify-center rounded-full border relative overflow-hidden ${
               isFavorite
                 ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)]"
                 : "bg-white/80 text-[var(--color-text-secondary)] border-white/80"
             }`}
             title={isFavorite ? "Unmark Favorite Venue" : "Mark as Favorite Venue"}
           >
-            <Star size={16} fill={isFavorite ? "currentColor" : "transparent"} />
+            <span
+              className={`absolute inset-0 rounded-full bg-white/20 blur-lg transition-opacity duration-300 ${
+                isFavorite ? "opacity-60" : "opacity-0"
+              }`}
+            />
+            <motion.span
+              className="absolute inset-0 rounded-full border border-white/70 pointer-events-none"
+              animate={
+                isFavorite
+                  ? { scale: [1, 1.3, 0.7], opacity: [0.6, 0.4, 0] }
+                  : { scale: [1, 0.75, 1], opacity: [0.3, 0.6, 0] }
+              }
+              transition={{ duration: 0.4 }}
+            />
+            <motion.span
+              animate={
+                isFavorite
+                  ? { scale: [0.85, 1.25, 1], rotate: [0, -12, 0] }
+                  : { scale: [1.1, 0.9, 1], rotate: [0, 8, 0] }
+              }
+              transition={{ duration: 0.35 }}
+              className="relative inline-flex"
+            >
+              <Star size={16} fill={isFavorite ? "currentColor" : "transparent"} />
+            </motion.span>
           </button>
         )}
       </div>

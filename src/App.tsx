@@ -1,5 +1,6 @@
 // src/App.tsx
 import React, { useState, useEffect, useMemo, useDeferredValue } from "react";
+import { AnimatePresence } from "framer-motion";
 import { Person, Venue } from "./types";
 
 import { useTags } from "./context/TagContext";
@@ -284,7 +285,7 @@ function App() {
       />
 
       <main className="flex-1 pb-24 w-full">
-        <div className="p-4 sm:p-6 md:p-8 grid gap-4 max-w-3xl mx-auto w-full">
+        <div className="p-4 sm:p-6 md:p-8 lg:p-10 grid gap-4 md:gap-6 lg:gap-8 max-w-3xl lg:max-w-5xl mx-auto w-full">
           <ModalManager
             showAdd={showAddModal}
             onAddCancel={() => setShowAddModal(false)}
@@ -375,9 +376,15 @@ function App() {
         insights={usageInsights}
       />
 
-      {notification && (
-        <Notification message={notification.message} type={notification.type} />
-      )}
+      <AnimatePresence>
+        {notification && (
+          <Notification
+            key={notification.id}
+            message={notification.message}
+            type={notification.type}
+          />
+        )}
+      </AnimatePresence>
 
       <Footer />
     </div>

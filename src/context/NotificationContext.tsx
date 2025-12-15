@@ -1,22 +1,19 @@
 // src/context/NotificationContext.tsx
-import React, { createContext, ReactNode, useContext, useState, useCallback } from 'react';
+import React, { createContext, ReactNode, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import useLocalStorage from '../hooks/useLocalStorage';
 
 export type NotificationType = 'success' | 'error' | 'info';
 
-export interface Notification {
+export interface NotificationEntry {
+  id: string;
   message: string;
   type: NotificationType;
-}
-
-export interface NotificationEntry extends Notification {
-  id: string;
   timestamp: string;
   read: boolean;
 }
 
 interface NotificationContextType {
-  notification: Notification | null;
+  notification: NotificationEntry | null;
   showNotification: (message: string, type?: NotificationType) => void;
   notifications: NotificationEntry[];
   markAsRead: (id: string) => void;
@@ -31,8 +28,9 @@ interface NotificationProviderProps {
 }
 
 export const NotificationProvider = ({ children, duration = 3000 }: NotificationProviderProps) => {
-  const [notification, setNotification] = useState<Notification | null>(null);
+  const [notification, setNotification] = useState<NotificationEntry | null>(null);
   const [notifications, setNotifications] = useLocalStorage<NotificationEntry[]>('remember-me-notifications', []);
+  const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showNotification = useCallback((message: string, type: NotificationType = 'success') => {
     const entry: NotificationEntry = {
@@ -44,8 +42,11 @@ export const NotificationProvider = ({ children, duration = 3000 }: Notification
     };
 
     setNotifications((prev) => [entry, ...prev].slice(0, 25));
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), duration);
+    setNotification(entry);
+    if (dismissTimer.current) {
+      clearTimeout(dismissTimer.current);
+    }
+    dismissTimer.current = setTimeout(() => setNotification(null), duration);
   }, [duration, setNotifications]);
 
   const markAsRead = useCallback((id: string) => {
@@ -59,6 +60,14 @@ export const NotificationProvider = ({ children, duration = 3000 }: Notification
       prev.map((entry) => (entry.read ? entry : { ...entry, read: true }))
     );
   }, [setNotifications]);
+
+  useEffect(() => {
+    return () => {
+      if (dismissTimer.current) {
+        clearTimeout(dismissTimer.current);
+      }
+    };
+  }, []);
 
   return (
     <NotificationContext.Provider value={{ notification, showNotification, notifications, markAsRead, markAllAsRead }}>

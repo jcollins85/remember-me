@@ -1,4 +1,5 @@
 import React from 'react';
+import { AnimatePresence } from 'framer-motion';
 import PersonModal from '../people/PersonModal';
 import DeleteConfirmModal from '../people/DeleteConfirmModal';
 import type { Person, Tag } from '../../types';
@@ -42,41 +43,48 @@ export default function ModalManager({
   onDeleteConfirm,
 }: Props) {
   return (
-    <>      
-      {showAdd && (
-        <PersonModal
-          mode="add"
-          tags={tags}
-          people={people}
-          getTagIdByName={getTagIdByName}
-          getTagNameById={getTagNameById}
-          createTag={createTag}
-          onSubmit={(p) => onAdd(p)}
-          onCancel={onAddCancel}
-        />
-      )}
+    <>
+      <AnimatePresence>
+        {showAdd && (
+          <PersonModal
+            key="add-person"
+            mode="add"
+            tags={tags}
+            people={people}
+            getTagIdByName={getTagIdByName}
+            getTagNameById={getTagNameById}
+            createTag={createTag}
+            onSubmit={(p) => onAdd(p)}
+            onCancel={onAddCancel}
+          />
+        )}
 
-      {editingPerson && (
-        <PersonModal
-          mode="edit"
-          person={editingPerson}
-          tags={tags}
-          people={people}
-          getTagIdByName={getTagIdByName}
-          getTagNameById={getTagNameById}
-          createTag={createTag}
-          onSubmit={(p) => onEdit(p)}
-          onCancel={onEditCancel}
-        />
-      )}
+        {editingPerson && (
+          <PersonModal
+            key="edit-person"
+            mode="edit"
+            person={editingPerson}
+            tags={tags}
+            people={people}
+            getTagIdByName={getTagIdByName}
+            getTagNameById={getTagNameById}
+            createTag={createTag}
+            onSubmit={(p) => onEdit(p)}
+            onCancel={onEditCancel}
+          />
+        )}
+      </AnimatePresence>
 
-      {personToDelete && (
-        <DeleteConfirmModal
-          name={personToDelete.name}
-          onCancel={onDeleteCancel}
-          onConfirm={() => onDeleteConfirm(personToDelete.id)}
-        />
-      )}
+      <AnimatePresence>
+        {personToDelete && (
+          <DeleteConfirmModal
+            key="delete-person"
+            name={personToDelete.name}
+            onCancel={onDeleteCancel}
+            onConfirm={() => onDeleteConfirm(personToDelete.id)}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }

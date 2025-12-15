@@ -1,4 +1,5 @@
 import React from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { X, CheckCircle2, Info, AlertTriangle } from "lucide-react";
 import { NotificationEntry } from "../../context/NotificationContext";
 
@@ -32,19 +33,26 @@ export default function NotificationPanel({
   onMarkAllRead,
   onMarkRead,
 }: NotificationPanelProps) {
-  if (!open) return null;
-
   const hasNotifications = notifications.length > 0;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex justify-end bg-black/10 backdrop-blur-[2px]"
-      onClick={onClose}
-    >
-      <div
-        className="glass-panel w-full max-w-sm mt-20 mr-4 p-4 space-y-4 max-h-[70vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-50 flex justify-end bg-black/10 backdrop-blur-[2px]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+        >
+          <motion.div
+            className="glass-panel w-full max-w-sm mt-20 mr-4 p-4 space-y-4 max-h-[70vh] overflow-y-auto"
+            initial={{ opacity: 0, scale: 0.95, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 16 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            onClick={(e) => e.stopPropagation()}
+          >
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">
@@ -110,7 +118,9 @@ export default function NotificationPanel({
             })}
           </div>
         )}
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

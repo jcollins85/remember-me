@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import PersonForm from "./PersonForm";
 import { Person, Tag } from "../../types";
 
@@ -32,12 +33,20 @@ export default function PersonModal({
   const initialData = mode === "edit" ? person : undefined;
 
   return (
-    <div
+    <motion.div
       className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center overflow-y-auto overscroll-contain"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
       onClick={onCancel}
     >
-      <div
+      <motion.div
         className="w-full max-w-md m-4 flex flex-col max-h-[90vh] overflow-hidden bg-white rounded-2xl shadow-2xl"
+        initial={{ opacity: 0, scale: 0.95, y: 24 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 24 }}
+        transition={{ duration: 0.25, ease: "easeInOut" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* HEADER */}
@@ -80,7 +89,7 @@ export default function PersonModal({
             Cancel
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

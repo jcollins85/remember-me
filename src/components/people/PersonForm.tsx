@@ -174,9 +174,10 @@ export default function PersonForm({
       return;
     }
     // Validate other fields
+    const normalizedDate = dateMet || today;
     const { isValid, errors } = validatePersonForm({
       name,
-      dateMet,
+      dateMet: normalizedDate,
       venue,
       tags: currentTags,
       position,
@@ -188,6 +189,11 @@ export default function PersonForm({
       setFormErrors(errors);
       return;
     }
+    setFormErrors({});
+    if (!dateMet) {
+      setDateMet(normalizedDate);
+    }
+    setFormErrors({});
 
     // Commit any leftover tag
     const leftover = currentInput.trim();
@@ -210,7 +216,7 @@ export default function PersonForm({
       position: position.trim() || undefined,
       venueId: matchedVenue.id,
       description: description.trim() || undefined,
-      dateMet,
+      dateMet: normalizedDate,
       createdAt: mode === "add" ? now : initialData.createdAt!,
       updatedAt: mode === "edit" ? now : undefined,
       locationTag: locationTag || undefined,
@@ -257,14 +263,16 @@ export default function PersonForm({
       {/* Date Met */}
       <div>
         <label htmlFor="date-met" className={labelClass}>
-          Date Met
+          Date Met <span className="text-red-500">*</span>
         </label>
         <input
           id="date-met"
           type="date"
           value={dateMet}
           onChange={(e) => setDateMet(e.target.value)}
-          className={inputClass}
+          className={`${inputClass} ${formErrors.dateMet ? "border-red-400" : ""}`}
+          required
+          max={today}
         />
         {formErrors.dateMet && (
           <p className="text-red-500 text-xs mt-1">{formErrors.dateMet}</p>

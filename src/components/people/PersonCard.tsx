@@ -1,5 +1,6 @@
 // PersonCard.tsx
 import { Person } from "../../types";
+import { motion } from "framer-motion";
 import { Pencil, Star, Trash2 } from "lucide-react";
 
 interface Props {
@@ -58,7 +59,7 @@ export default function PersonCard({
   };
 
   return (
-    <div className="bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-2xl p-4">
+    <div className="bg-[var(--color-card)] rounded-2xl p-4">
       <div className="flex justify-between items-start gap-4">
         <div>
           <h3 className="text-lg font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
@@ -66,13 +67,38 @@ export default function PersonCard({
             <button
               onClick={() => onToggleFavorite(person.id)}
               title="Toggle favorite"
-              className={`p-1 rounded-full border ${
+              className={`w-8 h-8 flex items-center justify-center rounded-full border relative overflow-hidden ${
                 person.favorite
                   ? "bg-[var(--color-accent-muted)] text-[var(--color-accent)] border-[var(--color-accent)]"
                   : "bg-[var(--color-card)] text-[var(--color-text-secondary)] border-[var(--color-card-border)]"
               }`}
             >
-              <Star size={16} fill={person.favorite ? "currentColor" : "transparent"} />
+              <span
+                className={`absolute inset-0 rounded-full bg-[var(--color-accent)]/10 blur-lg transition-opacity duration-300 ${
+                  person.favorite ? "opacity-100" : "opacity-0"
+                }`}
+              />
+              <motion.span
+                className="absolute inset-0 rounded-full border border-[var(--color-accent)]/60 pointer-events-none"
+                animate={
+                  person.favorite
+                    ? { scale: [1, 1.25, 0.6], opacity: [0.6, 0.4, 0] }
+                    : { scale: [1, 0.7, 1], opacity: [0.3, 0.6, 0] }
+                }
+                transition={{ duration: 0.35 }}
+                style={{ boxShadow: person.favorite ? "0 0 12px var(--color-accent)" : "0 0 6px rgba(0,0,0,0.12)" }}
+              />
+              <motion.span
+                animate={
+                  person.favorite
+                    ? { scale: [0.8, 1.3, 1], rotate: [0, 10, 0] }
+                    : { scale: [1.1, 0.9, 1], rotate: [0, -10, 0] }
+                }
+                transition={{ duration: 0.35 }}
+                className="relative inline-flex"
+              >
+                <Star size={16} fill={person.favorite ? "currentColor" : "transparent"} />
+              </motion.span>
             </button>
           </h3>
 

@@ -55,7 +55,7 @@ export default function VenueSections({
   }
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
+    <div className="grid gap-4 md:gap-6 lg:gap-8 md:grid-cols-2">
       {visibleVenueNames.map((venueName) => (
         <VenueGroupList
           key={venueName}

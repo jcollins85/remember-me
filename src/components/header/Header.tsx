@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, Dispatch, SetStateAction } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Settings, Bell, User, Search } from "lucide-react";
 import type { SortKey, VenueSortKey } from "../../utils/sortHelpers";
 import SegmentedControl, { Segment } from "../ui/SegmentedControl";
@@ -120,7 +121,7 @@ const Header: React.FC<HeaderProps> = ({
 
       {/* ── Utility Tier ─────────────────────────────────────────── */}
       <div className="bg-white/65 backdrop-blur-[30px] border-b border-white/40 shadow-level1 dark:bg-[var(--color-surface-alt)] dark:border-[var(--color-card-border)]">
-        <div className="px-4 pt-3">
+        <div className="px-4 sm:px-6 md:px-8 lg:px-10 pt-3">
           {/* Search with icon INSIDE the field */}
           <div className="relative w-full max-w-xl mx-auto">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-accent)] drop-shadow-sm" size={18} />
@@ -167,26 +168,31 @@ const Header: React.FC<HeaderProps> = ({
               </button>
             </div>
 
-            <div
-              className={`w-full max-w-xl overflow-hidden transition-[max-height,opacity] duration-250 ${
-                openSheet ? "max-h-36 opacity-100" : "max-h-0 opacity-0"
-              }`}
-            >
+            <AnimatePresence initial={false}>
               {openSheet && (
-                <div className="mt-2 bg-white/90 backdrop-blur-lg border border-white/40 px-4 py-3 rounded-2xl shadow-level2 dark:bg-[var(--color-card)] dark:border-[var(--color-card-border)]">
-                  <SortControls
-                    variant={openSheet}
-                    venueSortKey={venueSortKey}
-                    venueSortDir={venueSortDir}
-                    setVenueSortKey={setVenueSortKey}
-                    setVenueSortDir={setVenueSortDir}
-                    personSort={personSort}
-                    setPersonSort={setPersonSort}
-                    onClose={() => setOpenSheet(null)}
-                  />
-                </div>
+                <motion.div
+                  key={openSheet}
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  className="w-full max-w-xl overflow-hidden"
+                >
+                  <div className="mt-2 bg-white/90 backdrop-blur-lg border border-white/40 px-4 py-3 rounded-2xl shadow-level2 dark:bg-[var(--color-card)] dark:border-[var(--color-card-border)]">
+                    <SortControls
+                      variant={openSheet}
+                      venueSortKey={venueSortKey}
+                      venueSortDir={venueSortDir}
+                      setVenueSortKey={setVenueSortKey}
+                      setVenueSortDir={setVenueSortDir}
+                      personSort={personSort}
+                      setPersonSort={setPersonSort}
+                      onClose={() => setOpenSheet(null)}
+                    />
+                  </div>
+                </motion.div>
               )}
-            </div>
+            </AnimatePresence>
           </div>
 
           {/* Segmented control centered */}
