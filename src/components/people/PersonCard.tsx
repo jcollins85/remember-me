@@ -145,10 +145,10 @@ export default function PersonCard({
               <motion.button
                 key={tagId}
                 onClick={() => toggleTagFilter(tagId)}
-                className={`px-3 py-1 rounded-full text-sm border ${
+                className={`px-3 py-1 rounded-full text-sm transition-colors ${
                   isActive
-                    ? "bg-[var(--color-accent)] text-white shadow-sm border-[var(--color-accent)]"
-                    : "bg-[var(--color-accent-muted)] text-[var(--color-text-primary)] border-[var(--color-accent-muted)]/80 hover:bg-[var(--color-accent-muted)]/80"
+                    ? "bg-[var(--color-accent)] text-white shadow-sm"
+                    : "bg-[var(--color-accent-muted)] text-[var(--color-text-primary)]/85 hover:bg-[var(--color-accent-muted)]/90"
                 }`}
                 title={
                   isActive

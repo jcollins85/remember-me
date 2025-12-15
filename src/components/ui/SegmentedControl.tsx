@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { Sparkles, Heart } from 'lucide-react';
+import { LayoutGroup, motion } from 'framer-motion';
 
 export type Segment<T extends string> = { key: T; label: string };
 
@@ -18,30 +19,44 @@ function SegmentedControl<T extends string>({
   className = '',
 }: SegmentedControlProps<T>) {
   return (
-    <div
-      className={`inline-flex bg-white/80 backdrop-blur-lg border border-white/70 rounded-full shadow-level1 overflow-hidden ${className}`}
-    >
-      {segments.map(seg => {
-        const isSelected = seg.key === value;
-        const icon =
-          seg.key === 'all' ? <Sparkles size={14} className="mr-1.5" /> : <Heart size={14} className="mr-1.5" />;
+    <LayoutGroup>
+      <div
+        className={`relative inline-flex rounded-full bg-[var(--color-card)]/80 border border-[var(--color-card-border)]/70 backdrop-blur-lg overflow-hidden shadow-[0_8px_18px_rgba(15,23,42,0.07)] ${className}`}
+      >
+        {segments.map(seg => {
+          const isSelected = seg.key === value;
+          const icon =
+            seg.key === 'all' ? <Sparkles size={14} className="mr-1.5" /> : <Heart size={14} className="mr-1.5" />;
 
-        return (
-          <button
-            key={seg.key}
-            onClick={() => onChange(seg.key)}
-            className={`flex items-center px-4 py-1.5 text-sm font-medium whitespace-nowrap transition ${
-              isSelected
-                ? 'bg-[var(--color-accent)] text-white'
-                : 'text-[var(--color-text-primary)] hover:bg-white/40'
-            }`}
-          >
-            {icon}
-            {seg.label}
-          </button>
-        );
-      })}
-    </div>
+          return (
+            <button
+              key={seg.key}
+              type="button"
+              aria-pressed={isSelected}
+              onClick={() => onChange(seg.key)}
+              className={`relative isolate flex items-center gap-1.5 px-[11px] min-h-[32px] text-[0.82rem] font-medium transition-all duration-250 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]/25 ${
+                isSelected
+                  ? 'text-white drop-shadow-[0_2px_8px_rgba(15,23,42,0.25)] opacity-100'
+                  : 'text-[var(--color-text-secondary)] opacity-40 hover:opacity-100 hover:text-[var(--color-text-primary)]'
+              }`}
+            >
+              {isSelected && (
+                <motion.span
+                  layoutId="segmentHighlight"
+                  className="absolute inset-0 rounded-full shadow-[0_10px_24px_rgba(15,23,42,0.18)]"
+                  style={{ backgroundColor: 'var(--color-accent)' }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 32, mass: 0.35 }}
+                />
+              )}
+              <span className="relative flex items-center">
+                {icon}
+                {seg.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </LayoutGroup>
   );
 }
 
