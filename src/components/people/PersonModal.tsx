@@ -87,7 +87,7 @@ export default function PersonModal({
         </div>
 
         <div
-          className="relative flex-1 overflow-y-auto px-6 py-4"
+          className="relative flex-1 overflow-y-auto px-6 py-4 bg-[var(--color-card)]"
           style={{ scrollbarGutter: "stable", WebkitOverflowScrolling: "touch" }}
         >
           <PersonForm
