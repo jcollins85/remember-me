@@ -147,13 +147,21 @@ export default function SettingsPanel({
                       <button
                         key={item.key}
                         onClick={() => setTheme(item.key)}
-                        className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-start gap-3 ${
+                        className={`relative overflow-hidden w-full text-left px-4 py-3 rounded-2xl border transition flex items-start gap-3 ${
                           isActive
-                            ? "border-[color:var(--color-accent)] bg-[color:var(--color-accent-muted)] text-[var(--color-accent)]"
+                            ? "border-[color:var(--color-accent)] bg-[color:var(--color-accent-muted)] text-[var(--color-accent)] shadow-[0_12px_30px_rgba(15,23,42,0.18)]"
                             : "border-[color:var(--color-card-border)] bg-[var(--color-card)] text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/90"
                         }`}
                       >
-                        <div className="mt-0.5">{item.icon}</div>
+                        {isActive && (
+                          <motion.span
+                            className="absolute inset-0 rounded-2xl pointer-events-none bg-gradient-to-r from-white/50 via-white/10 to-transparent"
+                            initial={{ opacity: 0, x: -80 }}
+                            animate={{ opacity: [0, 0.7, 0], x: [-80, 80] }}
+                            transition={{ duration: 0.6 }}
+                          />
+                        )}
+                        <motion.div animate={isActive ? { rotate: [0, -8, 0], scale: [1, 1.1, 1] } : { rotate: 0, scale: 1 }} transition={{ duration: 0.35 }} className="mt-0.5">{item.icon}</motion.div>
                         <div>
                           <p className="font-semibold">{item.name}</p>
                           <p className="text-xs text-[var(--color-text-secondary)]">{item.description}</p>

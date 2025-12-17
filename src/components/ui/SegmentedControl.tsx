@@ -48,10 +48,14 @@ function SegmentedControlComponent<T extends string>({
                   transition={{ type: 'spring', stiffness: 420, damping: 32, mass: 0.35 }}
                 />
               )}
-              <span className="relative flex items-center">
+              <motion.span
+                className="relative flex items-center"
+                animate={isSelected ? { scale: [1, 1.1, 1] } : { scale: 1 }}
+                transition={{ duration: 0.25 }}
+              >
                 {icon}
                 {seg.label}
-              </span>
+              </motion.span>
             </button>
           );
         })}

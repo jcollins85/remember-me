@@ -1,4 +1,3 @@
-// PersonCard.tsx
 import { Person } from "../../types";
 import { motion } from "framer-motion";
 import { Pencil, Star, Trash2 } from "lucide-react";
