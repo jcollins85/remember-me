@@ -21,7 +21,7 @@ function SegmentedControlComponent<T extends string>({
   return (
     <LayoutGroup>
       <div
-        className={`relative inline-flex rounded-full bg-[var(--color-card)]/90 border border-[var(--color-card-border)]/60 backdrop-blur-lg overflow-hidden shadow-[0_8px_18px_rgba(15,23,42,0.07)] ${className}`}
+        className={`relative inline-flex rounded-full bg-[var(--color-card)]/90 backdrop-blur-lg overflow-hidden shadow-[0_8px_18px_rgba(15,23,42,0.07)] ${className}`}
       >
         {segments.map(seg => {
           const isSelected = seg.key === value;
@@ -43,8 +43,8 @@ function SegmentedControlComponent<T extends string>({
               {isSelected && (
                 <motion.span
                   layoutId="segmentHighlight"
-                  className="absolute inset-0 rounded-full shadow-[0_10px_24px_rgba(15,23,42,0.18)]"
-                  style={{ backgroundColor: 'var(--color-accent)' }}
+                  className="absolute inset-0 rounded-full shadow-[0_10px_24px_rgba(15,23,42,0.18)] border"
+                  style={{ backgroundColor: 'var(--color-accent)', borderColor: 'var(--color-accent)' }}
                   transition={{ type: 'spring', stiffness: 420, damping: 32, mass: 0.35 }}
                 />
               )}

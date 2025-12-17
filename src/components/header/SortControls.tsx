@@ -100,8 +100,8 @@ export default function SortControls({
               onClick={onSelect}
               className={`w-full text-left px-4 py-3 rounded-2xl border transition duration-200 flex items-start justify-between gap-2 ${
                 active
-                  ? "border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-accent)]"
-                  : "border-white/70 bg-white/80 text-[var(--color-text-primary)] hover:bg-white"
+                  ? "border-[color:var(--color-accent)] bg-[color:var(--color-accent-muted)] text-[var(--color-accent)]"
+                  : "border-[color:var(--color-card-border)] bg-[var(--color-card)] text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/90"
               }`}
             >
               <div>
@@ -111,8 +111,8 @@ export default function SortControls({
                 </p>
               </div>
               {active && (
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-[var(--color-accent)] shadow-[0_4px_10px_rgba(15,23,42,0.12)]">
-                  <Check size={14} />
+                <span className="inline-flex h-6 w-6 items-center justify-center self-center rounded-full bg-[var(--color-card)] text-[var(--color-accent)] shadow-[0_4px_10px_rgba(15,23,42,0.12)]">
+                  <Check size={14} className="translate-y-[0.5px]" />
                 </span>
               )}
             </button>

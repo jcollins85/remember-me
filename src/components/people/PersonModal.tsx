@@ -76,7 +76,7 @@ export default function PersonModal({
           <button
             type="button"
             aria-label="Close modal"
-            className="absolute top-3 right-3 h-9 w-9 rounded-full bg-white/85 text-[var(--color-text-primary)] shadow-[0_8px_18px_rgba(15,23,42,0.15)] hover:bg-white transition flex items-center justify-center"
+            className="absolute top-3 right-3 h-9 w-9 rounded-full bg-[var(--color-card)] text-[var(--color-text-primary)] border border-[var(--color-card-border)] shadow-[0_8px_18px_rgba(15,23,42,0.15)] hover:bg-[var(--color-card)]/90 transition flex items-center justify-center"
             onClick={(event) => {
               event.stopPropagation();
               onCancel();

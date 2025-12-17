@@ -86,9 +86,9 @@ const Header: React.FC<HeaderProps> = ({
       <div
         className={`px-4 sm:px-6 md:px-8 lg:px-10 ${
           isTopCollapsed ? "py-0 h-0" : "py-2.5"
-        } bg-white/80 backdrop-blur-[26px] border-b border-white/40 shadow-[0_10px_22px_rgba(15,23,42,0.1)] flex items-center justify-between transition-all duration-300 ${
+        } bg-[var(--color-surface)]/90 backdrop-blur-[26px] border-b border-[var(--color-card-border)]/70 shadow-[0_10px_22px_rgba(15,23,42,0.12)] flex items-center justify-between transition-all duration-300 ${
           isTopCollapsed ? "-translate-y-2 opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
-        } dark:bg-[var(--color-surface)] dark:border-[var(--color-card-border)]`}
+        }`}
       >
         <button
           aria-label="Settings"
@@ -110,7 +110,7 @@ const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* ── Utility Tier ─────────────────────────────────────────── */}
-      <div className="bg-white/70 backdrop-blur-[26px] border-b border-white/40 shadow-[0_14px_30px_rgba(15,23,42,0.1)] dark:bg-[var(--color-surface-alt)] dark:border-[var(--color-card-border)]">
+      <div className="bg-[var(--color-surface-alt)]/95 backdrop-blur-[26px] border-b border-[var(--color-card-border)]/70 shadow-[0_14px_30px_rgba(15,23,42,0.12)]">
         <div className="px-4 sm:px-6 md:px-8 lg:px-10 pt-3.5 pb-4 space-y-3.5">
           {/* Search with icon INSIDE the field */}
           <div className="relative w-full max-w-2xl mx-auto">
@@ -120,7 +120,7 @@ const Header: React.FC<HeaderProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by person, tag or venue…"
-              className="w-full h-12 pl-10 pr-12 rounded-full bg-white/80 backdrop-blur-sm border border-white/70 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] shadow-level1 dark:bg-[var(--color-card)] dark:border-[var(--color-card-border)]"
+              className="w-full h-12 pl-10 pr-12 rounded-full bg-[var(--color-card)] backdrop-blur-sm border border-[var(--color-card-border)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] shadow-level1"
             />
             {searchQuery && (
               <button
@@ -139,8 +139,8 @@ const Header: React.FC<HeaderProps> = ({
                 onClick={() => toggleSheet("venue")}
                 className={`px-4 py-1 rounded-full text-xs font-semibold transition pill-chip ${
                   sortSheet === "venue"
-                    ? "border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-accent)] shadow-level1"
-                    : "text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)]"
+                    ? "border-[color:var(--color-accent)] bg-[color:var(--color-accent-muted)] text-[var(--color-accent)] shadow-level1"
+                    : "border-[color:var(--color-card-border)] bg-[var(--color-card)] text-[var(--color-text-primary)]"
                 }`}
               >
                 Venues · {venueSortKey === "name" ? "Name" : venueSortKey === "recentVisit" ? "Recent" : "Known"}
@@ -150,8 +150,8 @@ const Header: React.FC<HeaderProps> = ({
                 onClick={() => toggleSheet("people")}
                 className={`px-4 py-1 rounded-full text-xs font-semibold transition pill-chip ${
                   sortSheet === "people"
-                    ? "border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-accent)] shadow-level1"
-                    : "text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)]"
+                    ? "border-[color:var(--color-accent)] bg-[color:var(--color-accent-muted)] text-[var(--color-accent)] shadow-level1"
+                    : "border-[color:var(--color-card-border)] bg-[var(--color-card)] text-[var(--color-text-primary)]"
                 }`}
               >
                 People · {personSort.replace("dateMet", "Met").replace("updatedAt", "Updated").replace("asc", " ↑").replace("desc", " ↓")}
@@ -178,7 +178,7 @@ const Header: React.FC<HeaderProps> = ({
             onClick={() => setSortSheet(null)}
           >
             <motion.div
-              className="glass-panel w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col relative"
+              className="glass-panel w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col relative bg-[var(--color-card)]"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
@@ -187,7 +187,7 @@ const Header: React.FC<HeaderProps> = ({
             >
               <button
                 type="button"
-                className="absolute top-3 right-3 h-9 w-9 rounded-full bg-white/85 text-[var(--color-text-primary)] shadow-[0_8px_18px_rgba(15,23,42,0.15)] hover:bg-white flex items-center justify-center"
+                className="absolute top-3 right-3 h-9 w-9 rounded-full bg-[var(--color-card)] text-[var(--color-text-primary)] border border-[var(--color-card-border)] shadow-[0_8px_18px_rgba(15,23,42,0.15)] hover:bg-[var(--color-card)]/90 flex items-center justify-center"
                 onClick={(event) => {
                   event.stopPropagation();
                   setSortSheet(null);

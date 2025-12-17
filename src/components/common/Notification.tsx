@@ -60,7 +60,7 @@ export default function Notification({
         {onDismiss && (
           <button
             type="button"
-            className="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-white/85 text-[var(--color-text-primary)] shadow-[0_8px_18px_rgba(15,23,42,0.15)] hover:bg-white flex items-center justify-center"
+            className="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-[var(--color-card)] text-[var(--color-text-primary)] shadow-[0_8px_18px_rgba(15,23,42,0.15)] hover:bg-[var(--color-card)]/90 flex items-center justify-center"
             aria-label="Dismiss notification"
             onClick={(e) => {
               e.stopPropagation();

@@ -239,7 +239,7 @@ export default function PersonForm({
 
   const labelClass = "block text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] mb-2";
   const inputClass =
-    "w-full px-3 py-2 rounded-2xl border border-white/70 bg-white/90 text-base text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] shadow-level1";
+    "w-full px-3 py-2 rounded-2xl border border-[var(--color-card-border)] bg-[var(--color-card)] text-base text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] shadow-level1";
 
   const useOverflowIndicator = (deps: React.DependencyList) => {
     const ref = useRef<HTMLDivElement | null>(null);

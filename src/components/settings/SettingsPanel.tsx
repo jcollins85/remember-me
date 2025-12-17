@@ -104,7 +104,7 @@ export default function SettingsPanel({
           >
             <button
               type="button"
-              className="absolute top-3 right-3 h-9 w-9 rounded-full bg-white/85 text-[var(--color-text-primary)] shadow-[0_8px_18px_rgba(15,23,42,0.15)] hover:bg-white flex items-center justify-center"
+              className="absolute top-3 right-3 h-9 w-9 rounded-full bg-[var(--color-card)] text-[var(--color-text-primary)] shadow-[0_8px_18px_rgba(15,23,42,0.15)] hover:bg-[var(--color-card)]/90 flex items-center justify-center"
               onClick={(event) => {
                 event.stopPropagation();
                 onClose();
@@ -146,8 +146,8 @@ export default function SettingsPanel({
                         onClick={() => setTheme(item.key)}
                         className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-start gap-3 ${
                           isActive
-                            ? "border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-accent)]"
-                            : "border-white/70 bg-white/70 text-[var(--color-text-primary)] hover:bg-white"
+                            ? "border-[color:var(--color-accent)] bg-[color:var(--color-accent-muted)] text-[var(--color-accent)]"
+                            : "border-[color:var(--color-card-border)] bg-[var(--color-card)] text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/90"
                         }`}
                       >
                         <div className="mt-0.5">{item.icon}</div>
@@ -188,7 +188,7 @@ export default function SettingsPanel({
                     <button
                       onClick={handleExport}
                       disabled={isExporting}
-                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-white/80 bg-white px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-white/90 disabled:opacity-60"
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-[color:var(--color-card-border)] bg-[var(--color-card)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/90 disabled:opacity-60"
                     >
                       <Download size={16} />
                       {isExporting ? "Exporting…" : "Export JSON"}
@@ -227,7 +227,7 @@ export default function SettingsPanel({
                   <div className="grid gap-3 sm:grid-cols-2">
                     <button
                       onClick={onResetData}
-                      className="px-4 py-3 rounded-2xl border border-white/80 bg-white text-sm font-semibold text-[var(--color-text-primary)] hover:bg-white/90 transition"
+                      className="px-4 py-3 rounded-2xl border border-[color:var(--color-card-border)] bg-[var(--color-card)] text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/90 transition"
                     >
                       Reset sample data
                     </button>

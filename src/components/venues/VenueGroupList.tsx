@@ -67,7 +67,7 @@ export default function VenueGroupList({
 
   return (
     <div
-      className={`mb-2.5 glass-panel border border-white/30 px-4 py-3 rounded-3xl shadow-level1 ${
+      className={`mb-2.5 glass-panel border border-[var(--color-card-border)]/70 px-4 py-3 rounded-3xl shadow-level1 ${
         isUnclassified ? "border-dashed" : ""
       }`}
     >
@@ -96,7 +96,7 @@ export default function VenueGroupList({
             className={`w-9 h-9 flex items-center justify-center rounded-full border relative overflow-hidden ${
               isFavorite
                 ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)]"
-                : "bg-white/80 text-[var(--color-text-secondary)] border-white/80"
+                : "bg-[var(--color-card)] text-[var(--color-text-secondary)] border-[var(--color-card-border)]"
             }`}
             title={isFavorite ? "Unmark Favorite Venue" : "Mark as Favorite Venue"}
           >
