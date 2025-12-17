@@ -1,4 +1,5 @@
 import React from "react";
+import { MapPin, Users, Check } from "lucide-react";
 import type { SortKey, VenueSortKey } from "../../utils/sortHelpers";
 
 type Direction = "asc" | "desc";
@@ -15,22 +16,22 @@ interface Props {
   onClose?: () => void;
 }
 
-const venuePresetOptions: Array<{ key: VenueSortKey; dir: Direction; label: string }> = [
-  { key: "name", dir: "asc", label: "Name A→Z" },
-  { key: "name", dir: "desc", label: "Name Z→A" },
-  { key: "recentVisit", dir: "desc", label: "Recent ↓" },
-  { key: "recentVisit", dir: "asc", label: "Recent ↑" },
-  { key: "knownCount", dir: "desc", label: "Most Known" },
-  { key: "knownCount", dir: "asc", label: "Least Known" },
+const venuePresetOptions: Array<{ key: VenueSortKey; dir: Direction; label: string; description: string }> = [
+  { key: "name", dir: "asc", label: "Name A→Z", description: "Alphabetical ascending" },
+  { key: "name", dir: "desc", label: "Name Z→A", description: "Alphabetical descending" },
+  { key: "recentVisit", dir: "desc", label: "Recent visits first", description: "Newest activity at the top" },
+  { key: "recentVisit", dir: "asc", label: "Oldest visits first", description: "Revisit older spots" },
+  { key: "knownCount", dir: "desc", label: "Most known people", description: "Heaviest activity first" },
+  { key: "knownCount", dir: "asc", label: "Least known people", description: "Discover quieter venues" },
 ];
 
-const personPresetOptions: Array<{ value: PersonSortString; label: string }> = [
-  { value: "name-asc", label: "Name A→Z" },
-  { value: "name-desc", label: "Name Z→A" },
-  { value: "dateMet-desc", label: "Date Newest" },
-  { value: "dateMet-asc", label: "Date Oldest" },
-  { value: "updatedAt-desc", label: "Updated Newest" },
-  { value: "updatedAt-asc", label: "Updated Oldest" },
+const personPresetOptions: Array<{ value: PersonSortString; label: string; description: string }> = [
+  { value: "name-asc", label: "Name A→Z", description: "Alphabetical ascending" },
+  { value: "name-desc", label: "Name Z→A", description: "Alphabetical descending" },
+  { value: "dateMet-desc", label: "Newest meetings", description: "People you met most recently" },
+  { value: "dateMet-asc", label: "Oldest meetings", description: "Older connections first" },
+  { value: "updatedAt-desc", label: "Recently updated", description: "Latest edits to profiles" },
+  { value: "updatedAt-asc", label: "Oldest updates", description: "See older notes again" },
 ];
 
 export default function SortControls({
@@ -44,60 +45,79 @@ export default function SortControls({
   onClose,
 }: Props) {
   const venueActiveToken = `${venueSortKey}-${venueSortDir}`;
+  const isVenue = variant === "venue";
 
-  const chips =
-    variant === "venue"
-      ? venuePresetOptions.map(({ key, dir, label }) => {
-          const token = `${key}-${dir}`;
-          const isActive = token === venueActiveToken;
-          return (
-            <button
-              key={token}
-              onClick={() => {
-                setVenueSortKey(key);
-                setVenueSortDir(dir);
-                onClose?.();
-              }}
-              className={`px-3 py-1 rounded-full text-[12px] border transition ${
-                isActive
-                  ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)]"
-                  : "bg-white text-[var(--color-text-secondary)] border-white/70 hover:bg-white/90"
-              }`}
-            >
-              {label}
-            </button>
-          );
-        })
-      : personPresetOptions.map(({ value, label }) => {
-          const isActive = value === personSort;
-          return (
-            <button
-              key={value}
-              onClick={() => {
-                setPersonSort(value);
-                onClose?.();
-              }}
-              className={`px-3 py-1 rounded-full text-[12px] border transition ${
-                isActive
-                  ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)]"
-                  : "bg-white text-[var(--color-text-secondary)] border-white/70 hover:bg-white/90"
-              }`}
-            >
-              {label}
-            </button>
-          );
-        });
+  const options = isVenue
+    ? venuePresetOptions.map(({ key, dir, label, description }) => {
+        const token = `${key}-${dir}`;
+        const active = token === venueActiveToken;
+        return {
+          key: token,
+          label,
+          description,
+          active,
+          onSelect: () => {
+            setVenueSortKey(key);
+            setVenueSortDir(dir);
+            onClose?.();
+          },
+        };
+      })
+    : personPresetOptions.map(({ value, label, description }) => {
+        const active = value === personSort;
+        return {
+          key: value,
+          label,
+          description,
+          active,
+          onSelect: () => {
+            setPersonSort(value);
+            onClose?.();
+          },
+        };
+      });
 
-  const label =
-    variant === "venue" ? "Sort venues by" : "Sort people by";
+  const label = isVenue ? "Sort venues" : "Sort people";
+  const HelperIcon = isVenue ? MapPin : Users;
 
   return (
-    <div className="rounded-2xl border border-white/60 bg-white px-4 py-3 space-y-2 text-left">
-      <p className="text-[11px] uppercase tracking-wide text-[var(--color-text-secondary)]">
-        {label}
-      </p>
-      <div className="flex flex-wrap gap-2 text-[13px]">
-        {chips}
+    <div className="space-y-4 text-left">
+      <div className="flex items-center gap-3 px-1">
+        <div className="w-10 h-10 rounded-2xl bg-[var(--color-accent-muted)] text-[var(--color-accent)] flex items-center justify-center shadow-[0_8px_18px_rgba(15,23,42,0.15)]">
+          <HelperIcon size={18} />
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">{label}</p>
+          <p className="text-sm text-[var(--color-text-secondary)]/90">Choose how {isVenue ? "venues" : "people"} are ordered.</p>
+        </div>
+      </div>
+
+      <div className="rounded-2xl bg-[var(--color-card)]/95 px-3 py-3 shadow-level1/40">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[13px]">
+          {options.map(({ key, label: optionLabel, description, active, onSelect }) => (
+            <button
+              key={key}
+              onClick={onSelect}
+              className={`w-full text-left px-4 py-3 rounded-2xl border transition duration-200 flex items-start justify-between gap-2 ${
+                active
+                  ? "border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-accent)]"
+                  : "border-white/70 bg-white/80 text-[var(--color-text-primary)] hover:bg-white"
+              }`}
+            >
+              <div>
+                <p className="text-sm font-semibold">{optionLabel}</p>
+                <p className={`text-xs ${active ? "text-[var(--color-accent)]/90" : "text-[var(--color-text-secondary)]"}`}>
+                  {description}
+                </p>
+              </div>
+              {active && (
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-[var(--color-accent)] shadow-[0_4px_10px_rgba(15,23,42,0.12)]">
+                  <Check size={14} />
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

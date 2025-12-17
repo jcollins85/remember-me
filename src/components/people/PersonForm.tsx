@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useVenues } from "../../context/VenueContext";
 import { UNCLASSIFIED } from "../../constants";
 import { Person, Tag, Venue } from "../../types";
@@ -48,10 +48,12 @@ export default function PersonForm({
     initialData.venueId
       ? venues.find((v) => v.id === initialData.venueId)?.name || ""
       : "";
-  const venueUsage = venues.reduce((acc, venue) => {
-    acc[venue.id] = people.filter((p) => p.venueId === venue.id).length;
-    return acc;
-  }, {} as Record<string, number>);
+  const venueUsage = useMemo(() => {
+    return venues.reduce((acc, venue) => {
+      acc[venue.id] = people.filter((p) => p.venueId === venue.id).length;
+      return acc;
+    }, {} as Record<string, number>);
+  }, [venues, people]);
   const {
     value: venue,
     touched: venueTouched,

@@ -20,7 +20,6 @@ import { useFilteredSortedPeople } from "./components/people/useFilteredSortedPe
 import { useVenueSort } from './components/venues/useVenueSort';
 import { useSearchSort } from './components/header/useSearchSort';
 import Notification from './components/common/Notification';
-import NotificationPanel from "./components/notifications/NotificationPanel";
 import SettingsPanel from "./components/settings/SettingsPanel";
 import ProfilePanel from "./components/profile/ProfilePanel";
 
@@ -52,7 +51,7 @@ function App() {
   // ── Settings panel ──
   const [showSettings, setShowSettings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const [showNotificationsPanel, setShowNotificationsPanel] = useState(false);
+  const [sortSheet, setSortSheet] = useState<"venue" | "people" | null>(null);
 
   // ── Sorting prefs ──  
   const [venueSortKey, setVenueSortKey] = useState<VenueSortKey>("recentVisit");
@@ -63,9 +62,6 @@ function App() {
   const {
     notification,
     showNotification,
-    notifications,
-    markAllAsRead,
-    markAsRead,
   } = useNotification();
   
   const {
@@ -175,16 +171,18 @@ function App() {
 
   // ── Prevent scrolling ──
   useEffect(() => {
-    document.body.style.overflow =
+    const shouldLock =
       showSettings ||
       showProfile ||
-      showNotificationsPanel ||
       showAddModal ||
       editingPerson ||
-      personToDelete
-        ? "hidden"
-        : "auto";
-  }, [showSettings, showProfile, showNotificationsPanel, showAddModal, editingPerson, personToDelete]);
+      personToDelete ||
+      sortSheet !== null;
+    document.body.style.overflow = shouldLock ? "hidden" : "auto";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [showSettings, showProfile, showAddModal, editingPerson, personToDelete, sortSheet]);
 
   const sortedVenues = useVenueSort(
     venues,
@@ -254,8 +252,6 @@ function App() {
     };
   }, [people, venuesById, getTagNameById]);
 
-  const unreadNotifications = notifications.filter((entry) => !entry.read).length;
-
   useEffect(() => {
     const usage = new Map<string, number>();
     people.forEach((person) => {
@@ -298,17 +294,14 @@ function App() {
         personSort={personSort}
         setPersonSort={setPersonSort}
         onOpenSettings={() => setShowSettings(true)}
-        onOpenNotifications={() => {
-          setShowNotificationsPanel(true);
-          markAllAsRead();
-        }}
         onOpenProfile={() => setShowProfile(true)}
         getTagNameById={getTagNameById}
         venueView={venueView}
         setVenueView={setVenueView}
         favoriteVenueCount={favoriteVenueNames.length}
         totalVenueCount={sortedVenueNames.length}
-        unreadNotifications={unreadNotifications}
+        sortSheet={sortSheet}
+        setSortSheet={setSortSheet}
       />
 
       <main className="flex-1 pb-24 w-full">
@@ -383,16 +376,6 @@ function App() {
         setFavoriteVenues={setFavoriteVenues}
         onResetData={handleResetData}
         onClearAchievements={handleClearAchievements}
-      />
-
-      <NotificationPanel
-        open={showNotificationsPanel}
-        onClose={() => setShowNotificationsPanel(false)}
-        notifications={notifications}
-        onMarkAllRead={markAllAsRead}
-        onMarkRead={(id) => {
-          markAsRead(id);
-        }}
       />
 
       <ProfilePanel

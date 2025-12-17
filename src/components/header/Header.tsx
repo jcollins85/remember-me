@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, Dispatch, SetStateAction } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Settings, Bell, User, Search } from "lucide-react";
+import { Settings, User, Search, X } from "lucide-react";
 import type { SortKey, VenueSortKey } from "../../utils/sortHelpers";
 import SegmentedControl, { Segment } from "../ui/SegmentedControl";
 import SortControls from "./SortControls";
@@ -23,8 +23,8 @@ interface HeaderProps {
   setVenueView: Dispatch<SetStateAction<"all" | "favs">>;
   favoriteVenueCount: number;
   totalVenueCount: number;
-  onOpenNotifications: () => void;
-  unreadNotifications: number;
+  sortSheet: "venue" | "people" | null;
+  setSortSheet: Dispatch<SetStateAction<"venue" | "people" | null>>;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -39,15 +39,14 @@ const Header: React.FC<HeaderProps> = ({
   personSort,
   setPersonSort,
   onOpenSettings,
-  onOpenNotifications,
   onOpenProfile,
   venueView,
   setVenueView,
   favoriteVenueCount,
   totalVenueCount,
-  unreadNotifications,
+  sortSheet,
+  setSortSheet,
 }) => {
-  const [sortSheet, setSortSheet] = useState<"venue" | "people" | null>(null);
   const [isTopCollapsed, setIsTopCollapsed] = useState(false);
 
   const toggleSheet = (sheet: "venue" | "people") => {
@@ -97,18 +96,6 @@ const Header: React.FC<HeaderProps> = ({
         </button>
         <img src="/remember-me-header-banner.png" alt="Remember Me" className="h-10 object-contain" />
         <div className="flex items-center gap-2">
-          <button
-            aria-label="Notifications"
-            className="p-2 rounded-md hover:bg-white/60 relative text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition"
-            onClick={onOpenNotifications}
-          >
-            <Bell size={20} />
-            {unreadNotifications > 0 && (
-              <span className="absolute -top-1 -right-1 bg-[var(--color-accent)] text-white text-[10px] leading-none px-1.5 py-0.5 rounded-full">
-                {unreadNotifications > 9 ? "9+" : unreadNotifications}
-              </span>
-            )}
-          </button>
           <button
             aria-label="Profile"
             className="p-2 rounded-md hover:bg-white/60 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition"
@@ -181,31 +168,43 @@ const Header: React.FC<HeaderProps> = ({
       <AnimatePresence>
         {sortSheet && (
           <motion.div
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end"
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center px-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSortSheet(null)}
           >
             <motion.div
-              className="w-full rounded-t-3xl bg-white px-6 pt-5 pb-6 space-y-5 shadow-[0_-18px_45px_rgba(15,23,42,0.25)]"
-              initial={{ y: 80 }}
-              animate={{ y: 0 }}
-              exit={{ y: 80 }}
-              transition={{ duration: 0.2 }}
+              className="glass-panel w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col relative"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="w-12 h-1.5 bg-black/10 rounded-full mx-auto mb-2" />
-              <SortControls
-                variant={sortSheet}
-                venueSortKey={venueSortKey}
-                venueSortDir={venueSortDir}
-                setVenueSortKey={setVenueSortKey}
-                setVenueSortDir={setVenueSortDir}
-                personSort={personSort}
-                setPersonSort={setPersonSort}
-                onClose={() => setSortSheet(null)}
-              />
+              <button
+                type="button"
+                className="absolute top-3 right-3 h-9 w-9 rounded-full bg-white/85 text-[var(--color-text-primary)] shadow-[0_8px_18px_rgba(15,23,42,0.15)] hover:bg-white flex items-center justify-center"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setSortSheet(null);
+                }}
+                aria-label="Close sort options"
+              >
+                <X size={16} />
+              </button>
+              <div className="overflow-y-auto px-5 pb-5 pt-6 space-y-4" style={{ scrollbarGutter: "stable" }}>
+                <SortControls
+                  variant={sortSheet}
+                  venueSortKey={venueSortKey}
+                  venueSortDir={venueSortDir}
+                  setVenueSortKey={setVenueSortKey}
+                  setVenueSortDir={setVenueSortDir}
+                  personSort={personSort}
+                  setPersonSort={setPersonSort}
+                  onClose={() => setSortSheet(null)}
+                />
+              </div>
             </motion.div>
           </motion.div>
         )}
