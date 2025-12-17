@@ -137,7 +137,7 @@ export default function SettingsPanel({
                     <p className="text-xs text-[var(--color-text-secondary)]">Pick the palette that suits your vibe.</p>
                   </div>
                 </div>
-                <div className="rounded-2xl bg-[var(--color-card)]/95 grid gap-3 shadow-level1/40 mt-1.5">
+                <div className="grid gap-3 mt-1.5">
                   {themes.map((item) => {
                     const isActive = item.key === theme;
                     return (
@@ -161,7 +161,10 @@ export default function SettingsPanel({
                 </div>
               </section>
 
-              <section className="space-y-2 border-t border-white/40 pt-4">
+              <section
+                className="space-y-2 border-t border-transparent pt-4"
+                style={{ borderColor: "color-mix(in srgb, var(--color-accent) 60%, transparent)" }}
+              >
                 <div className="flex items-center gap-2">
                   <CloudUpload size={16} className="text-[var(--color-accent)]" />
                   <div>
@@ -171,7 +174,7 @@ export default function SettingsPanel({
                     </p>
                   </div>
                 </div>
-                <div className="rounded-2xl bg-[var(--color-card)]/95 space-y-3 shadow-level1/40 mt-1.5">
+                <div className="space-y-3 mt-1.5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-[var(--color-accent-muted)] text-[var(--color-accent)]">

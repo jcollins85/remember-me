@@ -122,7 +122,7 @@ export default function ProfilePanel({
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className="rounded-2xl border border-[var(--color-card-border)] bg-[var(--color-card)] px-3 py-4"
+                    className="rounded-2xl bg-[var(--color-card)] px-3 py-4 shadow-level1"
                   >
                     <p className="text-2xl font-semibold text-[var(--color-text-primary)]">{item.value}</p>
                     <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">{item.label}</p>
@@ -130,7 +130,10 @@ export default function ProfilePanel({
                 ))}
               </div>
 
-              <section className="space-y-3 border-t border-white/40 pt-4">
+              <section
+                className="space-y-3 border-t border-transparent pt-4"
+                style={{ borderColor: "color-mix(in srgb, var(--color-accent) 60%, transparent)" }}
+              >
                 <div className="flex items-center gap-2">
                   <TrendingUp size={18} className="text-[var(--color-accent)]" />
                   <div>
@@ -140,35 +143,35 @@ export default function ProfilePanel({
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {insights.topVenue ? (
-                    <div className="rounded-2xl border border-[var(--color-card-border)] bg-[var(--color-card)] px-3 py-3 text-left">
+                    <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left shadow-level1">
                       <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Top venue</p>
                       <p className="font-semibold text-[var(--color-text-primary)]">{insights.topVenue.name}</p>
                       <p className="text-xs text-[var(--color-text-secondary)]">{insights.topVenue.count} people logged</p>
                     </div>
                   ) : (
-                    <div className="rounded-2xl border border-[var(--color-card-border)] bg-[var(--color-card)] px-3 py-3 text-left text-xs text-[var(--color-text-secondary)]">
+                    <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left text-xs text-[var(--color-text-secondary)] shadow-level1">
                       No venue data yet.
                     </div>
                   )}
                   {insights.topTag ? (
-                    <div className="rounded-2xl border border-[var(--color-card-border)] bg-[var(--color-card)] px-3 py-3 text-left">
+                    <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left shadow-level1">
                       <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Top tag</p>
                       <p className="font-semibold text-[var(--color-text-primary)] capitalize">{insights.topTag.name}</p>
                       <p className="text-xs text-[var(--color-text-secondary)]">{insights.topTag.count} mentions</p>
                     </div>
                   ) : (
-                    <div className="rounded-2xl border border-[var(--color-card-border)] bg-[var(--color-card)] px-3 py-3 text-left text-xs text-[var(--color-text-secondary)]">
+                    <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left text-xs text-[var(--color-text-secondary)] shadow-level1">
                       No tag usage yet.
                     </div>
                   )}
-                  <div className="rounded-2xl border border-[var(--color-card-border)] bg-[var(--color-card)] px-3 py-3 text-left flex items-center gap-3">
+                  <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left flex items-center gap-3 shadow-level1">
                     <Heart size={18} className="text-[var(--color-accent)]" />
                     <div>
                       <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Favourite people</p>
                       <p className="font-semibold text-[var(--color-text-primary)]">{insights.favoritesCount}</p>
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-[var(--color-card-border)] bg-[var(--color-card)] px-3 py-3 text-left flex items-center gap-3">
+                  <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left flex items-center gap-3 shadow-level1">
                     <Clock size={18} className="text-[var(--color-accent)]" />
                     <div>
                       <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Last interaction</p>
@@ -187,7 +190,10 @@ export default function ProfilePanel({
                 </div>
               </section>
 
-              <section className="space-y-2 pb-2 border-t border-white/40 pt-4">
+              <section
+                className="space-y-2 pb-2 border-t border-transparent pt-4"
+                style={{ borderColor: "color-mix(in srgb, var(--color-accent) 60%, transparent)" }}
+              >
                 <div className="flex items-center gap-2 mb-2">
                   <Award size={18} className="text-[var(--color-accent)]" />
                   <div>
@@ -207,7 +213,7 @@ export default function ProfilePanel({
                     const nextTarget = list.find((item) => !item.unlocked);
 
                     return (
-                      <div key={type} className="rounded-2xl border border-[var(--color-card-border)] bg-[var(--color-card)]">
+                      <div key={type} className="rounded-2xl bg-[var(--color-card)] shadow-level1">
                         <button
                           onClick={() => toggleSection(type)}
                           className="w-full flex items-center justify-between px-4 py-3 text-left"
