@@ -44,7 +44,7 @@ export default function ModalManager({
 }: Props) {
   return (
     <>
-      <AnimatePresence>
+      <AnimatePresence mode="wait" initial={false}>
         {showAdd && (
           <PersonModal
             key="add-person"
@@ -75,7 +75,7 @@ export default function ModalManager({
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
+      <AnimatePresence mode="wait" initial={false}>
         {personToDelete && (
           <DeleteConfirmModal
             key="delete-person"
