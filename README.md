@@ -28,7 +28,7 @@ Visit `http://localhost:5173` in your browser.
 - `hooks/useAchievements.ts`, `hooks/useDataBackup.ts`, `hooks/useFilteredSortedPeople.ts` – core logic.
 
 ## Notifications
-- Toasts via `NotificationContext`, with a persisted history (max 25 entries) accessible via the bell icon.
+- Toasts are handled by `NotificationContext`: stacked, dismissible, and theme-aware. We persist the last 25 events so panels like Profile can still show history even after reloads.
 
 ## Styling Philosophy
 - Glass outer shells (cards, modals) with flat/tinted inner cards to avoid stacked shadows.

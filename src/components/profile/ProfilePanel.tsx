@@ -44,6 +44,7 @@ const sectionMeta = {
   favorites: { label: "Favourites", icon: <Star size={14} /> },
 } as const;
 
+// ProfilePanel summarizes usage insights and lifetime achievements.
 export default function ProfilePanel({
   open,
   onClose,
@@ -143,25 +144,39 @@ export default function ProfilePanel({
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {insights.topVenue ? (
-                    <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left shadow-level1">
-                      <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Top venue</p>
-                      <p className="font-semibold text-[var(--color-text-primary)]">{insights.topVenue.name}</p>
-                      <p className="text-xs text-[var(--color-text-secondary)]">{insights.topVenue.count} people logged</p>
+                    <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left shadow-level1 flex items-center gap-3">
+                      <MapPin size={18} className="text-[var(--color-accent)]" />
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Top venue</p>
+                        <p className="font-semibold text-[var(--color-text-primary)]">{insights.topVenue.name}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)]">{insights.topVenue.count} people logged</p>
+                      </div>
                     </div>
                   ) : (
-                    <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left text-xs text-[var(--color-text-secondary)] shadow-level1">
-                      No venue data yet.
+                    <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left shadow-level1 flex items-center gap-3">
+                      <MapPin size={18} className="text-[var(--color-accent)]" />
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Top venue</p>
+                        <p className="text-xs text-[var(--color-text-secondary)]">No venue data yet.</p>
+                      </div>
                     </div>
                   )}
                   {insights.topTag ? (
-                    <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left shadow-level1">
-                      <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Top tag</p>
-                      <p className="font-semibold text-[var(--color-text-primary)] capitalize">{insights.topTag.name}</p>
-                      <p className="text-xs text-[var(--color-text-secondary)]">{insights.topTag.count} mentions</p>
+                    <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left shadow-level1 flex items-center gap-3">
+                      <TagIcon size={18} className="text-[var(--color-accent)]" />
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Top tag</p>
+                        <p className="font-semibold text-[var(--color-text-primary)] capitalize">{insights.topTag.name}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)]">{insights.topTag.count} mentions</p>
+                      </div>
                     </div>
                   ) : (
-                    <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left text-xs text-[var(--color-text-secondary)] shadow-level1">
-                      No tag usage yet.
+                    <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left shadow-level1 flex items-center gap-3">
+                      <TagIcon size={18} className="text-[var(--color-accent)]" />
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Top tag</p>
+                        <p className="text-xs text-[var(--color-text-secondary)]">No tag usage yet.</p>
+                      </div>
                     </div>
                   )}
                   <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left flex items-center gap-3 shadow-level1">

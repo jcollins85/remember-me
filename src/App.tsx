@@ -30,6 +30,8 @@ import { samplePeople, sampleTags, sampleVenues } from "./data";
 
 type VenueView = "all" | "favs";
 
+// App orchestrates all persistent providers and renders the main layout,
+// wiring together search, sorting, modals, notifications, and persisted data.
 function App() {
   // ── Tag context ──
   const { tags, createTag, getTagIdByName, getTagNameById, replaceTags } = useTags();  

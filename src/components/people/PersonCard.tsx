@@ -107,7 +107,7 @@ export default function PersonCard({
               <Highlight text={person.position} query={searchQuery} />
             </p>
           )}
-          <p className="text-xs text-[var(--color-text-secondary)] mt-1.5 tracking-wide uppercase">
+          <p className="text-xs text-[var(--color-text-secondary)] mt-1.5 tracking-wide">
             Date Met: {new Date(person.dateMet).toLocaleDateString()}
           </p>
           {person.description && (

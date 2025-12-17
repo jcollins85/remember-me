@@ -22,6 +22,8 @@ interface Props {
   onSubmittingChange?: (submitting: boolean) => void;
 }
 
+// PersonForm handles the add/edit workflow, coordinating venue/tag helpers
+// plus validation before delegating the final payload back to the modal.
 export default function PersonForm({
   initialData = {},
   onSubmit,

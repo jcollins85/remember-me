@@ -19,6 +19,8 @@ interface Props {
   createTag: (name: string) => Tag;
 }
 
+// PersonModal wraps PersonForm inside a framer-motion portal so it can
+// run on top of any page context without layout jank.
 export default function PersonModal({
   mode,
   person,

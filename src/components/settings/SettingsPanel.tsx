@@ -4,6 +4,7 @@ import { ThemeContext, ThemeKey } from "../../theme/ThemeContext";
 import { SunMedium, Palette, Moon, Heart, Download, Upload, Lock, X, Palette as PaletteIcon, CloudUpload, Wrench, Settings } from "lucide-react";
 import { useDataBackup } from "../../hooks/useDataBackup";
 
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || '0.0.0';
 interface SettingsPanelProps {
   open: boolean;
   onClose: () => void;
@@ -45,6 +46,8 @@ const themes: Array<{
   },
 ];
 
+// SettingsPanel exposes theme, backup, and developer utilities inside
+// a single sheet so users can tweak global behavior without leaving home.
 export default function SettingsPanel({
   open,
   onClose,
@@ -213,7 +216,12 @@ export default function SettingsPanel({
                 </div>
               </section>
 
-              <section className="space-y-2 border-t border-white/40 pt-4">
+              <section className="space-y-2 border-t border-[var(--color-card-border)]/70 pt-4">
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">Version</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">Remember Me v{APP_VERSION}</p>
+              </section>
+
+              <section className="space-y-2 border-t border-[var(--color-accent)]/60 pt-4">
                 <div className="flex items-center gap-2">
                   <Wrench size={16} className="text-[var(--color-accent)]" />
                   <div>
@@ -244,7 +252,7 @@ export default function SettingsPanel({
               <section className="space-y-2 border-t border-white/40 pt-4 text-[var(--color-text-secondary)]">
                 <p className="text-[11px] uppercase tracking-wide">About</p>
                 <div className="rounded-2xl bg-[var(--color-card)]/95 text-xs space-y-1 shadow-level1/40 mt-1.5">
-                  <p>Version 0.0.1 · Made by Remember Me</p>
+                  <p>Version 0.0.1 · Made by Era One</p>
                   <div className="flex gap-4 text-[var(--color-text-secondary)]">
                     <button className="underline-offset-2 hover:underline" type="button">
                       Privacy

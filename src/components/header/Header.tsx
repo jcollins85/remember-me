@@ -27,6 +27,8 @@ interface HeaderProps {
   setSortSheet: Dispatch<SetStateAction<"venue" | "people" | null>>;
 }
 
+// Sticky header that hosts search, sort toggles, and the segmented control
+// while keeping the UI responsive to scroll/collapse events.
 const Header: React.FC<HeaderProps> = ({
   searchQuery,
   setSearchQuery,

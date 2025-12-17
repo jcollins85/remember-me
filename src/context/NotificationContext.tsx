@@ -28,6 +28,8 @@ interface NotificationProviderProps {
   duration?: number; // milliseconds
 }
 
+// NotificationProvider centralizes toast state (stacked toasts + history)
+// so components can fire lightweight alerts without manual plumbing.
 export const NotificationProvider = ({ children, duration = 3000 }: NotificationProviderProps) => {
   const [notifications, setNotifications] = useLocalStorage<NotificationEntry[]>(
     'remember-me-notifications',
