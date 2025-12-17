@@ -241,6 +241,41 @@ export default function PersonForm({
   const inputClass =
     "w-full px-3 py-2 rounded-2xl border border-white/70 bg-white/90 text-base text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] shadow-level1";
 
+  const useOverflowIndicator = (deps: React.DependencyList) => {
+    const ref = useRef<HTMLDivElement | null>(null);
+    const [hasOverflow, setHasOverflow] = useState(false);
+    const [showHint, setShowHint] = useState(false);
+
+    useEffect(() => {
+      const el = ref.current;
+      if (!el) return;
+      const measure = () => {
+        const overflow = el.scrollWidth - el.clientWidth > 4;
+        setHasOverflow(overflow);
+        if (overflow) {
+          setShowHint(true);
+        }
+      };
+      measure();
+      window.addEventListener("resize", measure);
+      return () => {
+        window.removeEventListener("resize", measure);
+      };
+    }, deps);
+
+    useEffect(() => {
+      if (!hasOverflow) return;
+      const timer = window.setTimeout(() => setShowHint(false), 700);
+      return () => window.clearTimeout(timer);
+    }, [hasOverflow]);
+
+    return { ref, hasOverflow, showHint } as const;
+  };
+
+  const venueRail = useOverflowIndicator([venueSuggestions.length]);
+  const appliedTagsRail = useOverflowIndicator([currentTags.length]);
+  const suggestionRail = useOverflowIndicator([suggestions.length, currentInput]);
+
   return (
     <form id="person-form" onSubmit={handleSubmit} className="space-y-6">
       {/* Name */}
@@ -419,17 +454,24 @@ export default function PersonForm({
         )}
       </div>
       {venueSuggestions.length > 0 && (
-        <div className="overflow-x-auto whitespace-nowrap gap-2 mt-2 px-1 pb-2">
-          {venueSuggestions.map((name) => (
-            <button
-              key={name}
-              type="button"
-              onClick={() => onVenueSelect(name)}
-              className="inline-block mr-3 px-3 py-1 rounded-full text-sm bg-[var(--color-accent-muted)] text-[var(--color-text-primary)] border border-[var(--color-accent-muted)] hover:bg-[var(--color-accent-muted)]/80"
-            >
-              {name}
-            </button>
-          ))}
+        <div className="mt-2 space-y-1">
+          <p className="text-[11px] uppercase tracking-wide text-[var(--color-text-secondary)]">Suggested venues</p>
+          <div
+            ref={venueRail.ref}
+            className="relative overflow-x-auto whitespace-nowrap gap-2 px-1 pb-3 pr-10"
+            style={{ scrollbarGutter: "stable", WebkitOverflowScrolling: "touch" }}
+          >
+            {venueSuggestions.map((name) => (
+              <button
+                key={name}
+                type="button"
+                onClick={() => onVenueSelect(name)}
+                className="inline-block mr-3 px-3 py-1 rounded-full text-sm bg-[var(--color-accent-muted)] text-[var(--color-text-primary)] border border-[var(--color-accent-muted)] hover:bg-[var(--color-accent-muted)]/80"
+              >
+                {name}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -455,7 +497,12 @@ export default function PersonForm({
         <label htmlFor="tag-input" className={labelClass}>
           Tags
         </label>
-        <div role="list" className="overflow-x-auto whitespace-nowrap mb-2 px-1 pb-2">
+        <div
+          role="list"
+          ref={appliedTagsRail.ref}
+          className="relative overflow-x-auto whitespace-nowrap mb-2 px-1 pb-4 pr-10"
+          style={{ scrollbarGutter: "stable", WebkitOverflowScrolling: "touch" }}
+        >
           {currentTags.length > 0 ? (
             currentTags.map((tagName) => (
               <span key={tagName} className="inline-flex items-center mr-3 bg-[var(--color-accent-muted)] text-[var(--color-text-primary)] px-3 py-1 rounded-full text-sm">
@@ -489,58 +536,65 @@ export default function PersonForm({
           className={inputClass}
         />
         <div className="text-xs text-[var(--color-text-secondary)] text-right mt-1">{currentInput.length} / 25</div>
-        <div
-          className="overflow-x-auto whitespace-nowrap mt-3 px-3 pb-2"
-          onWheel={(e) => e.stopPropagation()}
-          onTouchStart={(e) => e.stopPropagation()}
-        >
-          {suggestions.map((tag, idx) => (
-            <button
-              key={tag.id}
-              type="button"
-              onPointerDown={() => {
-                ignoreBlurRef.current = true;
-              }}
-              onClick={() => {
-                commitTag(tag.name);
-                clearInput(); 
-              }}
-              className={`inline-block mr-3 px-3 py-1 rounded-full text-sm bg-[var(--color-accent-muted)] text-[var(--color-text-primary)] border border-[var(--color-accent-muted)] hover:bg-[var(--color-accent-muted)]/80 ${
-                idx === highlightedIndex ? "ring-2 ring-[var(--color-accent)]" : ""
-              }`}
-            >
-              {tag.name}
-            </button>
-          ))}
-          {(() => {
-            const pendingTag = currentInput
-              .trim()
-              .toLowerCase()
-              .replace(/[^a-z0-9-\s]/g, "")
-              .replace(/\s{2,}/g, " ");
-            if (
-              pendingTag &&
-              !currentTags.includes(pendingTag) &&
-              !tags.some((tag) => tag.name === pendingTag)
-            ) {
-              return (
-                <button
-                  type="button"
-                  onPointerDown={() => {
-                    ignoreBlurRef.current = true;
-                  }}
-                  onClick={() => {
-                    commitTag(pendingTag);
-                    clearInput();
-                  }}
-                  className="inline-block mr-3 px-3 py-1 rounded-full text-sm border border-dashed border-[var(--color-accent)] text-[var(--color-accent)] bg-white/70 hover:bg-white"
-                >
-                  Create “{pendingTag}”
-                </button>
-              );
-            }
-            return null;
-          })()}
+        <div className="mt-3 space-y-1">
+          {suggestions.length > 0 && (
+            <p className="text-[11px] uppercase tracking-wide text-[var(--color-text-secondary)]">Suggested tags</p>
+          )}
+          <div
+            ref={suggestionRail.ref}
+            className="relative overflow-x-auto whitespace-nowrap px-3 pb-3 pr-12"
+            onWheel={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            style={{ scrollbarGutter: "stable", WebkitOverflowScrolling: "touch" }}
+          >
+            {suggestions.map((tag, idx) => (
+              <button
+                key={tag.id}
+                type="button"
+                onPointerDown={() => {
+                  ignoreBlurRef.current = true;
+                }}
+                onClick={() => {
+                  commitTag(tag.name);
+                  clearInput(); 
+                }}
+                className={`inline-block mr-3 px-3 py-1 rounded-full text-sm bg-[var(--color-accent-muted)] text-[var(--color-text-primary)] border border-[var(--color-accent-muted)] hover:bg-[var(--color-accent-muted)]/80 ${
+                  idx === highlightedIndex ? "ring-2 ring-[var(--color-accent)]" : ""
+                }`}
+              >
+                {tag.name}
+              </button>
+            ))}
+            {(() => {
+              const pendingTag = currentInput
+                .trim()
+                .toLowerCase()
+                .replace(/[^a-z0-9-\s]/g, "")
+                .replace(/\s{2,}/g, " ");
+              if (
+                pendingTag &&
+                !currentTags.includes(pendingTag) &&
+                !tags.some((tag) => tag.name === pendingTag)
+              ) {
+                return (
+                  <button
+                    type="button"
+                    onPointerDown={() => {
+                      ignoreBlurRef.current = true;
+                    }}
+                    onClick={() => {
+                      commitTag(pendingTag);
+                      clearInput();
+                    }}
+                    className="inline-block mr-3 px-3 py-1 rounded-full text-sm border border-dashed border-[var(--color-accent)] text-[var(--color-accent)] bg-white/70 hover:bg-white"
+                  >
+                    Create “{pendingTag}”
+                  </button>
+                );
+              }
+              return null;
+            })()}
+          </div>
         </div>
         {error && <div className="text-red-500 text-xs mt-1">{error}</div>}
         {liveMsg && <div className="text-sm text-[var(--color-text-secondary)] mt-1">{liveMsg}</div>}
