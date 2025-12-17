@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { Sparkles, Heart } from 'lucide-react';
 import { LayoutGroup, motion } from 'framer-motion';
@@ -12,7 +12,7 @@ interface SegmentedControlProps<T extends string> {
   className?: string;
 }
 
-function SegmentedControl<T extends string>({
+function SegmentedControlComponent<T extends string>({
   segments,
   value,
   onChange,
@@ -21,7 +21,7 @@ function SegmentedControl<T extends string>({
   return (
     <LayoutGroup>
       <div
-        className={`relative inline-flex rounded-full bg-[var(--color-card)]/80 border border-[var(--color-card-border)]/70 backdrop-blur-lg overflow-hidden shadow-[0_8px_18px_rgba(15,23,42,0.07)] ${className}`}
+        className={`relative inline-flex rounded-full bg-[var(--color-card)]/90 border border-[var(--color-card-border)]/60 backdrop-blur-lg overflow-hidden shadow-[0_8px_18px_rgba(15,23,42,0.07)] ${className}`}
       >
         {segments.map(seg => {
           const isSelected = seg.key === value;
@@ -59,5 +59,7 @@ function SegmentedControl<T extends string>({
     </LayoutGroup>
   );
 }
+
+const SegmentedControl = memo(SegmentedControlComponent) as typeof SegmentedControlComponent;
 
 export default SegmentedControl;

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, Dispatch, SetStateAction } from "react";
+import React, { useState, useRef, useEffect, Dispatch, SetStateAction, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Settings, User, Search, X } from "lucide-react";
 import type { SortKey, VenueSortKey } from "../../utils/sortHelpers";
@@ -55,10 +55,13 @@ const Header: React.FC<HeaderProps> = ({
 
   useEffect(() => {
   }, []);
-  const segments: Segment<"all" | "favs">[] = [
-    { key: "all",  label: `All Venues (${totalVenueCount})` },
-    { key: "favs", label: `Favourites (${favoriteVenueCount})` },
-  ];
+  const segments: Segment<"all" | "favs">[] = useMemo(
+    () => [
+      { key: "all", label: `All Venues (${totalVenueCount})` },
+      { key: "favs", label: `Favourites (${favoriteVenueCount})` },
+    ],
+    [totalVenueCount, favoriteVenueCount]
+  );
 
   useEffect(() => {
     const COLLAPSE_AT = 80;
