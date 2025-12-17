@@ -60,8 +60,9 @@ function App() {
 
 
   const {
-    notification,
+    toasts,
     showNotification,
+    dismissToast,
   } = useNotification();
   
   const {
@@ -386,15 +387,18 @@ function App() {
         insights={usageInsights}
       />
 
-      <AnimatePresence>
-        {notification && (
-          <Notification
-            key={notification.id}
-            message={notification.message}
-            type={notification.type}
-          />
-        )}
-      </AnimatePresence>
+      <div className="fixed top-6 right-6 z-[120] flex flex-col gap-3 pointer-events-none">
+        <AnimatePresence>
+          {toasts.map((toast) => (
+            <Notification
+              key={toast.id}
+              message={toast.message}
+              type={toast.type}
+              onDismiss={() => dismissToast(toast.id)}
+            />
+          ))}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

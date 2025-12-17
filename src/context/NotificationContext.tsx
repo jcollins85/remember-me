@@ -13,8 +13,9 @@ export interface NotificationEntry {
 }
 
 interface NotificationContextType {
-  notification: NotificationEntry | null;
+  toasts: NotificationEntry[];
   showNotification: (message: string, type?: NotificationType) => void;
+  dismissToast: (id: string) => void;
   notifications: NotificationEntry[];
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
@@ -28,9 +29,11 @@ interface NotificationProviderProps {
 }
 
 export const NotificationProvider = ({ children, duration = 3000 }: NotificationProviderProps) => {
-  const [notification, setNotification] = useState<NotificationEntry | null>(null);
-  const [notifications, setNotifications] = useLocalStorage<NotificationEntry[]>('remember-me-notifications', []);
-  const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [notifications, setNotifications] = useLocalStorage<NotificationEntry[]>(
+    'remember-me-notifications',
+    []
+  );
+  const [toasts, setToasts] = useState<NotificationEntry[]>([]);
 
   const showNotification = useCallback((message: string, type: NotificationType = 'success') => {
     const entry: NotificationEntry = {
@@ -42,12 +45,15 @@ export const NotificationProvider = ({ children, duration = 3000 }: Notification
     };
 
     setNotifications((prev) => [entry, ...prev].slice(0, 25));
-    setNotification(entry);
-    if (dismissTimer.current) {
-      clearTimeout(dismissTimer.current);
-    }
-    dismissTimer.current = setTimeout(() => setNotification(null), duration);
+    setToasts((prev) => [...prev, entry].slice(-3));
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((toast) => toast.id !== entry.id));
+    }, duration);
   }, [duration, setNotifications]);
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  }, []);
 
   const markAsRead = useCallback((id: string) => {
     setNotifications((prev) =>
@@ -63,14 +69,12 @@ export const NotificationProvider = ({ children, duration = 3000 }: Notification
 
   useEffect(() => {
     return () => {
-      if (dismissTimer.current) {
-        clearTimeout(dismissTimer.current);
-      }
+      setToasts([]);
     };
   }, []);
 
   return (
-    <NotificationContext.Provider value={{ notification, showNotification, notifications, markAsRead, markAllAsRead }}>
+    <NotificationContext.Provider value={{ toasts, showNotification, dismissToast, notifications, markAsRead, markAllAsRead }}>
       {children}
     </NotificationContext.Provider>
   );
