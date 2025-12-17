@@ -102,12 +102,15 @@ export default function ProfilePanel({
               className="overflow-y-auto px-6 pb-6 pt-6 space-y-6"
               style={{ scrollbarGutter: "stable" }}
             >
-              <div className="space-y-1">
-                <p className="text-sm uppercase text-[var(--color-text-secondary)] tracking-wide">Your Profile</p>
-                <h2 className="text-2xl font-semibold">Remember Me</h2>
-                <p className="text-xs text-[var(--color-text-secondary)]">
-                  {stats.peopleCount} people · {stats.venuesWithPeople} venues · {stats.uniqueTagCount} tags used
-                </p>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-[var(--color-accent-muted)] text-[var(--color-accent)] flex items-center justify-center shadow-level1">
+                  <UserRound size={18} />
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--color-text-secondary)]">Your Profile</p>
+                  <h2 className="text-2xl font-semibold text-[var(--color-text-primary)]">Remember Me</h2>
+                  <p className="text-xs text-[var(--color-text-secondary)]">Lifetime overview of your connections</p>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-center">

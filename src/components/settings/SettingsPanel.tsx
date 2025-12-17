@@ -1,7 +1,7 @@
 import React, { useContext, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ThemeContext, ThemeKey } from "../../theme/ThemeContext";
-import { SunMedium, Palette, Moon, Heart, Download, Upload, Lock, X, Palette as PaletteIcon, CloudUpload, Wrench } from "lucide-react";
+import { SunMedium, Palette, Moon, Heart, Download, Upload, Lock, X, Palette as PaletteIcon, CloudUpload, Wrench, Settings } from "lucide-react";
 import { useDataBackup } from "../../hooks/useDataBackup";
 
 interface SettingsPanelProps {
@@ -118,10 +118,14 @@ export default function SettingsPanel({
               className="overflow-y-auto px-6 pb-6 pt-6 space-y-5"
               style={{ scrollbarGutter: "stable" }}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-[var(--color-accent-muted)] text-[var(--color-accent)] flex items-center justify-center shadow-level1">
+                  <Settings size={18} />
+                </div>
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Personalize</p>
+                  <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--color-text-secondary)]">Personalize</p>
                   <h3 className="text-xl font-semibold text-[var(--color-text-primary)]">Settings</h3>
+                  <p className="text-xs text-[var(--color-text-secondary)]">Tune the theme, data tools, and notifications.</p>
                 </div>
               </div>
 
