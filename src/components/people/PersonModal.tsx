@@ -50,7 +50,7 @@ export default function PersonModal({
       exit={{ opacity: 0 }}
       transition={{ duration: 0.25, ease: "easeInOut" }}
       onClick={onCancel}
-      style={{ willChange: "opacity" }}
+      style={{ willChange: "opacity", overscrollBehavior: "contain", touchAction: "none" }}
     >
       <motion.div
         role="dialog"
@@ -90,7 +90,12 @@ export default function PersonModal({
 
         <div
           className="relative flex-1 overflow-y-auto px-6 py-4 bg-[var(--color-card)]"
-          style={{ scrollbarGutter: "stable", WebkitOverflowScrolling: "touch" }}
+          style={{
+            scrollbarGutter: "stable",
+            WebkitOverflowScrolling: "touch",
+            overscrollBehavior: "contain",
+            touchAction: "pan-y",
+          }}
         >
           <PersonForm
             initialData={initialData}
