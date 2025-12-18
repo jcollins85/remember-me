@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { motion } from "framer-motion";
 import { useVenues } from "../../context/VenueContext";
 import { UNCLASSIFIED } from "../../constants";
 import { Person, Tag, Venue } from "../../types";
@@ -74,12 +75,19 @@ export default function PersonForm({
   // ── Form validation ──
   const [touchedName, setTouchedName] = useState(false);
   const [formErrors, setFormErrors] = useState<ValidationErrors>({});
+  const [venuePulse, setVenuePulse] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   useEffect(() => {
     return () => {
       onSubmittingChange?.(false);
     };
   }, [onSubmittingChange]);
+
+  useEffect(() => {
+    if (!venuePulse) return;
+    const id = window.setTimeout(() => setVenuePulse(null), 250);
+    return () => window.clearTimeout(id);
+  }, [venuePulse]);
 
   // ── Tag hook ──
   const {
@@ -107,6 +115,13 @@ export default function PersonForm({
         : [],
     allTags: tags,
   });
+  const [tagPulse, setTagPulse] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!tagPulse) return;
+    const id = window.setTimeout(() => setTagPulse(null), 250);
+    return () => window.clearTimeout(id);
+  }, [tagPulse]);
 
   const handleTagBlur = () => {
     if (ignoreBlurRef.current) {
@@ -463,16 +478,45 @@ export default function PersonForm({
             className="relative overflow-x-auto whitespace-nowrap gap-2 px-1 pb-3 pr-10"
             style={{ scrollbarGutter: "stable", WebkitOverflowScrolling: "touch" }}
           >
-            {venueSuggestions.map((name) => (
-              <button
-                key={name}
-                type="button"
-                onClick={() => onVenueSelect(name)}
-                className="inline-block mr-3 px-3 py-1 rounded-full text-sm bg-[var(--color-accent-muted)] text-[var(--color-text-primary)] border border-[var(--color-accent-muted)] hover:bg-[var(--color-accent-muted)]/80"
-              >
-                {name}
-              </button>
-            ))}
+            {venueSuggestions.map((name) => {
+              const pulsing = venuePulse === name;
+              return (
+                <motion.button
+                  key={name}
+                  type="button"
+                  className="inline-block mr-3 px-3 py-1 rounded-full text-sm bg-[var(--color-accent-muted)] text-[var(--color-text-primary)] border border-[var(--color-accent-muted)] hover:bg-[var(--color-accent-muted)]/80"
+                  onPointerDown={() => {
+                    ignoreBlurRef.current = true;
+                  }}
+                  onClick={() => {
+                    onVenueSelect(name);
+                    setVenuePulse(name);
+                    ignoreBlurRef.current = false;
+                  }}
+                  animate={
+                    pulsing
+                      ? {
+                          scale: [0.94, 1.05, 1],
+                          boxShadow: [
+                            "0 0 0 rgba(0,0,0,0)",
+                            "0 10px 20px rgba(15,23,42,0.15)",
+                            "0 0 0 rgba(0,0,0,0)",
+                          ],
+                        }
+                      : {
+                          scale: 1,
+                          boxShadow: "0 0 0 rgba(0,0,0,0)",
+                        }
+                  }
+                  transition={{ duration: 0.22, ease: "easeOut" }}
+                  onAnimationComplete={() => {
+                    if (pulsing) setVenuePulse(null);
+                  }}
+                >
+                  {name}
+                </motion.button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -549,24 +593,47 @@ export default function PersonForm({
             onTouchStart={(e) => e.stopPropagation()}
             style={{ scrollbarGutter: "stable", WebkitOverflowScrolling: "touch" }}
           >
-            {suggestions.map((tag, idx) => (
-              <button
-                key={tag.id}
-                type="button"
-                onPointerDown={() => {
-                  ignoreBlurRef.current = true;
-                }}
-                onClick={() => {
-                  commitTag(tag.name);
-                  clearInput(); 
-                }}
-                className={`inline-block mr-3 px-3 py-1 rounded-full text-sm bg-[var(--color-accent-muted)] text-[var(--color-text-primary)] border border-[var(--color-accent-muted)] hover:bg-[var(--color-accent-muted)]/80 ${
-                  idx === highlightedIndex ? "ring-2 ring-[var(--color-accent)]" : ""
-                }`}
-              >
-                {tag.name}
-              </button>
-            ))}
+            {suggestions.map((tag, idx) => {
+              const pulsing = tagPulse === tag.id;
+              return (
+                <motion.button
+                  key={tag.id}
+                  type="button"
+                  onPointerDown={() => {
+                    ignoreBlurRef.current = true;
+                  }}
+                  onClick={() => {
+                    commitTag(tag.name);
+                    clearInput();
+                    setTagPulse(tag.id);
+                  }}
+                  className={`inline-block mr-3 px-3 py-1 rounded-full text-sm bg-[var(--color-accent-muted)] text-[var(--color-text-primary)] border border-[var(--color-accent-muted)] hover:bg-[var(--color-accent-muted)]/80 ${
+                    idx === highlightedIndex ? "ring-2 ring-[var(--color-accent)]" : ""
+                  }`}
+                  animate={
+                    pulsing
+                      ? {
+                          scale: [0.94, 1.05, 1],
+                          boxShadow: [
+                            "0 0 0 rgba(0,0,0,0)",
+                            "0 10px 20px rgba(15,23,42,0.15)",
+                            "0 0 0 rgba(0,0,0,0)",
+                          ],
+                        }
+                      : {
+                          scale: 1,
+                          boxShadow: "0 0 0 rgba(0,0,0,0)",
+                        }
+                  }
+                  transition={{ duration: 0.22, ease: "easeOut" }}
+                  onAnimationComplete={() => {
+                    if (pulsing) setTagPulse(null);
+                  }}
+                >
+                  {tag.name}
+                </motion.button>
+              );
+            })}
             {(() => {
               const pendingTag = currentInput
                 .trim()
