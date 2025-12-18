@@ -1,7 +1,7 @@
 import React from 'react';
 import { AnimatePresence } from 'framer-motion';
 import PersonModal from '../people/PersonModal';
-import DeleteConfirmModal from '../people/DeleteConfirmModal';
+import DeleteConfirmModal from '../common/DeleteConfirmModal';
 import type { Person, Tag } from '../../types';
 
 interface Props {

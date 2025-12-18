@@ -135,6 +135,22 @@ function App() {
     showNotification("App data reset to sample set.", "info");
   };
 
+  const handleResetApp = () => {
+    if (
+      !window.confirm(
+        "Reset app to a blank state? This will permanently remove all people, venues, tags, favourites, and achievements."
+      )
+    ) {
+      return;
+    }
+    replacePeople([]);
+    replaceVenues([]);
+    replaceTags([]);
+    setFavoriteVenues([]);
+    resetAchievements();
+    showNotification("App reset to a blank state.", "info");
+  };
+
   const handleClearAchievements = () => {
     if (
       !window.confirm(
@@ -378,6 +394,7 @@ function App() {
         favoriteVenues={favoriteVenues}
         setFavoriteVenues={setFavoriteVenues}
         onResetData={handleResetData}
+        onResetApp={handleResetApp}
         onClearAchievements={handleClearAchievements}
       />
 

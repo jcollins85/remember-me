@@ -11,6 +11,7 @@ interface SettingsPanelProps {
   favoriteVenues: string[];
   setFavoriteVenues: React.Dispatch<React.SetStateAction<string[]>>;
   onResetData: () => void;
+  onResetApp: () => void;
   onClearAchievements: () => void;
 }
 
@@ -54,6 +55,7 @@ export default function SettingsPanel({
   favoriteVenues,
   setFavoriteVenues,
   onResetData,
+  onResetApp,
   onClearAchievements,
 }: SettingsPanelProps) {
   const { theme, setTheme } = useContext(ThemeContext);
@@ -107,7 +109,7 @@ export default function SettingsPanel({
           >
             <button
               type="button"
-              className="absolute top-3 right-3 h-9 w-9 rounded-full bg-[var(--color-card)] text-[var(--color-text-primary)] shadow-[0_8px_18px_rgba(15,23,42,0.15)] hover:bg-[var(--color-card)]/90 flex items-center justify-center"
+              className="absolute top-3 right-3 z-10 h-9 w-9 rounded-full bg-[var(--color-card)] text-[var(--color-text-primary)] border border-[var(--color-card-border)] shadow-[0_8px_18px_rgba(15,23,42,0.15)] hover:bg-[var(--color-card)]/90 flex items-center justify-center"
               onClick={(event) => {
                 event.stopPropagation();
                 onClose();
@@ -117,10 +119,7 @@ export default function SettingsPanel({
               <X size={16} />
             </button>
 
-            <div
-              className="overflow-y-auto px-6 pb-6 pt-6 space-y-5"
-              style={{ scrollbarGutter: "stable" }}
-            >
+            <div className="overflow-y-auto px-6 pb-6 pt-6 space-y-5" style={{ scrollbarGutter: "stable" }}>
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-2xl bg-[var(--color-accent-muted)] text-[var(--color-accent)] flex items-center justify-center shadow-level1">
                   <Settings size={18} />
@@ -131,7 +130,6 @@ export default function SettingsPanel({
                   <p className="text-xs text-[var(--color-text-secondary)]">Tune the theme, data tools, and notifications.</p>
                 </div>
               </div>
-
               <section className="space-y-3">
                 <div className="flex items-center gap-2">
                   <PaletteIcon size={16} className="text-[var(--color-accent)]" />
@@ -224,11 +222,6 @@ export default function SettingsPanel({
                 </div>
               </section>
 
-              <section className="space-y-2 border-t border-[var(--color-card-border)]/70 pt-4">
-                <p className="text-sm font-semibold text-[var(--color-text-primary)]">Version</p>
-                <p className="text-xs text-[var(--color-text-secondary)]">Remember Me v{APP_VERSION}</p>
-              </section>
-
               <section className="space-y-2 border-t border-[var(--color-accent)]/60 pt-4">
                 <div className="flex items-center gap-2">
                   <Wrench size={16} className="text-[var(--color-accent)]" />
@@ -254,13 +247,24 @@ export default function SettingsPanel({
                       Clear achievements
                     </button>
                   </div>
+                  <div className="space-y-2">
+                    <button
+                      onClick={onResetApp}
+                      className="w-full px-4 py-3 rounded-2xl border border-red-200/60 bg-red-500/10 text-sm font-semibold text-red-500 hover:bg-red-500/15 transition"
+                    >
+                      Reset app (blank state)
+                    </button>
+                    <p className="text-xs text-[var(--color-text-secondary)]">
+                      Removes all venues, people, favourites, tags, and achievements to mimic a first-time install.
+                    </p>
+                  </div>
                 </div>
               </section>
 
               <section className="space-y-2 border-t border-white/40 pt-4 text-[var(--color-text-secondary)]">
                 <p className="text-[11px] uppercase tracking-wide">About</p>
                 <div className="rounded-2xl bg-[var(--color-card)]/95 text-xs space-y-1 shadow-level1/40 mt-1.5">
-                  <p>Version 0.0.1 · Made by Era One</p>
+                  <p>Version v{APP_VERSION} · Made by Era One</p>
                   <div className="flex gap-4 text-[var(--color-text-secondary)]">
                     <button className="underline-offset-2 hover:underline" type="button">
                       Privacy

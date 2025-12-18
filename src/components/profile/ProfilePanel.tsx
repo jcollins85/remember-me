@@ -89,7 +89,7 @@ export default function ProfilePanel({
           >
             <button
               type="button"
-              className="absolute top-3 right-3 h-9 w-9 rounded-full bg-[var(--color-card)] text-[var(--color-text-primary)] border border-[var(--color-card-border)] shadow-[0_8px_18px_rgba(15,23,42,0.15)] hover:bg-[var(--color-card)]/90 flex items-center justify-center"
+              className="absolute top-3 right-3 z-10 h-9 w-9 rounded-full bg-[var(--color-card)] text-[var(--color-text-primary)] border border-[var(--color-card-border)] shadow-[0_8px_18px_rgba(15,23,42,0.15)] hover:bg-[var(--color-card)]/90 flex items-center justify-center"
               onClick={(event) => {
                 event.stopPropagation();
                 onClose();
@@ -99,10 +99,7 @@ export default function ProfilePanel({
               <X size={16} />
             </button>
 
-            <div
-              className="overflow-y-auto px-6 pb-6 pt-6 space-y-6"
-              style={{ scrollbarGutter: "stable" }}
-            >
+            <div className="overflow-y-auto px-6 pb-6 pt-6 space-y-6" style={{ scrollbarGutter: "stable" }}>
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-2xl bg-[var(--color-accent-muted)] text-[var(--color-accent)] flex items-center justify-center shadow-level1">
                   <UserRound size={18} />
@@ -113,7 +110,6 @@ export default function ProfilePanel({
                   <p className="text-xs text-[var(--color-text-secondary)]">Lifetime overview of your connections</p>
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-3 text-center">
                 {[
                   { label: "People tracked", value: stats.peopleCount },
