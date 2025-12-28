@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, Dispatch, SetStateAction, useMemo } from "react";
+import React, { Dispatch, SetStateAction, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Settings, User, Search, X } from "lucide-react";
 import type { SortKey, VenueSortKey } from "../../utils/sortHelpers";
@@ -49,14 +49,10 @@ const Header: React.FC<HeaderProps> = ({
   sortSheet,
   setSortSheet,
 }) => {
-  const [isTopCollapsed, setIsTopCollapsed] = useState(false);
-
   const toggleSheet = (sheet: "venue" | "people") => {
     setSortSheet((prev) => (prev === sheet ? null : sheet));
   };
 
-  useEffect(() => {
-  }, []);
   const segments: Segment<"all" | "favs">[] = useMemo(
     () => [
       { key: "all", label: `All Venues (${totalVenueCount})` },
@@ -64,22 +60,6 @@ const Header: React.FC<HeaderProps> = ({
     ],
     [totalVenueCount, favoriteVenueCount]
   );
-
-  useEffect(() => {
-    const COLLAPSE_AT = 50;
-    const EXPAND_AT = 10;
-    const handleScroll = () => {
-      const y = window.scrollY;
-      setIsTopCollapsed((prev) => {
-        if (!prev && y > COLLAPSE_AT) return true;
-        if (prev && y < EXPAND_AT) return false;
-        return prev;
-      });
-    };
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   return (
     <>
@@ -92,39 +72,20 @@ const Header: React.FC<HeaderProps> = ({
               height: "calc(100% + env(safe-area-inset-top))",
             }}
           />
-          <div className="relative" style={{ paddingTop: "env(safe-area-inset-top)" }}>
-      {/* ── Top Tier ─────────────────────────────────────────────── */}
-      <div
-        className={`px-4 sm:px-6 md:px-8 lg:px-10 ${
-          isTopCollapsed ? "py-0 h-0" : "py-1.5"
-        } flex items-center justify-between transition-all duration-300 ${
-          isTopCollapsed ? "-translate-y-2 opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
-        }`}
-      >
-        <button
-          aria-label="Settings"
-          onClick={onOpenSettings}
-          className="p-2 rounded-md hover:bg-white/60 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition"
-        >
-          <Settings size={20} />
-        </button>
-        <img src="/remember-me-header-banner.png" alt="Remember Me" className="h-10 object-contain" />
-        <div className="flex items-center gap-2">
-          <button
-            aria-label="Profile"
-            className="p-2 rounded-md hover:bg-white/60 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition"
-            onClick={onOpenProfile}
+          <div
+            className="relative space-y-2.5"
+            style={{ paddingTop: "calc(env(safe-area-inset-top) + 6px)" }}
           >
-            <User size={20} />
+      <div className="px-4 sm:px-6 md:px-8 lg:px-10 pb-1">
+        <div className="flex items-center gap-3 max-w-3xl mx-auto w-full">
+          <button
+            aria-label="Settings"
+            onClick={onOpenSettings}
+            className="p-2 rounded-md hover:bg-white/60 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition"
+          >
+            <Settings size={20} />
           </button>
-        </div>
-      </div>
-
-      {/* ── Utility Tier ─────────────────────────────────────────── */}
-      <div className="bg-[var(--color-surface-alt)]/95 backdrop-blur-[26px] border-b border-[var(--color-card-border)]/70 shadow-[0_14px_30px_rgba(15,23,42,0.12)]">
-        <div className="px-4 sm:px-6 md:px-8 lg:px-10 pt-2.5 pb-3 space-y-2.5">
-          {/* Search with icon INSIDE the field */}
-          <div className="relative w-full max-w-2xl mx-auto">
+          <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-accent)] drop-shadow-sm" size={18} />
             <input
               type="text"
@@ -143,8 +104,21 @@ const Header: React.FC<HeaderProps> = ({
               </button>
             )}
           </div>
+          <button
+            aria-label="Profile"
+            className="p-2 rounded-md hover:bg-white/60 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition"
+            onClick={onOpenProfile}
+          >
+            <User size={20} />
+          </button>
+        </div>
+      </div>
 
-          <div className="mt-4 flex flex-col items-center gap-2 text-[12px]">
+      {/* ── Utility Tier ─────────────────────────────────────────── */}
+      <div className="bg-transparent">
+        <div className="px-4 sm:px-6 md:px-8 lg:px-10 pt-1 pb-2 space-y-1.5">
+
+          <div className="flex flex-col items-center gap-1.5 text-[12px]">
             <div className="flex justify-center gap-3 w-full flex-wrap">
               <button
                 onClick={() => toggleSheet("venue")}
@@ -172,7 +146,7 @@ const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Segmented control centered */}
-      <div className="flex justify-center pt-4">
+      <div className="flex justify-center pt-1.5">
         <SegmentedControl segments={segments} value={venueView} onChange={setVenueView} className="shadow-level1" />
       </div>
     </div>
