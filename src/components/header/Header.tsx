@@ -66,8 +66,8 @@ const Header: React.FC<HeaderProps> = ({
   );
 
   useEffect(() => {
-    const COLLAPSE_AT = 80;
-    const EXPAND_AT = 20;
+    const COLLAPSE_AT = 50;
+    const EXPAND_AT = 10;
     const handleScroll = () => {
       const y = window.scrollY;
       setIsTopCollapsed((prev) => {
@@ -96,7 +96,7 @@ const Header: React.FC<HeaderProps> = ({
       {/* ── Top Tier ─────────────────────────────────────────────── */}
       <div
         className={`px-4 sm:px-6 md:px-8 lg:px-10 ${
-          isTopCollapsed ? "py-0 h-0" : "py-2.5"
+          isTopCollapsed ? "py-0 h-0" : "py-1.5"
         } flex items-center justify-between transition-all duration-300 ${
           isTopCollapsed ? "-translate-y-2 opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
         }`}
@@ -121,8 +121,8 @@ const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* ── Utility Tier ─────────────────────────────────────────── */}
-      <div className="bg-transparent">
-        <div className="px-4 sm:px-6 md:px-8 lg:px-10 pt-3.5 pb-4 space-y-3.5">
+      <div className="bg-[var(--color-surface-alt)]/95 backdrop-blur-[26px] border-b border-[var(--color-card-border)]/70 shadow-[0_14px_30px_rgba(15,23,42,0.12)]">
+        <div className="px-4 sm:px-6 md:px-8 lg:px-10 pt-2.5 pb-3 space-y-2.5">
           {/* Search with icon INSIDE the field */}
           <div className="relative w-full max-w-2xl mx-auto">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-accent)] drop-shadow-sm" size={18} />
