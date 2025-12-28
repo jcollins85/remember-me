@@ -85,7 +85,7 @@ const Header: React.FC<HeaderProps> = ({
     <>
       <div
         className="sticky z-40"
-        style={{ top: "env(safe-area-inset-top)" }}
+        style={{ top: "0", paddingTop: "env(safe-area-inset-top)" }}
       >
       {/* ── Top Tier ─────────────────────────────────────────────── */}
       <div
