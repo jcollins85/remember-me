@@ -83,15 +83,21 @@ const Header: React.FC<HeaderProps> = ({
 
   return (
     <>
-      <div
-        className="sticky z-40"
-        style={{ top: "0", paddingTop: "env(safe-area-inset-top)" }}
-      >
+      <div className="sticky z-40" style={{ top: 0 }}>
+        <div className="relative">
+          <div
+            className="absolute inset-x-0 pointer-events-none bg-[var(--color-surface)]/92 backdrop-blur-[30px] border-b border-[var(--color-card-border)]/70 shadow-[0_12px_28px_rgba(15,23,42,0.18)]"
+            style={{
+              top: "calc(-1 * env(safe-area-inset-top))",
+              height: "calc(100% + env(safe-area-inset-top))",
+            }}
+          />
+          <div className="relative" style={{ paddingTop: "env(safe-area-inset-top)" }}>
       {/* ── Top Tier ─────────────────────────────────────────────── */}
       <div
         className={`px-4 sm:px-6 md:px-8 lg:px-10 ${
           isTopCollapsed ? "py-0 h-0" : "py-2.5"
-        } bg-[var(--color-surface)]/90 backdrop-blur-[26px] border-b border-[var(--color-card-border)]/70 shadow-[0_10px_22px_rgba(15,23,42,0.12)] flex items-center justify-between transition-all duration-300 ${
+        } flex items-center justify-between transition-all duration-300 ${
           isTopCollapsed ? "-translate-y-2 opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
         }`}
       >
@@ -115,7 +121,7 @@ const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* ── Utility Tier ─────────────────────────────────────────── */}
-      <div className="bg-[var(--color-surface-alt)]/95 backdrop-blur-[26px] border-b border-[var(--color-card-border)]/70 shadow-[0_14px_30px_rgba(15,23,42,0.12)]">
+      <div className="bg-transparent">
         <div className="px-4 sm:px-6 md:px-8 lg:px-10 pt-3.5 pb-4 space-y-3.5">
           {/* Search with icon INSIDE the field */}
           <div className="relative w-full max-w-2xl mx-auto">
@@ -171,6 +177,8 @@ const Header: React.FC<HeaderProps> = ({
       </div>
     </div>
       </div>
+          </div>
+        </div>
       </div>
 
       <AnimatePresence>
