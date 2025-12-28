@@ -300,7 +300,15 @@ function App() {
   }, [people, tags, replaceTags]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[var(--color-background)] text-[var(--color-text-primary)]">
+    <div
+      className="flex flex-col min-h-screen bg-[var(--color-background)] text-[var(--color-text-primary)]"
+      style={{
+        paddingTop: "env(safe-area-inset-top)",
+        paddingBottom: "env(safe-area-inset-bottom)",
+        paddingLeft: "env(safe-area-inset-left)",
+        paddingRight: "env(safe-area-inset-right)",
+      }}
+    >
       <Header
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -323,7 +331,10 @@ function App() {
         setSortSheet={setSortSheet}
       />
 
-      <main className="flex-1 pb-24 w-full">
+      <main
+        className="flex-1 pb-24 w-full"
+        style={{ paddingBottom: "calc(6rem + env(safe-area-inset-bottom))" }}
+      >
         <div className="p-4 sm:p-6 md:p-8 lg:p-10 grid gap-4 md:gap-6 lg:gap-8 max-w-3xl lg:max-w-5xl mx-auto w-full">
           <ModalManager
             showAdd={showAddModal}
@@ -382,7 +393,8 @@ function App() {
 
       <button
         onClick={() => setShowAddModal(true)}
-        className="fixed bottom-6 sm:bottom-8 md:bottom-10 right-6 bg-[var(--color-accent)] text-white text-3xl rounded-full w-14 h-14 hover:brightness-110 transition z-40"
+        className="fixed sm:bottom-8 md:bottom-10 right-6 bg-[var(--color-accent)] text-white text-3xl rounded-full w-14 h-14 hover:brightness-110 transition z-40"
+        style={{ bottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}
         aria-label="Add Person"
       >
         ＋
@@ -406,7 +418,10 @@ function App() {
         insights={usageInsights}
       />
 
-      <div className="fixed top-6 right-6 z-[120] flex flex-col gap-3 pointer-events-none">
+      <div
+        className="fixed right-6 z-[120] flex flex-col gap-3 pointer-events-none"
+        style={{ top: "calc(1.5rem + env(safe-area-inset-top))" }}
+      >
         <AnimatePresence>
           {toasts.map((toast) => (
             <Notification
