@@ -303,7 +303,6 @@ function App() {
     <div
       className="flex flex-col min-h-screen bg-[var(--color-background)] text-[var(--color-text-primary)]"
       style={{
-        paddingTop: "env(safe-area-inset-top)",
         paddingBottom: "env(safe-area-inset-bottom)",
         paddingLeft: "env(safe-area-inset-left)",
         paddingRight: "env(safe-area-inset-right)",
