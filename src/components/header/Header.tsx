@@ -88,7 +88,7 @@ const Header: React.FC<HeaderProps> = ({
       <div
         className={`px-4 sm:px-6 md:px-8 lg:px-10 ${
           isTopCollapsed ? "py-0 h-0" : "py-2.5"
-        } bg-red-600 text-white border-b border-red-700 shadow-[0_10px_22px_rgba(239,68,68,0.35)] flex items-center justify-between transition-all duration-300 ${
+        } bg-[var(--color-surface)]/90 backdrop-blur-[26px] border-b border-[var(--color-card-border)]/70 shadow-[0_10px_22px_rgba(15,23,42,0.12)] flex items-center justify-between transition-all duration-300 ${
           isTopCollapsed ? "-translate-y-2 opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
         }`}
       >
