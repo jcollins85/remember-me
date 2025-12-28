@@ -86,13 +86,13 @@ const Header: React.FC<HeaderProps> = ({
             <Settings size={20} />
           </button>
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-accent)] drop-shadow-sm" size={18} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-accent)] drop-shadow-[0_2px_4px_rgba(15,23,42,0.3)] z-10" size={20} strokeWidth={2.4} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by person, tag or venue…"
-              className="w-full h-12 pl-10 pr-12 rounded-full bg-[var(--color-card)] backdrop-blur-sm border border-[var(--color-card-border)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] shadow-level1"
+              className="w-full h-12 pl-11 pr-12 rounded-full bg-[var(--color-card)] backdrop-blur-sm border border-[var(--color-card-border)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]/80 placeholder:text-[0.9rem] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] shadow-level1"
             />
             {searchQuery && (
               <button
