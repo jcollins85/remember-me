@@ -83,7 +83,10 @@ const Header: React.FC<HeaderProps> = ({
 
   return (
     <>
-      <div className="sticky top-0 z-40">
+      <div
+        className="sticky z-40"
+        style={{ top: "env(safe-area-inset-top)" }}
+      >
       {/* ── Top Tier ─────────────────────────────────────────────── */}
       <div
         className={`px-4 sm:px-6 md:px-8 lg:px-10 ${

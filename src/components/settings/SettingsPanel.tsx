@@ -98,6 +98,12 @@ export default function SettingsPanel({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
+          style={{
+            paddingTop: "calc(env(safe-area-inset-top) + 16px)",
+            paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)",
+            paddingLeft: "calc(env(safe-area-inset-left) + 16px)",
+            paddingRight: "calc(env(safe-area-inset-right) + 16px)",
+          }}
         >
           <motion.div
             className="glass-panel w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col relative"

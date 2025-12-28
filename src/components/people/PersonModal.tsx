@@ -50,7 +50,15 @@ export default function PersonModal({
       exit={{ opacity: 0 }}
       transition={{ duration: 0.25, ease: "easeInOut" }}
       onClick={onCancel}
-      style={{ willChange: "opacity", overscrollBehavior: "contain", touchAction: "none" }}
+      style={{
+        willChange: "opacity",
+        overscrollBehavior: "contain",
+        touchAction: "none",
+        paddingTop: "calc(env(safe-area-inset-top) + 16px)",
+        paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)",
+        paddingLeft: "calc(env(safe-area-inset-left) + 16px)",
+        paddingRight: "calc(env(safe-area-inset-right) + 16px)",
+      }}
     >
       <motion.div
         role="dialog"
