@@ -363,6 +363,7 @@ function App() {
             personToDelete={personToDelete}
             onDeleteCancel={() => setPersonToDelete(null)}
             onDeleteConfirm={(id) => {
+              triggerImpact(ImpactStyle.Heavy);
               const deletedName = personToDelete?.name ?? "Person";
               deletePerson(id);
               setPersonToDelete(null);
@@ -394,7 +395,10 @@ function App() {
       </main>
 
       <button
-        onClick={() => setShowAddModal(true)}
+        onClick={async () => {
+          await triggerImpact(ImpactStyle.Light);
+          setShowAddModal(true);
+        }}
         className="fixed sm:bottom-8 md:bottom-10 right-6 bg-[var(--color-accent)] text-white text-3xl rounded-full w-14 h-14 hover:brightness-110 transition z-40"
         style={{ bottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}
         aria-label="Add Person"
