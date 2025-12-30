@@ -1,5 +1,6 @@
 import React from "react";
 import { MapPin, Users, Check } from "lucide-react";
+import { triggerImpact, ImpactStyle } from "../../utils/haptics";
 import type { SortKey, VenueSortKey } from "../../utils/sortHelpers";
 
 type Direction = "asc" | "desc";
@@ -56,7 +57,8 @@ export default function SortControls({
           label,
           description,
           active,
-          onSelect: () => {
+          onSelect: async () => {
+            await triggerImpact(active ? ImpactStyle.Light : ImpactStyle.Medium);
             setVenueSortKey(key);
             setVenueSortDir(dir);
             onClose?.();
@@ -70,7 +72,8 @@ export default function SortControls({
           label,
           description,
           active,
-          onSelect: () => {
+          onSelect: async () => {
+            await triggerImpact(active ? ImpactStyle.Light : ImpactStyle.Medium);
             setPersonSort(value);
             onClose?.();
           },
