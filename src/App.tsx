@@ -363,7 +363,6 @@ function App() {
             personToDelete={personToDelete}
             onDeleteCancel={() => setPersonToDelete(null)}
             onDeleteConfirm={(id) => {
-              triggerImpact(ImpactStyle.Heavy);
               const deletedName = personToDelete?.name ?? "Person";
               deletePerson(id);
               setPersonToDelete(null);

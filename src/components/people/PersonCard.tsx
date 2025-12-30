@@ -49,6 +49,7 @@ export default function PersonCard({
   searchQuery,
 }: Props) {
   const toggleTagFilter = (tagId: string) => {
+    triggerImpact(ImpactStyle.Light);
     setActiveTags((prev) => {
       if (prev.includes(tagId)) {
         return prev.filter((t) => t !== tagId);

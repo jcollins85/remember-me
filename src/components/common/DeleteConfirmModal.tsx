@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
+import { triggerImpact, ImpactStyle } from "../../utils/haptics";
 
 interface Props {
   name: string;
@@ -42,13 +43,19 @@ export default function DeleteConfirmModal({ name, onConfirm, onCancel, isDeleti
         </div>
         <div className="flex justify-end gap-2 px-6 py-4 bg-[var(--color-card)]">
           <button
-            onClick={onCancel}
+            onClick={() => {
+              triggerImpact(ImpactStyle.Light);
+              onCancel();
+            }}
             className="px-4 py-2 rounded-full border border-white/40 text-sm text-[var(--color-text-secondary)] hover:bg-white/60 hover:text-[var(--color-text-primary)] transition"
           >
             Cancel
           </button>
           <button
-            onClick={onConfirm}
+            onClick={() => {
+              triggerImpact(ImpactStyle.Heavy);
+              onConfirm();
+            }}
             disabled={isDeleting}
             className="px-4 py-2 rounded-full bg-red-500 text-white text-sm font-semibold shadow-level1 hover:brightness-105 transition disabled:opacity-60 disabled:cursor-not-allowed"
           >

@@ -8,6 +8,7 @@ import { useTagInput } from "../../hooks/useTagInput";
 import { useVenueInput } from "../../hooks/useVenueInput";
 import { validatePersonForm, ValidationErrors } from "../../utils/validation";
 import { useNotification } from "../../context/NotificationContext";
+import { triggerImpact, ImpactStyle } from "../../utils/haptics";
 
 interface Props {
   initialData?: Partial<Person>;
@@ -189,6 +190,7 @@ export default function PersonForm({
     if (isSubmitting) return;
     // Name required
     if (!name.trim()) {
+      triggerImpact(ImpactStyle.Heavy);
       setTouchedName(true);
       return;
     }
@@ -205,6 +207,7 @@ export default function PersonForm({
       longitude: manualLon,
     });
     if (!isValid) {
+      triggerImpact(ImpactStyle.Heavy);
       setFormErrors(errors);
       return;
     }

@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ThemeContext, ThemeKey } from "../../theme/ThemeContext";
 import { SunMedium, Palette, Moon, Heart, Download, Upload, Lock, X, Palette as PaletteIcon, CloudUpload, Wrench, Settings } from "lucide-react";
 import { useDataBackup } from "../../hooks/useDataBackup";
+import { triggerImpact, ImpactStyle } from "../../utils/haptics";
 
 const APP_VERSION = import.meta.env.VITE_APP_VERSION || '0.0.0';
 interface SettingsPanelProps {
@@ -201,7 +202,10 @@ export default function SettingsPanel({
 
                   <div className="flex flex-col sm:flex-row gap-3">
                     <button
-                      onClick={handleExport}
+                      onClick={async () => {
+                        await triggerImpact(ImpactStyle.Light);
+                        handleExport();
+                      }}
                       disabled={isExporting}
                       className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-[color:var(--color-card-border)] bg-[var(--color-card)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/90 disabled:opacity-60"
                     >
@@ -209,7 +213,10 @@ export default function SettingsPanel({
                       {isExporting ? "Exporting…" : "Export JSON"}
                     </button>
                     <button
-                      onClick={handleImportClick}
+                      onClick={async () => {
+                        await triggerImpact(ImpactStyle.Light);
+                        handleImportClick();
+                      }}
                       disabled={isImporting}
                       className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] px-4 py-3 text-sm font-semibold hover:bg-[var(--color-accent-muted)] disabled:opacity-60"
                     >
@@ -241,13 +248,19 @@ export default function SettingsPanel({
                 <div className="rounded-2xl bg-[var(--color-card)]/95 space-y-3 shadow-level1/40 mt-1.5">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <button
-                      onClick={onResetData}
+                      onClick={async () => {
+                        await triggerImpact(ImpactStyle.Light);
+                        onResetData();
+                      }}
                       className="px-4 py-3 rounded-2xl border border-[color:var(--color-card-border)] bg-[var(--color-card)] text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/90 transition"
                     >
                       Reset sample data
                     </button>
                     <button
-                      onClick={onClearAchievements}
+                      onClick={async () => {
+                        await triggerImpact(ImpactStyle.Light);
+                        onClearAchievements();
+                      }}
                       className="px-4 py-3 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] text-sm font-semibold hover:bg-[var(--color-accent-muted)] transition"
                     >
                       Clear achievements
@@ -255,7 +268,10 @@ export default function SettingsPanel({
                   </div>
                   <div className="space-y-2">
                     <button
-                      onClick={onResetApp}
+                      onClick={async () => {
+                        await triggerImpact(ImpactStyle.Heavy);
+                        onResetApp();
+                      }}
                       className="w-full px-4 py-3 rounded-2xl border border-red-200/60 bg-red-500/10 text-sm font-semibold text-red-500 hover:bg-red-500/15 transition"
                     >
                       Reset app (blank state)
