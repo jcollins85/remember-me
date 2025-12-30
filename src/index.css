@@ -178,6 +178,49 @@ body::before {
   mask-size: cover;
 }
 
+.celebration-toast {
+  position: relative;
+  overflow: hidden;
+}
+
+.celebration-toast::after {
+  content: "";
+  position: absolute;
+  inset: -45%;
+  background-image:
+    repeating-linear-gradient(-30deg, rgba(255,255,255,0.35) 0, rgba(255,255,255,0.35) 1px, transparent 1px, transparent 6px),
+    linear-gradient(-30deg, rgba(255,255,255,0.22), transparent 65%);
+  opacity: 0.2;
+  transform: translate3d(-70%, -30%, 0);
+  animation: celebration-shimmer 3.6s linear infinite;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+@keyframes celebration-shimmer {
+  0% {
+    opacity: 0;
+    transform: translate3d(-70%, -30%, 0);
+  }
+  25% {
+    opacity: 0.28;
+  }
+  50% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(45%, 30%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celebration-toast::after {
+    animation: none;
+    opacity: 0;
+  }
+}
+
 /* Prevent iOS zoom on form fields */
 input,
 textarea {

@@ -1,7 +1,7 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, CheckCircle2, Info, AlertTriangle } from "lucide-react";
-import { NotificationEntry } from "../../context/NotificationContext";
+import { X, CheckCircle2, Info, AlertTriangle, Star } from "lucide-react";
+import { NotificationEntry, NotificationType } from "../../context/NotificationContext";
 
 interface NotificationPanelProps {
   open: boolean;
@@ -11,7 +11,7 @@ interface NotificationPanelProps {
   onMarkRead: (id: string) => void;
 }
 
-const typeMeta = {
+const typeMeta: Record<NotificationType, { icon: ReactNode; className: string }> = {
   success: {
     icon: <CheckCircle2 size={16} />,
     className: "text-[var(--color-success)]",
@@ -24,7 +24,11 @@ const typeMeta = {
     icon: <AlertTriangle size={16} />,
     className: "text-[var(--color-error)]",
   },
-} as const;
+  celebration: {
+    icon: <Star size={16} />,
+    className: "text-[var(--color-accent)]",
+  },
+};
 
 export default function NotificationPanel({
   open,

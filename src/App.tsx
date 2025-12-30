@@ -232,7 +232,8 @@ function App() {
     const next = new Set(prev);
     achievements.forEach((achievement) => {
       if (achievement.unlocked && !prev.has(achievement.id)) {
-        showNotification(`Achievement unlocked: ${achievement.title}`, "info");
+        triggerImpact(ImpactStyle.Heavy);
+        showNotification(`Achievement unlocked: ${achievement.title}`, "celebration", { description: achievement.description });
         next.add(achievement.id);
       }
     });
@@ -350,7 +351,7 @@ function App() {
             showAdd={showAddModal}
             onAddCancel={() => setShowAddModal(false)}
             onAdd={async (newPerson) => {
-              await triggerImpact(ImpactStyle.Medium);
+              await triggerImpact(ImpactStyle.Heavy);
               addPerson(newPerson);
               setShowAddModal(false);
               showNotification(`${newPerson.name} added`, "success");
@@ -364,7 +365,7 @@ function App() {
             editingPerson={editingPerson}
             onEditCancel={() => setEditingPerson(null)}
             onEdit={async (updated) => {
-              await triggerImpact(ImpactStyle.Medium);
+              await triggerImpact(ImpactStyle.Heavy);
               updatePerson(updated);
               setEditingPerson(null);
               showNotification(`${updated.name} updated`, "success");
@@ -435,7 +436,7 @@ function App() {
 
       <div
         className="fixed right-6 z-[120] flex flex-col gap-3 pointer-events-none"
-        style={{ top: "calc(1.5rem + env(safe-area-inset-top))" }}
+        style={{ bottom: "calc(6rem + env(safe-area-inset-bottom))" }}
       >
         <AnimatePresence>
           {toasts.map((toast) => (
@@ -443,6 +444,7 @@ function App() {
               key={toast.id}
               message={toast.message}
               type={toast.type}
+              meta={toast.meta}
               onDismiss={() => dismissToast(toast.id)}
             />
           ))}

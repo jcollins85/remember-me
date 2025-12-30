@@ -2,7 +2,7 @@
 import React, { createContext, ReactNode, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import useLocalStorage from '../hooks/useLocalStorage';
 
-export type NotificationType = 'success' | 'error' | 'info';
+export type NotificationType = 'success' | 'error' | 'info' | 'celebration';
 
 export interface NotificationEntry {
   id: string;
@@ -10,11 +10,12 @@ export interface NotificationEntry {
   type: NotificationType;
   timestamp: string;
   read: boolean;
+  meta?: Record<string, unknown>;
 }
 
 interface NotificationContextType {
   toasts: NotificationEntry[];
-  showNotification: (message: string, type?: NotificationType) => void;
+  showNotification: (message: string, type?: NotificationType, meta?: NotificationEntry["meta"]) => void;
   dismissToast: (id: string) => void;
   notifications: NotificationEntry[];
   markAsRead: (id: string) => void;
@@ -37,17 +38,18 @@ export const NotificationProvider = ({ children, duration = 3000 }: Notification
   );
   const [toasts, setToasts] = useState<NotificationEntry[]>([]);
 
-  const showNotification = useCallback((message: string, type: NotificationType = 'success') => {
+  const showNotification = useCallback((message: string, type: NotificationType = 'success', meta?: NotificationEntry['meta']) => {
     const entry: NotificationEntry = {
       id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
       message,
       type,
       timestamp: new Date().toISOString(),
       read: false,
+      meta,
     };
 
     setNotifications((prev) => [entry, ...prev].slice(0, 25));
-    setToasts((prev) => [...prev, entry].slice(-3));
+    setToasts((prev) => [...prev, entry].slice(-2));
     setTimeout(() => {
       setToasts((prev) => prev.filter((toast) => toast.id !== entry.id));
     }, duration);
