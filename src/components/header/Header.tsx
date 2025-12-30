@@ -4,6 +4,7 @@ import { Settings, User, Search, X } from "lucide-react";
 import type { SortKey, VenueSortKey } from "../../utils/sortHelpers";
 import SegmentedControl, { Segment } from "../ui/SegmentedControl";
 import SortControls from "./SortControls";
+import { triggerImpact, ImpactStyle } from "../../utils/haptics";
 
 interface HeaderProps {
   searchQuery: string;
@@ -177,6 +178,7 @@ const Header: React.FC<HeaderProps> = ({
                 className="absolute top-3 right-3 h-9 w-9 rounded-full bg-[var(--color-card)] text-[var(--color-text-primary)] border border-[var(--color-card-border)] shadow-[0_8px_18px_rgba(15,23,42,0.15)] hover:bg-[var(--color-card)]/90 flex items-center justify-center"
                 onClick={(event) => {
                   event.stopPropagation();
+                  triggerImpact(ImpactStyle.Light);
                   setSortSheet(null);
                 }}
                 aria-label="Close sort options"

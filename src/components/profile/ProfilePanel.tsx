@@ -14,6 +14,7 @@ import {
   Clock,
 } from "lucide-react";
 import type { AchievementProgress, AchievementStats } from "../../hooks/useAchievements";
+import { triggerImpact, ImpactStyle } from "../../utils/haptics";
 
 interface UsageInsights {
   topVenue?: { name: string; count: number };

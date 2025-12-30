@@ -119,6 +119,7 @@ export default function SettingsPanel({
               className="absolute top-3 right-3 z-10 h-9 w-9 rounded-full bg-[var(--color-card)] text-[var(--color-text-primary)] border border-[var(--color-card-border)] shadow-[0_8px_18px_rgba(15,23,42,0.15)] hover:bg-[var(--color-card)]/90 flex items-center justify-center"
               onClick={(event) => {
                 event.stopPropagation();
+                triggerImpact(ImpactStyle.Light);
                 onClose();
               }}
               aria-label="Close settings"
