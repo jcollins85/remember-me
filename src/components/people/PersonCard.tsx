@@ -1,6 +1,7 @@
 import { Person } from "../../types";
 import { motion } from "framer-motion";
 import { Pencil, Star, Trash2 } from "lucide-react";
+import { triggerImpact, ImpactStyle } from "../../utils/haptics";
 
 interface Props {
   person: Person;
@@ -64,7 +65,12 @@ export default function PersonCard({
           <h3 className="text-xl font-semibold tracking-tight text-[var(--color-text-primary)] flex items-center gap-2">
             <Highlight text={person.name} query={searchQuery} />
             <button
-              onClick={() => onToggleFavorite(person.id)}
+              onClick={async () => {
+                await triggerImpact(
+                  person.favorite ? ImpactStyle.Light : ImpactStyle.Medium
+                );
+                onToggleFavorite(person.id);
+              }}
               title="Toggle favorite"
               className={`w-8 h-8 flex items-center justify-center rounded-full border relative overflow-hidden ${
                 person.favorite

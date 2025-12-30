@@ -5,6 +5,7 @@ import { Person } from "../../types";
 import PersonCard from "../people/PersonCard";
 import { UNCLASSIFIED } from "../../constants";
 import { ChevronDown, ChevronRight, Star } from "lucide-react";
+import { triggerImpact, ImpactStyle } from "../../utils/haptics";
 
 interface VenueGroupListProps {
   venue: string;
@@ -85,8 +86,9 @@ export default function VenueGroupList({
         </button>
         {!isUnclassified && (
           <button
-            onClick={(e) => {
+            onClick={async (e) => {
               e.stopPropagation();
+              await triggerImpact(isFavorite ? ImpactStyle.Light : ImpactStyle.Medium);
               setFavoriteVenues((prev) =>
                 prev.includes(venue)
                   ? prev.filter((v) => v !== venue)

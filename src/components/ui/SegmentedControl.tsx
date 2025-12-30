@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { Sparkles, Heart } from 'lucide-react';
 import { LayoutGroup, motion } from 'framer-motion';
+import { triggerImpact, ImpactStyle } from '../../utils/haptics';
 
 export type Segment<T extends string> = { key: T; label: string };
 
@@ -28,12 +29,18 @@ function SegmentedControlComponent<T extends string>({
           const icon =
             seg.key === 'all' ? <Sparkles size={14} className="mr-1.5" /> : <Heart size={14} className="mr-1.5" />;
 
+          const handleSelect = async () => {
+            if (isSelected) return;
+            await triggerImpact(ImpactStyle.Medium);
+            onChange(seg.key);
+          };
+
           return (
             <button
               key={seg.key}
               type="button"
               aria-pressed={isSelected}
-              onClick={() => onChange(seg.key)}
+              onClick={handleSelect}
               className={`relative isolate flex items-center gap-1.5 px-[11px] min-h-[30px] text-[0.82rem] font-medium transition-all duration-250 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]/25 ${
                 isSelected
                   ? 'text-white drop-shadow-[0_2px_8px_rgba(15,23,42,0.25)] opacity-100'
