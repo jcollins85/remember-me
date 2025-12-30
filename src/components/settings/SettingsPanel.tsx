@@ -152,7 +152,10 @@ export default function SettingsPanel({
                     return (
                       <button
                         key={item.key}
-                        onClick={() => setTheme(item.key)}
+                        onClick={async () => {
+                          await triggerImpact(isActive ? ImpactStyle.Light : ImpactStyle.Medium);
+                          setTheme(item.key);
+                        }}
                         className={`relative overflow-hidden w-full text-left px-4 py-3 rounded-2xl border transition flex items-start gap-3 ${
                           isActive
                             ? "border-[color:var(--color-accent)] bg-[color:var(--color-accent-muted)] text-[var(--color-accent)] shadow-[0_12px_30px_rgba(15,23,42,0.18)]"

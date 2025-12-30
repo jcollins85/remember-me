@@ -491,7 +491,8 @@ export default function PersonForm({
                   onPointerDown={() => {
                     ignoreBlurRef.current = true;
                   }}
-                  onClick={() => {
+                  onClick={async () => {
+                    await triggerImpact(ImpactStyle.Light);
                     onVenueSelect(name);
                     setVenuePulse(name);
                     ignoreBlurRef.current = false;
@@ -554,17 +555,19 @@ export default function PersonForm({
         >
           {currentTags.length > 0 ? (
             currentTags.map((tagName) => (
-              <span key={tagName} className="inline-flex items-center mr-3 bg-[var(--color-accent-muted)] text-[var(--color-text-primary)] px-3 py-1 rounded-full text-sm">
+              <button
+                type="button"
+                key={tagName}
+                onClick={async () => {
+                  await triggerImpact(ImpactStyle.Light);
+                  removeTag(tagName);
+                }}
+                className="inline-flex items-center mr-3 bg-[var(--color-accent-muted)] text-[var(--color-text-primary)] px-3 py-1 rounded-full text-sm hover:bg-[var(--color-accent-muted)]/80 transition focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                aria-label={`Remove tag ${tagName}`}
+              >
                 {tagName}
-                <button
-                  type="button"
-                  onClick={() => removeTag(tagName)}
-                  className="ml-2 text-red-500 hover:text-red-600"
-                  aria-label={`Remove tag ${tagName}`}
-                >
-                  ×
-                </button>
-              </span>
+                <span className="ml-2 text-red-500 text-base">×</span>
+              </button>
             ))
           ) : (
             <span className="inline-block mr-3 text-[var(--color-text-secondary)] text-sm italic">
@@ -605,7 +608,8 @@ export default function PersonForm({
                   onPointerDown={() => {
                     ignoreBlurRef.current = true;
                   }}
-                  onClick={() => {
+                  onClick={async () => {
+                    await triggerImpact(ImpactStyle.Light);
                     commitTag(tag.name);
                     clearInput();
                     setTagPulse(tag.id);
@@ -654,7 +658,8 @@ export default function PersonForm({
                     onPointerDown={() => {
                       ignoreBlurRef.current = true;
                     }}
-                    onClick={() => {
+                    onClick={async () => {
+                      await triggerImpact(ImpactStyle.Light);
                       commitTag(pendingTag);
                       clearInput();
                     }}
