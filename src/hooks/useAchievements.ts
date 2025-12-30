@@ -201,8 +201,7 @@ interface LifetimeStats {
 export function useAchievements(
   people: Person[],
   venues: Venue[],
-  favoriteVenues: string[],
-  onAchievementEarned?: (achievement: AchievementDefinition) => void
+  favoriteVenues: string[]
 ) {
   const [earnedEntries, setEarnedEntries] = useLocalStorage<
     Record<string, string>
@@ -298,21 +297,11 @@ export function useAchievements(
         ) {
           next[achievement.id] = new Date().toISOString();
           changed = true;
-          const unlockedAchievement = {
-            id: achievement.id,
-            type: achievement.type,
-            target: achievement.target,
-            title: achievement.title,
-            description: achievement.description,
-          };
-          if (onAchievementEarned) {
-            onAchievementEarned(unlockedAchievement);
-          }
         }
       });
       return changed ? next : prev;
     });
-  }, [achievements, onAchievementEarned, setEarnedEntries]);
+  }, [achievements, setEarnedEntries]);
 
   const resetAchievements = useCallback(() => {
     setEarnedEntries({});

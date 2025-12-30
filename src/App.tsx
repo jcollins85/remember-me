@@ -223,11 +223,21 @@ function App() {
   const { achievements, stats, resetAchievements } = useAchievements(
     people,
     venues,
-    favoriteVenues,
-    (achievement) => {
-      showNotification(`Achievement unlocked: ${achievement.title}`, "info");
-    }
+    favoriteVenues
   );
+
+  const unlockedRef = React.useRef<Set<string>>(new Set());
+  useEffect(() => {
+    const prev = unlockedRef.current;
+    const next = new Set(prev);
+    achievements.forEach((achievement) => {
+      if (achievement.unlocked && !prev.has(achievement.id)) {
+        showNotification(`Achievement unlocked: ${achievement.title}`, "info");
+        next.add(achievement.id);
+      }
+    });
+    unlockedRef.current = next;
+  }, [achievements, showNotification]);
 
   const usageInsights = useMemo(() => {
     const venueUsage = people.reduce<Record<string, number>>((acc, person) => {
