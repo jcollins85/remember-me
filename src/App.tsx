@@ -24,6 +24,7 @@ import SettingsPanel from "./components/settings/SettingsPanel";
 import ProfilePanel from "./components/profile/ProfilePanel";
 
 import { SortKey, VenueSortKey } from "./utils/sortHelpers";
+import { triggerImpact, ImpactStyle } from "./utils/haptics";
 
 import { UNCLASSIFIED } from "./constants";
 import { samplePeople, sampleTags, sampleVenues } from "./data";
@@ -338,7 +339,8 @@ function App() {
           <ModalManager
             showAdd={showAddModal}
             onAddCancel={() => setShowAddModal(false)}
-            onAdd={(newPerson) => {
+            onAdd={async (newPerson) => {
+              await triggerImpact(ImpactStyle.Medium);
               addPerson(newPerson);
               setShowAddModal(false);
               showNotification(`${newPerson.name} added`, "success");
@@ -351,7 +353,8 @@ function App() {
 
             editingPerson={editingPerson}
             onEditCancel={() => setEditingPerson(null)}
-            onEdit={(updated) => {
+            onEdit={async (updated) => {
+              await triggerImpact(ImpactStyle.Medium);
               updatePerson(updated);
               setEditingPerson(null);
               showNotification(`${updated.name} updated`, "success");
