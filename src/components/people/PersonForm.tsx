@@ -258,6 +258,7 @@ export default function PersonForm({
   };
 
   const labelClass = "block text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] mb-2";
+  const inputShell = "w-full max-w-md";
   const inputClass =
     "w-full px-3 py-2 rounded-2xl border border-[var(--color-card-border)] bg-[var(--color-card)] text-base text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] shadow-level1";
 
@@ -478,7 +479,7 @@ export default function PersonForm({
           <p className="text-[11px] uppercase tracking-wide text-[var(--color-text-secondary)]">Suggested venues</p>
           <div
             ref={venueRail.ref}
-            className="relative overflow-x-auto whitespace-nowrap gap-2 px-1 pb-3 pr-10"
+            className="relative overflow-x-auto whitespace-nowrap gap-2 px-1 pb-3 pr-10 tag-suggestion-rail"
             style={{ scrollbarGutter: "stable", WebkitOverflowScrolling: "touch" }}
           >
             {venueSuggestions.map((name) => {
@@ -594,7 +595,7 @@ export default function PersonForm({
           )}
           <div
             ref={suggestionRail.ref}
-            className="relative overflow-x-auto whitespace-nowrap px-3 pb-3 pr-12"
+            className="relative overflow-x-auto whitespace-nowrap px-3 pb-3 pr-12 tag-suggestion-rail"
             onWheel={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
             style={{ scrollbarGutter: "stable", WebkitOverflowScrolling: "touch" }}
