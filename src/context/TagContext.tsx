@@ -4,6 +4,7 @@ import useLocalStorage from '../hooks/useLocalStorage';
 import { sampleTags } from '../data';
 import { Tag } from '../types';
 import { useNotification } from './NotificationContext';
+import { useAnalytics } from './AnalyticsContext';
 
 interface TagContextType {
   tags: Tag[];
@@ -21,6 +22,7 @@ interface TagProviderProps {
 
 export const TagProvider = ({ children }: TagProviderProps) => {
   const { showNotification } = useNotification();
+  const { trackEvent } = useAnalytics();
   const handleStorageError = useCallback(
     (action: 'read' | 'write') => {
       const verb = action === 'read' ? 'loading' : 'saving';
@@ -59,6 +61,7 @@ export const TagProvider = ({ children }: TagProviderProps) => {
       lastUsed: Date.now(),
     };
     setTags((prev) => [...prev, newTag]);
+    trackEvent("tag_created", { name: normalized });
     return newTag;
   };
 

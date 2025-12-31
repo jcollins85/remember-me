@@ -25,6 +25,7 @@ import ProfilePanel from "./components/profile/ProfilePanel";
 
 import { SortKey, VenueSortKey } from "./utils/sortHelpers";
 import { triggerImpact, ImpactStyle } from "./utils/haptics";
+import { useAnalytics } from "./context/AnalyticsContext";
 
 import { UNCLASSIFIED } from "./constants";
 import { samplePeople, sampleTags, sampleVenues } from "./data";
@@ -108,6 +109,8 @@ function App() {
     setPersonToDelete({ id, name } as Person);
   };
 
+  const { trackEvent } = useAnalytics();
+
   const handleResetData = () => {
     if (
       !window.confirm(
@@ -133,6 +136,7 @@ function App() {
     replaceTags(clonedTags);
     setFavoriteVenues([]);
 
+    trackEvent("data_reset_sample");
     showNotification("App data reset to sample set.", "info");
   };
 
@@ -149,6 +153,7 @@ function App() {
     replaceTags([]);
     setFavoriteVenues([]);
     resetAchievements();
+    trackEvent("data_reset_blank");
     showNotification("App reset to a blank state.", "info");
   };
 
@@ -161,6 +166,7 @@ function App() {
       return;
     }
     resetAchievements();
+    trackEvent("achievements_cleared");
     showNotification("Achievements cleared.", "info");
   };
 
@@ -233,6 +239,11 @@ function App() {
     achievements.forEach((achievement) => {
       if (achievement.unlocked && !achievement.unlockedAt && !prev.has(achievement.id)) {
         triggerImpact(ImpactStyle.Heavy);
+        trackEvent("achievement_unlocked", {
+          id: achievement.id,
+          type: achievement.type,
+          title: achievement.title,
+        });
         showNotification(`Achievement unlocked: ${achievement.title}`, "celebration", { description: achievement.description });
         next.add(achievement.id);
       }

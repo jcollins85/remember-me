@@ -6,6 +6,7 @@ import PersonCard from "../people/PersonCard";
 import { UNCLASSIFIED } from "../../constants";
 import { ChevronDown, ChevronRight, Star } from "lucide-react";
 import { triggerImpact, ImpactStyle } from "../../utils/haptics";
+import { useAnalytics } from "../../context/AnalyticsContext";
 
 interface VenueGroupListProps {
   venue: string;
@@ -40,6 +41,7 @@ export default function VenueGroupList({
   getTagNameById,
   searchQuery,
 }: VenueGroupListProps) {
+  const { trackEvent } = useAnalytics();
   const groupList = Array.isArray(group) ? group : [];
   const sortedGroup = [...groupList].sort((a, b) => {
     if (a.favorite && !b.favorite) return -1;
@@ -74,7 +76,10 @@ export default function VenueGroupList({
     >
       <div className="flex items-center justify-between gap-3 py-1">
         <button
-          onClick={() => toggleGroup(venue)}
+          onClick={async () => {
+            await trackEvent("venue_toggle", { venue, open: !isOpen });
+            toggleGroup(venue);
+          }}
           className="text-left text-lg font-semibold text-[var(--color-text-primary)] flex items-center gap-2"
           aria-label={`Toggle ${venue}`}
         >
@@ -94,6 +99,7 @@ export default function VenueGroupList({
                   ? prev.filter((v) => v !== venue)
                   : [...prev, venue]
               );
+              trackEvent(isFavorite ? "venue_unfavorited" : "venue_favorited", { venue });
             }}
             className={`w-9 h-9 flex items-center justify-center rounded-full border relative overflow-hidden ${
               isFavorite

@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from 'react';
 import { Sparkles, Heart } from 'lucide-react';
 import { LayoutGroup, motion } from 'framer-motion';
 import { triggerImpact, ImpactStyle } from '../../utils/haptics';
+import { useAnalytics } from '../../context/AnalyticsContext';
 
 export type Segment<T extends string> = { key: T; label: string };
 
@@ -19,6 +20,7 @@ function SegmentedControlComponent<T extends string>({
   onChange,
   className = '',
 }: SegmentedControlProps<T>) {
+  const { trackEvent } = useAnalytics();
   return (
     <LayoutGroup>
       <div
@@ -34,6 +36,7 @@ function SegmentedControlComponent<T extends string>({
           const handleSelect = async () => {
             if (isSelected) return;
             await triggerImpact(ImpactStyle.Medium);
+            trackEvent('segmented_control_change', { segment: seg.key });
             onChange(seg.key);
           };
 

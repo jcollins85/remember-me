@@ -8,19 +8,22 @@ import { VenueProvider } from './context/VenueContext';
 import { NotificationProvider } from './context/NotificationContext';
 import './index.css';
 import { ThemeProvider } from './theme/ThemeContext';
+import { AnalyticsProvider } from './context/AnalyticsContext';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ThemeProvider>
-      <NotificationProvider>
-        <TagProvider>
-          <PeopleProvider>
-            <VenueProvider>
-              <App />
-            </VenueProvider>
-          </PeopleProvider>
-        </TagProvider>
-      </NotificationProvider>
+      <AnalyticsProvider>
+        <NotificationProvider>
+          <TagProvider>
+            <PeopleProvider>
+              <VenueProvider>
+                <App />
+              </VenueProvider>
+            </PeopleProvider>
+          </TagProvider>
+        </NotificationProvider>
+      </AnalyticsProvider>
     </ThemeProvider>
   </React.StrictMode>
 );
