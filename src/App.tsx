@@ -231,7 +231,7 @@ function App() {
     const prev = unlockedRef.current;
     const next = new Set(prev);
     achievements.forEach((achievement) => {
-      if (achievement.unlocked && !prev.has(achievement.id)) {
+      if (achievement.unlocked && !achievement.unlockedAt && !prev.has(achievement.id)) {
         triggerImpact(ImpactStyle.Heavy);
         showNotification(`Achievement unlocked: ${achievement.title}`, "celebration", { description: achievement.description });
         next.add(achievement.id);
