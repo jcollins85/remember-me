@@ -9,6 +9,8 @@ import { useVenueInput } from "../../hooks/useVenueInput";
 import { validatePersonForm, ValidationErrors } from "../../utils/validation";
 import { useNotification } from "../../context/NotificationContext";
 import { triggerImpact, ImpactStyle } from "../../utils/haptics";
+import { Capacitor } from "@capacitor/core";
+import { Geolocation } from "@capacitor/geolocation";
 
 interface Props {
   initialData?: Partial<Person>;
@@ -39,7 +41,7 @@ export default function PersonForm({
   hideActions = false,
   onSubmittingChange,
 }: Props) {
-  const showLocationControls = false;
+  const showLocationControls = true;
   const { showNotification } = useNotification();
   // ── Basic fields ──
   const [name, setName] = useState(initialData.name || "");
@@ -47,7 +49,7 @@ export default function PersonForm({
   const [description, setDescription] = useState(initialData.description || "");
 
   // ── Venue hook ──
-  const { venues, addVenue } = useVenues();
+  const { venues, addVenue, updateVenue } = useVenues();
   const initialVenueName =
     initialData.venueId
       ? venues.find((v) => v.id === initialData.venueId)?.name || ""
@@ -155,6 +157,8 @@ export default function PersonForm({
   const [locationTag, setLocationTag] = useState<string>(
     initialData.locationTag ?? ""
   );
+  const [isCapturingLocation, setIsCapturingLocation] = useState(false);
+  const [isSavingVenueLocation, setIsSavingVenueLocation] = useState(false);
   useEffect(() => {
     if (coords && !Number.isNaN(coords.lat) && !Number.isNaN(coords.lon)) {
       const latString = coords.lat.toFixed(4);
@@ -179,6 +183,84 @@ export default function PersonForm({
     }
     setCoords({ lat: latVal, lon: lonVal });
     setLocationTag(`${latVal.toFixed(4)}, ${lonVal.toFixed(4)}`);
+  };
+
+  const getCurrentCoordinates = async () => {
+    try {
+      if (Capacitor.isNativePlatform()) {
+        await Geolocation.requestPermissions();
+      }
+      const position = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+      });
+      return {
+        lat: position.coords.latitude,
+        lon: position.coords.longitude,
+      };
+    } catch (nativeError) {
+      console.warn("Native geolocation error", nativeError);
+    }
+    if (!navigator.geolocation) {
+      throw new Error("Geolocation not supported on this device.");
+    }
+    return new Promise<{ lat: number; lon: number }>((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+        },
+        (err) => reject(err),
+        { enableHighAccuracy: true }
+      );
+    });
+  };
+
+  const captureCurrentLocation = async () => {
+    try {
+      setIsCapturingLocation(true);
+      const { lat, lon } = await getCurrentCoordinates();
+      setCoords({ lat, lon });
+      setLocationTag(`${lat.toFixed(4)}, ${lon.toFixed(4)}`);
+      showNotification("Location captured", "info");
+    } catch (error: any) {
+      console.warn("Location capture error", error);
+      const message =
+        (typeof error?.message === "string" && error.message) ||
+        "Couldn't access your location.";
+      showNotification(message, "error");
+    } finally {
+      setIsCapturingLocation(false);
+    }
+  };
+
+  const applyLocationToVenue = async () => {
+    if (!coords) {
+      showNotification("Capture a location first.", "error");
+      return;
+    }
+    const trimmedVenue = venue.trim().toLowerCase();
+    if (!trimmedVenue) {
+      showNotification("Select a venue to attach this location.", "error");
+      return;
+    }
+    const matchedVenue = venues.find(
+      (v) => v.name.trim().toLowerCase() === trimmedVenue
+    );
+    if (!matchedVenue) {
+      showNotification("Location can only be attached to existing venues.", "error");
+      return;
+    }
+    try {
+      setIsSavingVenueLocation(true);
+      updateVenue({
+        ...matchedVenue,
+        coords: { lat: coords.lat, lon: coords.lon },
+      });
+      showNotification(`Location saved to ${matchedVenue.name}`, "success");
+    } catch {
+      showNotification("Unable to update venue location.", "error");
+    } finally {
+      setIsSavingVenueLocation(false);
+    }
   };
 
   // ── Prevent blur on suggestion click ──
@@ -337,107 +419,6 @@ export default function PersonForm({
         )}
       </div>
 
-      {/* Location */}
-      {showLocationControls && (
-      <div className="space-y-3">
-        <p className="text-xs text-[var(--color-text-secondary)]">
-          Save where you met by capturing coordinates. You can tap to open them in Maps later.
-        </p>
-        <div className="flex items-center space-x-3">
-          <button
-            type="button"
-            onClick={() => {
-              if (!navigator.geolocation) {
-                showNotification("Geolocation not supported on this device.", "error");
-                return;
-              }
-              navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                  const { latitude: lat, longitude: lon } = pos.coords;
-                  setCoords({ lat, lon });
-                  setLocationTag(`${lat.toFixed(4)}, ${lon.toFixed(4)}`);
-                  showNotification("Location captured", "success");
-                },
-                () => {
-                  showNotification("Couldn't access your location.", "error");
-                }
-              );
-            }}
-            className="px-4 py-2 rounded-full bg-[var(--color-accent)] text-white text-xs font-semibold shadow hover:brightness-110 transition"
-          >
-            Use current location
-          </button>
-          {coords && (
-            <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
-              <span>{locationTag}</span>
-              <button
-                type="button"
-                onClick={() => {
-                  if (coords) {
-                    navigator.clipboard
-                      ?.writeText(`${coords.lat}, ${coords.lon}`)
-                      .then(() => showNotification("Coordinates copied", "info"))
-                      .catch(() =>
-                        showNotification("Unable to copy coordinates.", "error")
-                      );
-                  }
-                }}
-                className="px-2 py-1 rounded-full border border-white/70 text-xs hover:bg-white"
-              >
-                Copy
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (coords) {
-                    window.open(`https://maps.google.com/?q=${coords.lat},${coords.lon}`, '_blank');
-                  }
-                }}
-                className="px-2 py-1 rounded-full border border-white/70 text-xs hover:bg-white"
-              >
-                Open in Maps
-              </button>
-            </div>
-          )}
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={labelClass} htmlFor="latitude">Latitude</label>
-            <input
-              id="latitude"
-              type="number"
-              step="0.0001"
-              value={manualLat}
-              onChange={(e) => {
-                const value = e.target.value;
-                setManualLat(value);
-                updateCoordsFromManual(value, manualLon);
-              }}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className={labelClass} htmlFor="longitude">Longitude</label>
-            <input
-              id="longitude"
-              type="number"
-              step="0.0001"
-              value={manualLon}
-              onChange={(e) => {
-                const value = e.target.value;
-                setManualLon(value);
-                updateCoordsFromManual(manualLat, value);
-              }}
-              className={inputClass}
-            />
-          </div>
-        </div>
-        {formErrors.coords && (
-          <p className="text-red-500 text-xs">{formErrors.coords}</p>
-        )}
-      </div>
-      )}
-
       {/* Position */}
       <div>
         <label htmlFor="position" className={labelClass}>
@@ -523,6 +504,64 @@ export default function PersonForm({
               );
             })}
           </div>
+        </div>
+      )}
+      {showLocationControls && (
+        <div className="mt-4 space-y-3 rounded-2xl bg-[var(--color-card)]/70 px-4 py-3">
+          <p className="text-xs text-[var(--color-text-secondary)]">
+            Capture a meeting location and attach it to this venue.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={captureCurrentLocation}
+              disabled={isCapturingLocation}
+              className="px-4 py-2 rounded-full bg-[var(--color-accent)] text-white text-xs font-semibold shadow hover:brightness-110 transition disabled:opacity-60"
+            >
+              {isCapturingLocation ? "Capturing…" : "Use current location"}
+            </button>
+            {coords && (
+              <>
+                <div className="text-sm text-[var(--color-text-secondary)]">{locationTag}</div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (coords) {
+                      navigator.clipboard
+                        ?.writeText(`${coords.lat}, ${coords.lon}`)
+                        .then(() => showNotification("Coordinates copied", "info"))
+                        .catch(() => showNotification("Unable to copy coordinates.", "error"));
+                    }
+                  }}
+                  className="px-2 py-1 rounded-full border border-white/70 text-xs hover:bg-white"
+                >
+                  Copy
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (coords) {
+                      window.open(`https://maps.google.com/?q=${coords.lat},${coords.lon}`, "_blank");
+                    }
+                  }}
+                  className="px-2 py-1 rounded-full border border-white/70 text-xs hover:bg-white"
+                >
+                  Open in Maps
+                </button>
+              </>
+            )}
+          </div>
+          {coords && venue.trim() && (
+            <button
+              type="button"
+              onClick={applyLocationToVenue}
+              disabled={isSavingVenueLocation}
+              className="px-4 py-2 rounded-full border border-[var(--color-card-border)] bg-[var(--color-card)] text-xs font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/90 transition disabled:opacity-50"
+            >
+              {isSavingVenueLocation ? "Saving…" : `Attach to "${venue}"`}
+            </button>
+          )}
+          {formErrors.coords && <p className="text-red-500 text-xs">{formErrors.coords}</p>}
         </div>
       )}
 
