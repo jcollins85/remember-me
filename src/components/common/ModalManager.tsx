@@ -3,7 +3,6 @@ import { AnimatePresence } from 'framer-motion';
 import PersonModal from '../people/PersonModal';
 import DeleteConfirmModal from '../common/DeleteConfirmModal';
 import type { Person, Tag } from '../../types';
-import { useAnalytics } from '../../context/AnalyticsContext';
 
 interface Props {
   // Add Person Modal
@@ -43,15 +42,6 @@ export default function ModalManager({
   onDeleteCancel,
   onDeleteConfirm,
 }: Props) {
-  const { trackEvent } = useAnalytics();
-  const handleAddSubmit = async (person: Person) => {
-    await trackEvent("person_added", { venueId: person.venueId, tags: person.tags?.length ?? 0, favorite: !!person.favorite });
-    onAdd(person);
-  };
-  const handleEditSubmit = async (person: Person) => {
-    await trackEvent("person_updated", { id: person.id, venueId: person.venueId, favorite: !!person.favorite });
-    onEdit(person);
-  };
   return (
     <>
       <AnimatePresence mode="wait" initial={false}>
@@ -64,7 +54,7 @@ export default function ModalManager({
             getTagIdByName={getTagIdByName}
             getTagNameById={getTagNameById}
             createTag={createTag}
-            onSubmit={handleAddSubmit}
+            onSubmit={onAdd}
             onCancel={onAddCancel}
           />
         )}
@@ -79,7 +69,7 @@ export default function ModalManager({
             getTagIdByName={getTagIdByName}
             getTagNameById={getTagNameById}
             createTag={createTag}
-            onSubmit={handleEditSubmit}
+            onSubmit={onEdit}
             onCancel={onEditCancel}
           />
         )}

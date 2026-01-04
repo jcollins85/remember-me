@@ -75,6 +75,7 @@ function App() {
     personSort,  setPersonSort
   } = useSearchSort();
   const deferredSearchQuery = useDeferredValue(searchQuery);
+  const { trackEvent } = useAnalytics();
 
   // ── Venue context & lookup ──
   const { venues, replaceVenues } = useVenues();
@@ -93,6 +94,20 @@ function App() {
     sortDir === "asc"
   );
 
+  useEffect(() => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) {
+      return;
+    }
+    const handler = window.setTimeout(() => {
+      trackEvent("search_used", {
+        query_length: trimmed.length,
+        results: filteredPeople.length,
+      });
+    }, 500);
+    return () => window.clearTimeout(handler);
+  }, [searchQuery, filteredPeople.length, trackEvent]);
+
   // ── Handlers ──
   const toggleGroup = (venueName: string) => {
     setOpenGroups((prev: Record<string, boolean>) => {
@@ -108,8 +123,6 @@ function App() {
   const handleDelete = (id: string, name: string) => {
     setPersonToDelete({ id, name } as Person);
   };
-
-  const { trackEvent } = useAnalytics();
 
   const handleResetData = () => {
     if (
@@ -136,7 +149,6 @@ function App() {
     replaceTags(clonedTags);
     setFavoriteVenues([]);
 
-    trackEvent("data_reset_sample");
     showNotification("App data reset to sample set.", "info");
   };
 
@@ -153,7 +165,6 @@ function App() {
     replaceTags([]);
     setFavoriteVenues([]);
     resetAchievements();
-    trackEvent("data_reset_blank");
     showNotification("App reset to a blank state.", "info");
   };
 
@@ -166,7 +177,6 @@ function App() {
       return;
     }
     resetAchievements();
-    trackEvent("achievements_cleared");
     showNotification("Achievements cleared.", "info");
   };
 
@@ -231,6 +241,20 @@ function App() {
     venues,
     favoriteVenues
   );
+
+  const getVenueAnalyticsMeta = (venueId?: string) => {
+    if (!venueId) {
+      return { venue_name: "Unclassified", venue_type: "unclassified" };
+    }
+    const venue = venuesById[venueId];
+    if (!venue) {
+      return { venue_name: "Custom Venue", venue_type: "new" };
+    }
+    return {
+      venue_name: venue.name,
+      venue_type: favoriteVenues.includes(venue.name) ? "favorite" : "existing",
+    };
+  };
 
   const unlockedRef = React.useRef<Set<string>>(new Set());
   useEffect(() => {
@@ -366,6 +390,12 @@ function App() {
               addPerson(newPerson);
               setShowAddModal(false);
               showNotification(`${newPerson.name} added`, "success");
+              const venueMeta = getVenueAnalyticsMeta(newPerson.venueId);
+              trackEvent("person_added", {
+                ...venueMeta,
+                tags: newPerson.tags?.length ?? 0,
+                favorite: !!newPerson.favorite,
+              });
             }}
             tags={tags}
             people={people}
@@ -380,12 +410,27 @@ function App() {
               updatePerson(updated);
               setEditingPerson(null);
               showNotification(`${updated.name} updated`, "success");
+              const venueMeta = getVenueAnalyticsMeta(updated.venueId);
+              trackEvent("person_updated", {
+                id: updated.id,
+                ...venueMeta,
+                tags: updated.tags?.length ?? 0,
+                favorite: !!updated.favorite,
+              });
             }}
 
             personToDelete={personToDelete}
             onDeleteCancel={() => setPersonToDelete(null)}
             onDeleteConfirm={(id) => {
               const deletedName = personToDelete?.name ?? "Person";
+              const deletedPerson = people.find((p) => p.id === id);
+              const venueMeta = getVenueAnalyticsMeta(deletedPerson?.venueId);
+              trackEvent("person_deleted", {
+                id,
+                ...venueMeta,
+                tags: deletedPerson?.tags?.length ?? 0,
+                favorite: deletedPerson?.favorite ?? false,
+              });
               deletePerson(id);
               setPersonToDelete(null);
               showNotification(`${deletedName} deleted`, "info");

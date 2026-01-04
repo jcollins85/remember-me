@@ -130,7 +130,7 @@ export const samplePeople: Person[] = [
   },
   {
     id: uuidv4(),
-    name: "Leila D’Souza",
+    name: "Sophie Turner",
     position: "Marketing Coordinator",
     description: "Always networking—co-hosted a pop-up at Stackt Market.",
     venueId: sampleVenues[4].id,
@@ -210,7 +210,7 @@ export const samplePeople: Person[] = [
   },
   {
     id: uuidv4(),
-    name: "Nina Kapoor",
+    name: "Nina Keller",
     position: "Marketing Coordinator",
     description: "Organizes top-tier launches at Stackt Market.",
     venueId: sampleVenues[4].id,
@@ -270,7 +270,7 @@ export const samplePeople: Person[] = [
   },
   {
     id: uuidv4(),
-    name: "Rhea Patel",
+    name: "Rhea Palmer",
     position: "Law Student",
     description: "AI ethics debate champ who favors Broadview rooftop meetups.",
     venueId: sampleVenues[3].id,
