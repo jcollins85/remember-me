@@ -41,7 +41,9 @@ export default function PersonForm({
   hideActions = false,
   onSubmittingChange,
 }: Props) {
-  const showLocationControls = true;
+const showLocationControls = true;
+const mapPreviewPlaceholder =
+  "data:image/svg+xml,%3Csvg width='640' height='360' viewBox='0 0 640 360' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='640' height='360' fill='%23f8f4ef'/%3E%3Cpath d='M0 40h640M0 120h640M0 200h640M0 280h640' stroke='%23e5dbcf' stroke-width='2'/%3E%3Cpath d='M80 0v360M200 0v360M320 0v360M440 0v360M560 0v360' stroke='%23e5dbcf' stroke-width='2'/%3E%3Cpath d='M0 260l80-40 60 30 100-50 90 60 90-80 120 40 100-70 0 210H0z' fill='%23d5e5f0'/%3E%3Cpath d='M0 300l90-60 120 70 120-70 120 50 190-140V360H0z' fill='%23c7e0da'/%3E%3C/svg%3E";
   const { showNotification } = useNotification();
   // ── Basic fields ──
   const [name, setName] = useState(initialData.name || "");
@@ -507,62 +509,115 @@ export default function PersonForm({
         </div>
       )}
       {showLocationControls && (
-        <div className="mt-4 space-y-3 rounded-2xl bg-[var(--color-card)]/70 px-4 py-3">
-          <p className="text-xs text-[var(--color-text-secondary)]">
-            Capture a meeting location and attach it to this venue.
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
+        <section className="mt-6 space-y-4">
+          <div>
+            <p className={labelClass.replace("mb-2", "")}>Location</p>
+            <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
+              Add a map pin for this venue (optional)
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={captureCurrentLocation}
               disabled={isCapturingLocation}
-              className="px-4 py-2 rounded-full bg-[var(--color-accent)] text-white text-xs font-semibold shadow hover:brightness-110 transition disabled:opacity-60"
+              className="rounded-full bg-[var(--color-accent)] px-4 py-1.5 text-xs font-semibold text-white shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition hover:brightness-110 disabled:opacity-60"
             >
               {isCapturingLocation ? "Capturing…" : "Use current location"}
             </button>
-            {coords && (
-              <>
-                <div className="text-sm text-[var(--color-text-secondary)]">{locationTag}</div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (coords) {
+            <button
+              type="button"
+              onClick={() => showNotification("Search coming soon", "info")}
+              className="rounded-full border border-white/40 bg-[var(--color-card)] px-4 py-1.5 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_6px_18px_rgba(0,0,0,0.08)]"
+            >
+              Search for a place
+            </button>
+          </div>
+
+          <div className="space-y-4 rounded-[30px] border border-[var(--color-card-border)] bg-[var(--color-card)]/95 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.15)]">
+            <div className="flex items-center justify-between text-sm font-semibold text-[var(--color-text-primary)]">
+              <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
+                {coords ? "Pinned location ready" : "No pin yet"}
+              </p>
+              <button
+                type="button"
+                disabled={!coords}
+                onClick={() => {
+                  if (coords) {
+                    window.open(`https://maps.google.com/?q=${coords.lat},${coords.lon}`, "_blank");
+                  }
+                }}
+                className="text-xs font-semibold text-[var(--color-text-secondary)] underline-offset-2 disabled:opacity-40 hover:underline"
+              >
+                Open in Maps
+              </button>
+            </div>
+
+            <div className="relative overflow-hidden rounded-[26px] border border-white/15 bg-[var(--color-card)]/60">
+              <img
+                src={mapPreviewPlaceholder}
+                alt="Map preview"
+                className="h-48 w-full object-cover"
+              />
+              {coords && (
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90">
+                    <div className="h-6 w-6 rounded-full bg-[var(--color-accent)] shadow-lg" />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-base font-semibold text-[var(--color-text-primary)]">
+                {venue.trim() || "The Broadview Rooftop"}
+              </p>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                {locationTag || "106 Broadview Ave · Toronto"}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {coords ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
                       navigator.clipboard
                         ?.writeText(`${coords.lat}, ${coords.lon}`)
                         .then(() => showNotification("Coordinates copied", "info"))
                         .catch(() => showNotification("Unable to copy coordinates.", "error"));
-                    }
-                  }}
-                  className="px-2 py-1 rounded-full border border-white/70 text-xs hover:bg-white"
-                >
-                  Copy
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (coords) {
-                      window.open(`https://maps.google.com/?q=${coords.lat},${coords.lon}`, "_blank");
-                    }
-                  }}
-                  className="px-2 py-1 rounded-full border border-white/70 text-xs hover:bg-white"
-                >
-                  Open in Maps
-                </button>
-              </>
+                    }}
+                    className="rounded-full border border-[var(--color-card-border)] px-4 py-1.5 text-sm font-semibold text-[var(--color-text-primary)] shadow-[0_4px_12px_rgba(15,23,42,0.08)]"
+                  >
+                    Copy
+                  </button>
+                  <button
+                    type="button"
+                    onClick={captureCurrentLocation}
+                    className="rounded-full border border-[var(--color-card-border)] px-4 py-1.5 text-sm font-semibold text-[var(--color-text-primary)] shadow-[0_4px_12px_rgba(15,23,42,0.08)]"
+                  >
+                    Retake
+                  </button>
+                </>
+              ) : (
+                <p className="text-xs text-[var(--color-text-secondary)]">Capture a location to enable actions.</p>
+              )}
+            </div>
+            {coords && venue.trim() && (
+              <button
+                type="button"
+                onClick={applyLocationToVenue}
+                disabled={isSavingVenueLocation}
+                className="mt-2 w-full rounded-full bg-[var(--color-accent)] px-4 py-1.5 text-sm font-semibold text-white shadow-[0_10px_26px_rgba(0,0,0,0.2)] transition hover:brightness-110 disabled:opacity-60"
+              >
+                {isSavingVenueLocation ? "Saving…" : `Attach to "${venue}"`}
+              </button>
             )}
+            {formErrors.coords && <p className="text-red-500 text-xs">{formErrors.coords}</p>}
           </div>
-          {coords && venue.trim() && (
-            <button
-              type="button"
-              onClick={applyLocationToVenue}
-              disabled={isSavingVenueLocation}
-              className="px-4 py-2 rounded-full border border-[var(--color-card-border)] bg-[var(--color-card)] text-xs font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/90 transition disabled:opacity-50"
-            >
-              {isSavingVenueLocation ? "Saving…" : `Attach to "${venue}"`}
-            </button>
-          )}
-          {formErrors.coords && <p className="text-red-500 text-xs">{formErrors.coords}</p>}
-        </div>
+        </section>
       )}
 
       {/* Description */}
