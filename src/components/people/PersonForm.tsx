@@ -588,16 +588,17 @@ const mapPreviewPlaceholder =
           </div>
 
           <div className="space-y-4 rounded-[30px] border border-[var(--color-card-border)] bg-[var(--color-card)]/95 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.15)]">
-            <div className="flex items-center justify-between text-sm font-semibold text-[var(--color-text-primary)]">
-              <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
-                {coords ? "Pinned location ready" : "No pin yet"}
-              </p>
+            <div className="flex items-center justify-end">
               <button
                 type="button"
                 disabled={!coords}
                 onClick={() => {
                   if (coords) {
-                    window.open(`https://maps.google.com/?q=${coords.lat},${coords.lon}`, "_blank");
+                    if (Capacitor.isNativePlatform()) {
+                      window.open(`maps://?ll=${coords.lat},${coords.lon}`, "_blank");
+                    } else {
+                      window.open(`https://maps.google.com/?q=${coords.lat},${coords.lon}`, "_blank");
+                    }
                   }
                 }}
                 className="text-xs font-semibold text-[var(--color-text-secondary)] underline-offset-2 disabled:opacity-40 hover:underline"
