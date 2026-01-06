@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useVenues } from "../../context/VenueContext";
 import { UNCLASSIFIED } from "../../constants";
 import { Person, Tag, Venue } from "../../types";
@@ -53,10 +53,10 @@ const mapPreviewPlaceholder =
 
   // ── Venue hook ──
   const { venues, addVenue, updateVenue } = useVenues();
-  const initialVenueName =
-    initialData.venueId
-      ? venues.find((v) => v.id === initialData.venueId)?.name || ""
-      : "";
+  const initialVenueRecord = initialData.venueId
+    ? venues.find((v) => v.id === initialData.venueId)
+    : undefined;
+  const initialVenueName = initialVenueRecord?.name ?? "";
   const venueUsage = useMemo(() => {
     return venues.reduce((acc, venue) => {
       acc[venue.id] = people.filter((p) => p.venueId === venue.id).length;
@@ -149,17 +149,23 @@ const mapPreviewPlaceholder =
     initialData.dateMet ? initialData.dateMet.split("T")[0] : today
   );
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(
-    initialData.coords ?? null
+    initialVenueRecord?.coords ?? null
   );
   const [manualLat, setManualLat] = useState(
-    initialData.coords ? initialData.coords.lat.toFixed(4) : ""
+    initialVenueRecord?.coords ? initialVenueRecord.coords.lat.toFixed(4) : ""
   );
   const [manualLon, setManualLon] = useState(
-    initialData.coords ? initialData.coords.lon.toFixed(4) : ""
+    initialVenueRecord?.coords ? initialVenueRecord.coords.lon.toFixed(4) : ""
   );
   const [locationTag, setLocationTag] = useState<string>(
-    initialData.locationTag ?? ""
+    initialVenueRecord?.locationTag ?? ""
   );
+  const [recentlyAttached, setRecentlyAttached] = useState(false);
+  useEffect(() => {
+    if (!recentlyAttached) return;
+    const timer = window.setTimeout(() => setRecentlyAttached(false), 1500);
+    return () => window.clearTimeout(timer);
+  }, [recentlyAttached]);
   const [isCapturingLocation, setIsCapturingLocation] = useState(false);
   const [isSavingVenueLocation, setIsSavingVenueLocation] = useState(false);
   const [mapSnapshot, setMapSnapshot] = useState<string | null>(null);
@@ -170,7 +176,7 @@ const mapPreviewPlaceholder =
       const lonString = coords.lon.toFixed(4);
       setManualLat(latString);
       setManualLon(lonString);
-      setLocationTag(`${latString}, ${lonString}`);
+      setLocationTag((prev) => prev || `${latString}, ${lonString}`);
     }
   }, [coords]);
   const updateCoordsFromManual = (latStr: string, lonStr: string) => {
@@ -273,7 +279,9 @@ const mapPreviewPlaceholder =
       setIsCapturingLocation(true);
       const { lat, lon } = await getCurrentCoordinates();
       setCoords({ lat, lon });
-      setLocationTag(`${lat.toFixed(4)}, ${lon.toFixed(4)}`);
+      const autoLabel = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+      setLocationTag((prev) => prev || autoLabel);
+      await autoAttachVenue({ lat, lon }, locationTag || autoLabel);
       showNotification("Location captured", "info");
     } catch (error: any) {
       console.warn("Location capture error", error);
@@ -286,7 +294,10 @@ const mapPreviewPlaceholder =
     }
   };
 
-  const applyLocationToVenue = async () => {
+  const autoAttachVenue = async (
+    coordinates: { lat: number; lon: number },
+    label: string
+  ) => {
     if (!coords) {
       showNotification("Capture a location first.", "error");
       return;
@@ -305,10 +316,16 @@ const mapPreviewPlaceholder =
     }
     try {
       setIsSavingVenueLocation(true);
+      const label =
+        locationTag?.trim() ||
+        `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
       updateVenue({
         ...matchedVenue,
-        coords: { lat: coords.lat, lon: coords.lon },
+        coords: { lat: coordinates.lat, lon: coordinates.lon },
+        locationTag: label,
       });
+      setLocationTag(label);
+      setRecentlyAttached(true);
       showNotification(`Location saved to ${matchedVenue.name}`, "success");
     } catch {
       showNotification("Unable to update venue location.", "error");
@@ -368,7 +385,7 @@ const mapPreviewPlaceholder =
     // Resolve venue via hook
     const matchedVenue = resolveVenue();
 
-    const person: Person = {
+  const person: Person = {
       id: (initialData.id as string) || uuidv4(),
       name: name.trim(),
       position: position.trim() || undefined,
@@ -377,8 +394,6 @@ const mapPreviewPlaceholder =
       dateMet: normalizedDate,
       createdAt: mode === "add" ? now : initialData.createdAt!,
       updatedAt: mode === "edit" ? now : undefined,
-      locationTag: locationTag || undefined,
-      coords: coords ?? undefined,
       tags: tagIds,
       favorite: initialData.favorite ?? false,
     };
@@ -587,96 +602,97 @@ const mapPreviewPlaceholder =
             </button>
           </div>
 
-          <div className="space-y-4 rounded-[30px] border border-[var(--color-card-border)] bg-[var(--color-card)]/95 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.15)]">
-            <div className="flex items-center justify-end">
-              <button
-                type="button"
-                disabled={!coords}
-                onClick={() => {
-                  if (coords) {
-                    if (Capacitor.isNativePlatform()) {
-                      window.open(`maps://?ll=${coords.lat},${coords.lon}`, "_blank");
-                    } else {
-                      window.open(`https://maps.google.com/?q=${coords.lat},${coords.lon}`, "_blank");
-                    }
-                  }
-                }}
-                className="text-xs font-semibold text-[var(--color-text-secondary)] underline-offset-2 disabled:opacity-40 hover:underline"
-              >
-                Open in Maps
-              </button>
-            </div>
-
-            <div className="relative overflow-hidden rounded-[26px] border border-white/15 bg-[var(--color-card)]/60">
-              <img
-                src={mapSnapshot ?? mapPreviewPlaceholder}
-                alt="Map preview"
-                className="h-48 w-full object-cover transition-opacity"
-              />
-              {!mapSnapshot && coords && (
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90">
-                    <div className="h-6 w-6 rounded-full bg-[var(--color-accent)] shadow-lg" />
+          <AnimatePresence mode="wait" initial={false}>
+          {coords ? (
+            <motion.div
+              key="map-card"
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="space-y-4 rounded-[30px] border border-[var(--color-card-border)] bg-[var(--color-card)]/95 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.15)]"
+            >
+              <div className="relative overflow-hidden rounded-[26px] border border-white/15 bg-[var(--color-card)]/60">
+                <img
+                  src={mapSnapshot ?? mapPreviewPlaceholder}
+                  alt="Map preview"
+                  className="h-48 w-full object-cover transition-opacity"
+                />
+                {!mapSnapshot && coords && (
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90">
+                      <div className="h-6 w-6 rounded-full bg-[var(--color-accent)] shadow-lg" />
+                    </div>
                   </div>
-                </div>
-              )}
-              {isSnapshotLoading && (
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[var(--color-card)]/50 text-xs font-semibold text-[var(--color-text-secondary)]">
-                  Generating preview…
-                </div>
-              )}
-            </div>
+                )}
+                {isSnapshotLoading && (
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[var(--color-card)]/50 text-xs font-semibold text-[var(--color-text-secondary)]">
+                    Generating preview…
+                  </div>
+                )}
+              </div>
 
-            <div className="space-y-1">
-              <p className="text-base font-semibold text-[var(--color-text-primary)]">
-                {venue.trim() || "The Broadview Rooftop"}
-              </p>
-              {coords && (
-                <p className="text-sm text-[var(--color-text-secondary)]">
-                  {locationTag || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`}
+              <div className="space-y-1">
+                <p className="text-base font-semibold text-[var(--color-text-primary)]">
+                  {venue.trim() || "The Broadview Rooftop"}
                 </p>
+                {coords && (
+                  <p className="text-sm text-[var(--color-text-secondary)]">
+                    {locationTag || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`}
+                  </p>
+                )}
+              </div>
+              {coords && venue.trim() && recentlyAttached && (
+                <div className="rounded-full bg-[var(--color-accent-muted)]/70 px-3 py-1 text-xs font-semibold text-[var(--color-text-primary)]">
+                  Saved to “{venue.trim()}”
+                </div>
               )}
-            </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              {coords ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard
-                        ?.writeText(`${coords.lat}, ${coords.lon}`)
-                        .then(() => showNotification("Coordinates copied", "info"))
-                        .catch(() => showNotification("Unable to copy coordinates.", "error"));
-                    }}
-                    className="rounded-full border border-[var(--color-card-border)] px-4 py-1.5 text-sm font-semibold text-[var(--color-text-primary)] shadow-[0_4px_12px_rgba(15,23,42,0.08)]"
-                  >
-                    Copy
-                  </button>
-                  <button
-                    type="button"
-                    onClick={captureCurrentLocation}
-                    className="rounded-full border border-[var(--color-card-border)] px-4 py-1.5 text-sm font-semibold text-[var(--color-text-primary)] shadow-[0_4px_12px_rgba(15,23,42,0.08)]"
-                  >
-                    Retake
-                  </button>
-                </>
-              ) : (
-                <p className="text-xs text-[var(--color-text-secondary)]">Capture a location to enable actions.</p>
-              )}
-            </div>
-            {coords && venue.trim() && (
-              <button
-                type="button"
-                onClick={applyLocationToVenue}
-                disabled={isSavingVenueLocation}
-                className="mt-2 w-full rounded-full bg-[var(--color-accent)] px-4 py-1.5 text-sm font-semibold text-white shadow-[0_10px_26px_rgba(0,0,0,0.2)] transition hover:brightness-110 disabled:opacity-60"
-              >
-                {isSavingVenueLocation ? "Saving…" : `Attach to "${venue}"`}
-              </button>
-            )}
-            {formErrors.coords && <p className="text-red-500 text-xs">{formErrors.coords}</p>}
-          </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard
+                      ?.writeText(`${coords.lat}, ${coords.lon}`)
+                      .then(() => showNotification("Coordinates copied", "info"))
+                      .catch(() => showNotification("Unable to copy coordinates.", "error"));
+                  }}
+                  className="rounded-full border border-[var(--color-card-border)] px-3 py-1 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
+                >
+                  Copy address
+                </button>
+                <button
+                  type="button"
+                  disabled={!coords}
+                  onClick={() => {
+                    if (coords) {
+                      if (Capacitor.isNativePlatform()) {
+                        window.open(`maps://?ll=${coords.lat},${coords.lon}`, "_blank");
+                      } else {
+                        window.open(`https://maps.google.com/?q=${coords.lat},${coords.lon}`, "_blank");
+                      }
+                    }
+                  }}
+                  className="rounded-full border border-[var(--color-card-border)] px-3 py-1 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
+                >
+                  Open in Maps
+                </button>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.p
+              key="map-empty"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.18 }}
+              className="text-xs text-[var(--color-text-secondary)]"
+            >
+              Capture or search to preview the location.
+            </motion.p>
+          )}
+          </AnimatePresence>
+          {formErrors.coords && <p className="text-red-500 text-xs">{formErrors.coords}</p>}
         </section>
       )}
 

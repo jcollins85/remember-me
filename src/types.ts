@@ -15,10 +15,8 @@ export interface Person {
   description?: string;
   venueId?: string;
   dateMet: string;
-  locationTag?: string;
   createdAt: string;
   updatedAt?: string;  
-  coords?: { lat: number; lon: number };
   tags?: string[]; // array of tag IDs
   favorite?: boolean;
 }

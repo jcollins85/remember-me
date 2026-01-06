@@ -81,8 +81,6 @@ function sanitizePeople(raw: unknown): Person[] {
       dateMet,
       createdAt,
       updatedAt,
-      locationTag: typeof item.locationTag === "string" ? item.locationTag : undefined,
-      coords: sanitizeCoords(item.coords),
       tags,
       favorite: Boolean(item.favorite),
     };

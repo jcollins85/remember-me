@@ -140,7 +140,6 @@ function App() {
     const clonedPeople = samplePeople.map((person) => ({
       ...person,
       tags: person.tags ? [...person.tags] : [],
-      coords: person.coords ? { ...person.coords } : undefined,
     }));
     const clonedVenues = sampleVenues.map((venue) => ({
       ...venue,
