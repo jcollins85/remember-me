@@ -56,6 +56,15 @@ const mapPreviewPlaceholder =
   const initialVenueRecord = initialData.venueId
     ? venues.find((v) => v.id === initialData.venueId)
     : undefined;
+  const getSelectedVenue = () => {
+    const typed = venue.trim().toLowerCase();
+    if (!typed) return null;
+    return (
+      venues.find(
+        (v) => v.name.trim().toLowerCase() === typed
+      ) ?? null
+    );
+  };
   const initialVenueName = initialVenueRecord?.name ?? "";
   const venueUsage = useMemo(() => {
     return venues.reduce((acc, venue) => {
@@ -161,6 +170,7 @@ const mapPreviewPlaceholder =
     initialVenueRecord?.locationTag ?? ""
   );
   const [recentlyAttached, setRecentlyAttached] = useState(false);
+  const [attachError, setAttachError] = useState<string | null>(null);
   useEffect(() => {
     if (!recentlyAttached) return;
     const timer = window.setTimeout(() => setRecentlyAttached(false), 1500);
@@ -170,6 +180,10 @@ const mapPreviewPlaceholder =
   const [isSavingVenueLocation, setIsSavingVenueLocation] = useState(false);
   const [mapSnapshot, setMapSnapshot] = useState<string | null>(null);
   const [isSnapshotLoading, setIsSnapshotLoading] = useState(false);
+  const [snapshotError, setSnapshotError] = useState<string | null>(null);
+  const [showReplaceModal, setShowReplaceModal] = useState(false);
+  const [replaceVenue, setReplaceVenue] = useState<Venue | null>(null);
+  const [pendingReplaceAction, setPendingReplaceAction] = useState<(() => Promise<void>) | null>(null);
   useEffect(() => {
     if (coords && !Number.isNaN(coords.lat) && !Number.isNaN(coords.lon)) {
       const latString = coords.lat.toFixed(4);
@@ -201,12 +215,14 @@ const mapPreviewPlaceholder =
 
     if (!coords) {
       setMapSnapshot(null);
+      setSnapshotError(null);
       setIsSnapshotLoading(false);
       return;
     }
 
     if (!Capacitor.isNativePlatform()) {
       setMapSnapshot(null);
+      setSnapshotError("Preview available on device");
       return;
     }
 
@@ -222,14 +238,16 @@ const mapPreviewPlaceholder =
         });
         if (!cancelled) {
           setMapSnapshot(`data:image/png;base64,${result.imageData}`);
+          setSnapshotError(null);
           if (result.address) {
             setLocationTag(result.address);
           }
         }
-      } catch (snapshotError) {
-        console.warn("Map snapshot error", snapshotError);
+      } catch (error) {
+        console.warn("Map snapshot error", error);
         if (!cancelled) {
           setMapSnapshot(null);
+          setSnapshotError("Preview unavailable");
         }
       } finally {
         if (!cancelled) {
@@ -243,7 +261,7 @@ const mapPreviewPlaceholder =
     return () => {
       cancelled = true;
     };
-  }, [coords]);
+  }, [coords, locationTag, venue]);
 
   const getCurrentCoordinates = async () => {
     try {
@@ -274,7 +292,7 @@ const mapPreviewPlaceholder =
     });
   };
 
-  const captureCurrentLocation = async () => {
+  const runCurrentCapture = async () => {
     try {
       setIsCapturingLocation(true);
       const { lat, lon } = await getCurrentCoordinates();
@@ -294,44 +312,59 @@ const mapPreviewPlaceholder =
     }
   };
 
+  const captureCurrentLocation = async () => {
+    const selectedVenue = getSelectedVenue();
+    if (selectedVenue?.coords) {
+      setReplaceVenue(selectedVenue);
+      setPendingReplaceAction(() => runCurrentCapture);
+      setShowReplaceModal(true);
+      return;
+    }
+    await runCurrentCapture();
+  };
+
   const autoAttachVenue = async (
     coordinates: { lat: number; lon: number },
     label: string
   ) => {
-    if (!coords) {
-      showNotification("Capture a location first.", "error");
-      return;
-    }
-    const trimmedVenue = venue.trim().toLowerCase();
-    if (!trimmedVenue) {
+    const selectedVenue = getSelectedVenue();
+    if (!selectedVenue) {
       showNotification("Select a venue to attach this location.", "error");
-      return;
-    }
-    const matchedVenue = venues.find(
-      (v) => v.name.trim().toLowerCase() === trimmedVenue
-    );
-    if (!matchedVenue) {
-      showNotification("Location can only be attached to existing venues.", "error");
       return;
     }
     try {
       setIsSavingVenueLocation(true);
-      const label =
-        locationTag?.trim() ||
-        `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
       updateVenue({
-        ...matchedVenue,
+        ...selectedVenue,
         coords: { lat: coordinates.lat, lon: coordinates.lon },
         locationTag: label,
       });
       setLocationTag(label);
       setRecentlyAttached(true);
-      showNotification(`Location saved to ${matchedVenue.name}`, "success");
-    } catch {
+      showNotification(`Location saved to ${selectedVenue.name}`, "success");
+    } catch (err) {
+      console.warn("Venue attach error", err);
+      setAttachError("Couldn't save the pin. Try again?");
       showNotification("Unable to update venue location.", "error");
     } finally {
       setIsSavingVenueLocation(false);
     }
+  };
+
+  const handleReplaceConfirm = async () => {
+    setShowReplaceModal(false);
+    setReplaceVenue(null);
+    const action = pendingReplaceAction;
+    setPendingReplaceAction(null);
+    if (action) {
+      await action();
+    }
+  };
+
+  const handleReplaceCancel = () => {
+    setShowReplaceModal(false);
+    setReplaceVenue(null);
+    setPendingReplaceAction(null);
   };
 
   // ── Prevent blur on suggestion click ──
@@ -449,6 +482,7 @@ const mapPreviewPlaceholder =
   const suggestionRail = useOverflowIndicator([suggestions.length, currentInput]);
 
   return (
+    <>
     <form id="person-form" onSubmit={handleSubmit} className="space-y-6">
       {/* Name */}
       <div>
@@ -630,6 +664,21 @@ const mapPreviewPlaceholder =
                     Generating preview…
                   </div>
                 )}
+                {coords && venue.trim() && (recentlyAttached || attachError) && (
+                  recentlyAttached && !attachError ? (
+                    <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-[var(--color-card)]/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-primary)]">
+                      Saved to “{venue.trim()}”
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => autoAttachVenue(coords, locationTag || venue.trim())}
+                      className="absolute left-3 top-3 rounded-full bg-red-600/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white"
+                    >
+                      Retry pin save
+                    </button>
+                  )
+                )}
               </div>
 
               <div className="space-y-1">
@@ -642,18 +691,15 @@ const mapPreviewPlaceholder =
                   </p>
                 )}
               </div>
-              {coords && venue.trim() && recentlyAttached && (
-                <div className="rounded-full bg-[var(--color-accent-muted)]/70 px-3 py-1 text-xs font-semibold text-[var(--color-text-primary)]">
-                  Saved to “{venue.trim()}”
-                </div>
-              )}
 
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={() => {
+                    const text =
+                      locationTag?.trim() || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
                     navigator.clipboard
-                      ?.writeText(`${coords.lat}, ${coords.lon}`)
+                      ?.writeText(text)
                       .then(() => showNotification("Coordinates copied", "info"))
                       .catch(() => showNotification("Unable to copy coordinates.", "error"));
                   }}
@@ -877,5 +923,40 @@ const mapPreviewPlaceholder =
         </div>
       )}
     </form>
+    {showReplaceModal && replaceVenue && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="w-full max-w-sm rounded-[32px] bg-[var(--color-card)] p-6 shadow-[0_20px_50px_rgba(15,23,42,0.4)] text-center space-y-4"
+        >
+          <div>
+            <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+              Replace saved pin?
+            </p>
+            <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+              “{replaceVenue.name}” already has a location. Replacing it will update the pin for everyone linked to this venue.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+            <button
+              type="button"
+              onClick={handleReplaceCancel}
+              className="rounded-full border border-[var(--color-card-border)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/80"
+            >
+              Keep existing
+            </button>
+            <button
+              type="button"
+              onClick={handleReplaceConfirm}
+              className="rounded-full bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(0,0,0,0.25)] hover:brightness-110"
+            >
+              Replace location
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
