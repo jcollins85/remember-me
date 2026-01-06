@@ -30,6 +30,10 @@ import { useAnalytics } from "./context/AnalyticsContext";
 import { UNCLASSIFIED } from "./constants";
 import { samplePeople, sampleTags, sampleVenues } from "./data";
 
+import { registerPlugin } from "@capacitor/core";
+
+import { MapKitBridge } from "mapkit-bridge";
+
 type VenueView = "all" | "favs";
 
 // App orchestrates all persistent providers and renders the main layout,

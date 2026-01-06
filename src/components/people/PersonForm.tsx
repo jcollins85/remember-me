@@ -11,6 +11,7 @@ import { useNotification } from "../../context/NotificationContext";
 import { triggerImpact, ImpactStyle } from "../../utils/haptics";
 import { Capacitor } from "@capacitor/core";
 import { Geolocation } from "@capacitor/geolocation";
+import { MapKitBridge } from "mapkit-bridge";
 
 interface Props {
   initialData?: Partial<Person>;
@@ -161,6 +162,8 @@ const mapPreviewPlaceholder =
   );
   const [isCapturingLocation, setIsCapturingLocation] = useState(false);
   const [isSavingVenueLocation, setIsSavingVenueLocation] = useState(false);
+  const [mapSnapshot, setMapSnapshot] = useState<string | null>(null);
+  const [isSnapshotLoading, setIsSnapshotLoading] = useState(false);
   useEffect(() => {
     if (coords && !Number.isNaN(coords.lat) && !Number.isNaN(coords.lon)) {
       const latString = coords.lat.toFixed(4);
@@ -186,6 +189,55 @@ const mapPreviewPlaceholder =
     setCoords({ lat: latVal, lon: lonVal });
     setLocationTag(`${latVal.toFixed(4)}, ${lonVal.toFixed(4)}`);
   };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!coords) {
+      setMapSnapshot(null);
+      setIsSnapshotLoading(false);
+      return;
+    }
+
+    if (!Capacitor.isNativePlatform()) {
+      setMapSnapshot(null);
+      return;
+    }
+
+    const fetchSnapshot = async () => {
+      try {
+        setIsSnapshotLoading(true);
+        const result = await MapKitBridge.getSnapshot({
+          lat: coords.lat,
+          lng: coords.lon,
+          width: 640,
+          height: 288,
+          spanMeters: 800,
+        });
+        if (!cancelled) {
+          setMapSnapshot(`data:image/png;base64,${result.imageData}`);
+          if (result.address) {
+            setLocationTag(result.address);
+          }
+        }
+      } catch (snapshotError) {
+        console.warn("Map snapshot error", snapshotError);
+        if (!cancelled) {
+          setMapSnapshot(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsSnapshotLoading(false);
+        }
+      }
+    };
+
+    fetchSnapshot();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [coords]);
 
   const getCurrentCoordinates = async () => {
     try {
@@ -556,15 +608,20 @@ const mapPreviewPlaceholder =
 
             <div className="relative overflow-hidden rounded-[26px] border border-white/15 bg-[var(--color-card)]/60">
               <img
-                src={mapPreviewPlaceholder}
+                src={mapSnapshot ?? mapPreviewPlaceholder}
                 alt="Map preview"
-                className="h-48 w-full object-cover"
+                className="h-48 w-full object-cover transition-opacity"
               />
-              {coords && (
+              {!mapSnapshot && coords && (
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90">
                     <div className="h-6 w-6 rounded-full bg-[var(--color-accent)] shadow-lg" />
                   </div>
+                </div>
+              )}
+              {isSnapshotLoading && (
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[var(--color-card)]/50 text-xs font-semibold text-[var(--color-text-secondary)]">
+                  Generating preview…
                 </div>
               )}
             </div>
@@ -573,9 +630,11 @@ const mapPreviewPlaceholder =
               <p className="text-base font-semibold text-[var(--color-text-primary)]">
                 {venue.trim() || "The Broadview Rooftop"}
               </p>
-              <p className="text-sm text-[var(--color-text-secondary)]">
-                {locationTag || "106 Broadview Ave · Toronto"}
-              </p>
+              {coords && (
+                <p className="text-sm text-[var(--color-text-secondary)]">
+                  {locationTag || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`}
+                </p>
+              )}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
