@@ -710,9 +710,9 @@ const mapPreviewPlaceholder =
           className="mt-6 space-y-4"
         >
           <div>
-            <p className={labelClass.replace("mb-2", "")}>Location</p>
+            <p className={labelClass.replace("mb-2", "")}>Location (optional)</p>
             <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
-              Add a map pin for this venue (optional)
+              Capture or search to pin this venue
             </p>
           </div>
 
@@ -829,19 +829,8 @@ const mapPreviewPlaceholder =
                 </button>
               </div>
             </motion.div>
-          ) : (
-            <motion.p
-              key="map-empty"
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.18 }}
-              className="text-xs text-[var(--color-text-secondary)]"
-            >
-              Capture or search to preview the location.
-            </motion.p>
-          )}
-          </AnimatePresence>
+          ) : null}
+         </AnimatePresence>
           {formErrors.coords && <p className="text-red-500 text-xs">{formErrors.coords}</p>}
         </motion.section>
       )}
@@ -1102,16 +1091,6 @@ const mapPreviewPlaceholder =
             {!placeLoading && !placeError && placeResults.length === 0 && placeQuery.trim().length >= 2 && (
               <p className="text-xs text-[var(--color-text-secondary)] px-1">No matches found.</p>
             )}
-            {placeResults.slice(0, 5).map((place) => (
-              <button
-                key={`${place.name}-${place.lat}-${place.lng}`}
-                onClick={() => handlePlaceSelect(place)}
-                className="w-full rounded-[18px] border border-black/5 bg-white px-4 py-3 text-left shadow-[0_8px_20px_rgba(15,23,42,0.05)] transition hover:bg-[var(--color-card)]/70 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-              >
-                <p className="text-sm font-semibold text-[var(--color-text-primary)]">{place.name}</p>
-                <p className="text-xs text-[var(--color-text-secondary)]">{place.address}</p>
-              </button>
-            ))}
           </div>
         </div>
       </div>
