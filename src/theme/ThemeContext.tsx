@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { useAnalytics } from '../context/AnalyticsContext';
 
 // Define available theme keys
-export type ThemeKey = 'light' | 'coral' | 'midnight' | 'pink';
+export type ThemeKey = 'light' | 'coral' | 'midnight' | 'pink' | 'emerald';
 
 interface ThemeContextProps {
   theme: ThemeKey;
@@ -24,7 +24,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const getInitialTheme = (): ThemeKey => {
     if (typeof window === 'undefined') return 'light';
     const stored = localStorage.getItem('theme') as ThemeKey | null;
-    if (stored && ['light', 'coral', 'midnight', 'pink'].includes(stored)) {
+    if (stored && ['light', 'coral', 'midnight', 'pink', 'emerald'].includes(stored)) {
       return stored;
     }
     const mqlDark = window.matchMedia('(prefers-color-scheme: dark)');

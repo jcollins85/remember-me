@@ -1,9 +1,9 @@
 import React, { useContext, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ThemeContext, ThemeKey } from "../../theme/ThemeContext";
-import { SunMedium, Palette, Moon, Heart, Download, Upload, Lock, X, Palette as PaletteIcon, CloudUpload, Wrench, Settings } from "lucide-react";
+import { SunMedium, Palette, Moon, Heart, Download, Upload, Lock, X, Palette as PaletteIcon, CloudUpload, Wrench, Settings, Leaf, Waves } from "lucide-react";
 import { useDataBackup } from "../../hooks/useDataBackup";
-import { triggerImpact, ImpactStyle } from "../../utils/haptics";
+import { triggerImpact, ImpactStyle, isHapticsEnabled, setHapticsEnabled as persistHapticsPreference } from "../../utils/haptics";
 
 const APP_VERSION = import.meta.env.VITE_APP_VERSION || '0.0.0';
 interface SettingsPanelProps {
@@ -41,6 +41,12 @@ const themes: Array<{
     icon: <Heart size={16} />,
   },
   {
+    key: "emerald",
+    name: "Emerald",
+    description: "Fresh glass greens with lush accents.",
+    icon: <Leaf size={16} />,
+  },
+  {
     key: "midnight",
     name: "Midnight",
     description: "Moody dark mode for late-night sessions.",
@@ -63,6 +69,7 @@ export default function SettingsPanel({
   const { exportBackup, importBackupFromFile } = useDataBackup(favoriteVenues, setFavoriteVenues);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [hapticsEnabled, setHapticsEnabled] = useState(isHapticsEnabled());
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleExport = () => {
@@ -71,6 +78,15 @@ export default function SettingsPanel({
       exportBackup();
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  const handleToggleHaptics = async () => {
+    const next = !hapticsEnabled;
+    setHapticsEnabled(next);
+    persistHapticsPreference(next);
+    if (next) {
+      await triggerImpact(ImpactStyle.Light);
     }
   };
 
@@ -179,6 +195,44 @@ export default function SettingsPanel({
                     );
                   })}
                 </div>
+              </section>
+
+              <section
+                className="space-y-3 border-t border-transparent pt-4"
+                style={{ borderColor: "color-mix(in srgb, var(--color-accent) 50%, transparent)" }}
+              >
+                <div className="flex items-center gap-2">
+                  <Waves size={16} className="text-[var(--color-accent)]" />
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">Haptic feedback</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">Feel a subtle tap on key actions.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleToggleHaptics}
+                  className="w-full flex items-center justify-between rounded-2xl border border-[var(--color-card-border)] bg-[var(--color-card)] px-4 py-3 text-left hover:bg-[var(--color-card)]/90 transition"
+                >
+                  <div>
+                    <p className="font-semibold text-[var(--color-text-primary)]">
+                      {hapticsEnabled ? "Enabled" : "Disabled"}
+                    </p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">
+                      {hapticsEnabled ? "Tap to mute haptics." : "Tap to enable haptics."}
+                    </p>
+                  </div>
+                  <span
+                    className={`relative inline-flex h-6 w-12 items-center rounded-full transition ${
+                      hapticsEnabled ? "bg-[var(--color-accent)]" : "bg-[var(--color-card-border)]"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                        hapticsEnabled ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </span>
+                </button>
               </section>
 
               <section

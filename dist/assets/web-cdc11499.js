@@ -1,1 +1,0 @@
-import{a}from"./index-f151c98f.js";class r extends a{async echo(e){return console.log("ECHO",e),e}async ping(){return{value:"pong"}}async searchPlaces(){return{results:[]}}async getSnapshot(){throw this.unimplemented("Map snapshots are only available on native iOS.")}}export{r as MapKitBridgeWeb};

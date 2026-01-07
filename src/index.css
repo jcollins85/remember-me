@@ -109,6 +109,26 @@
   --bg-blob-c: rgba(248,113,113,0.18);
 }
 
+[data-theme="emerald"] {
+  --color-background: #F1FBF6;
+  --color-surface: rgba(250,255,252,0.92);
+  --color-surface-alt: rgba(236,250,243,0.95);
+  --color-card: rgba(255,255,255,0.92);
+  --color-card-border: rgba(163,214,189,0.65);
+  --color-text-primary: #09291B;
+  --color-text-secondary: #4A6B56;
+  --color-accent: #0EA672;
+  --color-accent-secondary: #0891B2;
+  --color-accent-muted: #D2F5E2;
+  --color-pill-press: color-mix(in srgb, var(--color-accent) 55%, var(--color-accent-muted));
+  --color-pill-bg: rgba(255,255,255,0.5);
+  --color-pill-border: rgba(255,255,255,0.7);
+  --background-gradient: linear-gradient(180deg, #f0fdf4 0%, #dbfbe9 45%, #d2f4ef 100%);
+  --bg-blob-a: rgba(16,185,129,0.22);
+  --bg-blob-b: rgba(45,212,191,0.18);
+  --bg-blob-c: rgba(132,225,188,0.22);
+}
+
 html, body, #root { height: 100%; }
 body { overflow-y: auto; }
 body {

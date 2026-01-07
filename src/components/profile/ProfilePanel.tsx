@@ -267,16 +267,12 @@ export default function ProfilePanel({
                                 className={`rounded-xl px-3 py-2 transition relative border ${
                                   achievement.unlocked
                                     ? "border-[var(--color-accent)] bg-[var(--color-accent-muted)]/70"
-                                    : "border-white/60 bg-white/85"
+                                    : "border-[var(--color-card-border)] bg-[var(--color-card)]/85"
                                 }`}
                               >
                                 <div className="flex items-start gap-3">
                                   <div
-                                    className={`h-9 w-9 rounded-2xl flex items-center justify-center ${
-                                      achievement.unlocked
-                                        ? "bg-[#F59E0B] text-white"
-                                        : "bg-white text-[var(--color-text-primary)] border border-white/60"
-                                    }`}
+                                    className="h-9 w-9 rounded-2xl flex items-center justify-center border border-[var(--color-card-border)] text-[var(--color-text-primary)]"
                                   >
                                     {typeIconMap[achievement.type]}
                                   </div>
@@ -299,20 +295,18 @@ export default function ProfilePanel({
                                         {new Date(achievement.unlockedAt).toLocaleDateString()}
                                       </p>
                                     )}
-                                    <div className="mt-2">
-                                      <div className="h-1.5 rounded-full overflow-hidden bg-white/60">
-                                        <div
-                                          className={`h-full ${
-                                            achievement.unlocked
-                                              ? "bg-gradient-to-r from-[#F59E0B] to-[#FBBF24]"
-                                              : "bg-[var(--color-accent-muted)]"
-                                          }`}
-                                          style={{
-                                            width: `${Math.round(achievement.progress * 100)}%`,
-                                          }}
-                                        />
+                                    {!achievement.unlocked && (
+                                      <div className="mt-2">
+                                        <div className="h-1.5 rounded-full overflow-hidden bg-[var(--color-card-border)]/60">
+                                          <div
+                                            className="h-full bg-[var(--color-accent-muted)]"
+                                            style={{
+                                              width: `${Math.round(achievement.progress * 100)}%`,
+                                            }}
+                                          />
+                                        </div>
                                       </div>
-                                    </div>
+                                    )}
                                   </div>
                                 </div>
                                 {achievement.unlocked && (
