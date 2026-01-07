@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
-		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
 		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
@@ -17,6 +16,7 @@
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		8F83486D2F03897D006B7CAC /* CapacitorHaptics in Frameworks */ = {isa = PBXBuildFile; productRef = 8F83486C2F03897D006B7CAC /* CapacitorHaptics */; };
 		8F8348712F04CFAF006B7CAC /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8F8348702F04CFAE006B7CAC /* GoogleService-Info.plist */; };
+		8FF020E92F0EC011007818A0 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 8FF020E82F0EC011007818A0 /* CapApp-SPM */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,8 +38,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8FF020E92F0EC011007818A0 /* CapApp-SPM in Frameworks */,
 				8F83486D2F03897D006B7CAC /* CapacitorHaptics in Frameworks */,
-				4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -97,8 +97,8 @@
 			);
 			name = App;
 			packageProductDependencies = (
-				4D22ABE82AF431CB00220026 /* CapApp-SPM */,
 				8F83486C2F03897D006B7CAC /* CapacitorHaptics */,
+				8FF020E82F0EC011007818A0 /* CapApp-SPM */,
 			);
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
@@ -131,8 +131,8 @@
 			);
 			mainGroup = 504EC2FB1FED79650016851F;
 			packageReferences = (
-				D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */,
 				8F83486B2F03897D006B7CAC /* XCLocalSwiftPackageReference "../../node_modules/@capacitor/haptics" */,
+				8FF020E72F0EC011007818A0 /* XCLocalSwiftPackageReference "CapApp-SPM" */,
 			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
 			projectDirPath = "";
@@ -391,18 +391,13 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = "../../node_modules/@capacitor/haptics";
 		};
-		D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */ = {
+		8FF020E72F0EC011007818A0 /* XCLocalSwiftPackageReference "CapApp-SPM" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = "CapApp-SPM";
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		4D22ABE82AF431CB00220026 /* CapApp-SPM */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */;
-			productName = "CapApp-SPM";
-		};
 		8F83486C2F03897D006B7CAC /* CapacitorHaptics */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = CapacitorHaptics;
@@ -411,6 +406,10 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8F83486B2F03897D006B7CAC /* XCLocalSwiftPackageReference "../../node_modules/@capacitor/haptics" */;
 			productName = CapacitorHaptics;
+		};
+		8FF020E82F0EC011007818A0 /* CapApp-SPM */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = "CapApp-SPM";
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
