@@ -22,11 +22,13 @@
     "vite-plugin-pwa": "^1.0.0"
   },
   "dependencies": {
+    "@capacitor-community/background-geolocation": "^1.2.26",
     "@capacitor/cli": "^8.0.0",
     "@capacitor/core": "^8.0.0",
     "@capacitor/geolocation": "^8.0.0",
     "@capacitor/haptics": "^8.0.0",
     "@capacitor/ios": "^8.0.0",
+    "@capacitor/local-notifications": "^8.0.0",
     "firebase": "^12.7.0",
     "framer-motion": "^12.12.2",
     "lucide-react": "^0.525.0",

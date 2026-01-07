@@ -1,7 +1,7 @@
 import React, { useContext, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ThemeContext, ThemeKey } from "../../theme/ThemeContext";
-import { SunMedium, Palette, Moon, Heart, Download, Upload, Lock, X, Palette as PaletteIcon, CloudUpload, Wrench, Settings, Leaf, Waves } from "lucide-react";
+import { SunMedium, Palette, Moon, Heart, Download, Upload, Lock, X, Palette as PaletteIcon, CloudUpload, Wrench, Settings, Leaf, Waves, MapPin } from "lucide-react";
 import { useDataBackup } from "../../hooks/useDataBackup";
 import { triggerImpact, ImpactStyle, isHapticsEnabled, setHapticsEnabled as persistHapticsPreference } from "../../utils/haptics";
 
@@ -14,6 +14,9 @@ interface SettingsPanelProps {
   onResetData: () => void;
   onResetApp: () => void;
   onClearAchievements: () => void;
+  proximityEnabled: boolean;
+  onToggleProximity: () => Promise<void> | void;
+  proximitySupported: boolean;
 }
 
 const themes: Array<{
@@ -64,6 +67,9 @@ export default function SettingsPanel({
   onResetData,
   onResetApp,
   onClearAchievements,
+  proximityEnabled,
+  onToggleProximity,
+  proximitySupported,
 }: SettingsPanelProps) {
   const { theme, setTheme } = useContext(ThemeContext);
   const { exportBackup, importBackupFromFile } = useDataBackup(favoriteVenues, setFavoriteVenues);
@@ -195,6 +201,57 @@ export default function SettingsPanel({
                     );
                   })}
                 </div>
+              </section>
+
+              <section
+                className="space-y-3 border-t border-transparent pt-4"
+                style={{ borderColor: "color-mix(in srgb, var(--color-accent) 50%, transparent)" }}
+              >
+                <div className="flex items-center gap-2">
+                  <MapPin size={16} className="text-[var(--color-accent)]" />
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">Proximity alerts</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">
+                      Get a notification when you’re near saved venues.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={proximitySupported ? onToggleProximity : undefined}
+                  disabled={!proximitySupported}
+                  className="w-full flex items-center justify-between rounded-2xl border border-[var(--color-card-border)] bg-[var(--color-card)] px-4 py-3 text-left hover:bg-[var(--color-card)]/90 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <div>
+                    <p className="font-semibold text-[var(--color-text-primary)]">
+                      {proximitySupported
+                        ? proximityEnabled
+                          ? "Enabled"
+                          : "Disabled"
+                        : "Unavailable"}
+                    </p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">
+                      {proximitySupported
+                        ? proximityEnabled
+                          ? "Tap to pause alerts."
+                          : "Tap to enable alerts."
+                        : "Requires the iOS app."}
+                    </p>
+                  </div>
+                  <span
+                    className={`relative inline-flex h-6 w-12 items-center rounded-full transition ${
+                      proximityEnabled && proximitySupported
+                        ? "bg-[var(--color-accent)]"
+                        : "bg-[var(--color-card-border)]"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                        proximityEnabled && proximitySupported ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </span>
+                </button>
               </section>
 
               <section

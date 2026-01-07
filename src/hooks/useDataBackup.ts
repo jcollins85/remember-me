@@ -83,6 +83,7 @@ function sanitizePeople(raw: unknown): Person[] {
       updatedAt,
       tags,
       favorite: Boolean(item.favorite),
+      proximityAlertsEnabled: item.proximityAlertsEnabled !== false,
     };
   });
 }
@@ -113,6 +114,7 @@ function sanitizeVenues(raw: unknown): Venue[] {
       locationTag: typeof item.locationTag === "string" ? truncate(item.locationTag) : undefined,
       coords: sanitizeCoords(item.coords),
       favorite: Boolean(item.favorite),
+      proximityAlertsEnabled: item.proximityAlertsEnabled !== false,
     };
   });
 }

@@ -168,6 +168,9 @@ const mapPreviewPlaceholder =
   const [locationTag, setLocationTag] = useState<string>(
     initialVenueRecord?.locationTag ?? ""
   );
+  const [venueProximityEnabled, setVenueProximityEnabled] = useState(
+    initialVenueRecord?.proximityAlertsEnabled !== false
+  );
   const [recentlyAttached, setRecentlyAttached] = useState(false);
   const [attachError, setAttachError] = useState<string | null>(null);
   useEffect(() => {
@@ -201,6 +204,22 @@ const mapPreviewPlaceholder =
       setLocationTag((prev) => prev || `${latString}, ${lonString}`);
     }
   }, [coords]);
+
+  useEffect(() => {
+    const typed = venue.trim();
+    if (!typed) {
+      setVenueProximityEnabled(true);
+      return;
+    }
+    const existing = venues.find(
+      (v) => v.name.trim().toLowerCase() === typed.toLowerCase()
+    );
+    if (existing) {
+      setVenueProximityEnabled(existing.proximityAlertsEnabled !== false);
+    } else {
+      setVenueProximityEnabled(true);
+    }
+  }, [venue, venues]);
 
   // Hydrate previously saved location data when an existing venue is selected.
   useEffect(() => {
@@ -440,6 +459,16 @@ const mapPreviewPlaceholder =
     action();
   };
 
+  const toggleVenueProximityAlerts = () => {
+    const next = !venueProximityEnabled;
+    setVenueProximityEnabled(next);
+    const venueRecord = getSelectedVenue() ?? resolveVenue();
+    updateVenue({
+      ...venueRecord,
+      proximityAlertsEnabled: next,
+    });
+  };
+
   const autoAttachVenue = async (
     coordinates: { lat: number; lon: number },
     label: string,
@@ -455,6 +484,7 @@ const mapPreviewPlaceholder =
         ...selectedVenue,
         coords: { lat: coordinates.lat, lon: coordinates.lon },
         locationTag: label,
+        proximityAlertsEnabled: venueProximityEnabled,
       });
       setLocationTag(label);
       if (!options?.silent) {
@@ -896,6 +926,28 @@ const mapPreviewPlaceholder =
                 </motion.div>
               ) : null}
             </AnimatePresence>
+
+            {coords && (
+              <div className="rounded-2xl border border-[var(--color-card-border)] bg-[var(--color-card)]/80 px-4 py-3 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">Proximity alert</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">Notify me when I’m near this venue.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={toggleVenueProximityAlerts}
+                  className={`relative inline-flex h-6 w-12 items-center rounded-full transition ${
+                    venueProximityEnabled ? "bg-[var(--color-accent)]" : "bg-[var(--color-card-border)]"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                      venueProximityEnabled ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+            )}
 
             {formErrors.coords && <p className="text-red-500 text-xs">{formErrors.coords}</p>}
           </motion.section>

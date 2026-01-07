@@ -56,6 +56,7 @@ export const sampleVenues: Venue[] = [
     locationTag: "Little Italy · Toronto, ON",
     coords: { lat: 43.6557, lon: -79.4111 },
     favorite: false,
+    proximityAlertsEnabled: true,
   },
   {
     id: uuidv4(),
@@ -63,6 +64,7 @@ export const sampleVenues: Venue[] = [
     locationTag: "Queen West · Toronto, ON",
     coords: { lat: 43.6424, lon: -79.4254 },
     favorite: false,
+    proximityAlertsEnabled: true,
   },
   {
     id: uuidv4(),
@@ -70,6 +72,7 @@ export const sampleVenues: Venue[] = [
     locationTag: "Entertainment District · Toronto, ON",
     coords: { lat: 43.6479, lon: -79.3947 },
     favorite: false,
+    proximityAlertsEnabled: true,
   },
   {
     id: uuidv4(),
@@ -77,6 +80,7 @@ export const sampleVenues: Venue[] = [
     locationTag: "Riverside · Toronto, ON",
     coords: { lat: 43.6593, lon: -79.3511 },
     favorite: false,
+    proximityAlertsEnabled: true,
   },
   {
     id: uuidv4(),
@@ -84,6 +88,7 @@ export const sampleVenues: Venue[] = [
     locationTag: "Bathurst & Front · Toronto, ON",
     coords: { lat: 43.6419, lon: -79.4036 },
     favorite: false,
+    proximityAlertsEnabled: true,
   },
   {
     id: uuidv4(),
@@ -91,6 +96,7 @@ export const sampleVenues: Venue[] = [
     locationTag: "Yorkville · Toronto, ON",
     coords: { lat: 43.671, lon: -79.3932 },
     favorite: false,
+    proximityAlertsEnabled: true,
   },
 ];
 

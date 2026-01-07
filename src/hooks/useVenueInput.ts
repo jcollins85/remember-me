@@ -79,6 +79,7 @@ export function useVenueInput({
       locationTag: undefined,
       coords: undefined,
       favorite: false,
+      proximityAlertsEnabled: true,
     };
     addVenue(newVenue);
     return newVenue;

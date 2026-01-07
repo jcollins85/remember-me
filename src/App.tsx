@@ -30,15 +30,18 @@ import { useAnalytics } from "./context/AnalyticsContext";
 import { UNCLASSIFIED } from "./constants";
 import { samplePeople, sampleTags, sampleVenues } from "./data";
 
-import { registerPlugin } from "@capacitor/core";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 
 import { MapKitBridge } from "mapkit-bridge";
+import { isProximityAlertsEnabled, setProximityAlertsEnabled } from "./utils/proximityAlerts";
+import { refreshMonitoredVenues, startProximityAlerts, stopProximityAlerts } from "./utils/proximityService";
 
 type VenueView = "all" | "favs";
 
 // App orchestrates all persistent providers and renders the main layout,
 // wiring together search, sorting, modals, notifications, and persisted data.
 function App() {
+  const proximitySupported = Capacitor.isNativePlatform();
   // ── Tag context ──
   const { tags, createTag, getTagIdByName, getTagNameById, replaceTags } = useTags();  
   
@@ -60,6 +63,9 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [sortSheet, setSortSheet] = useState<"venue" | "people" | null>(null);
+  const [proximityEnabled, setProximityEnabled] = useState(() =>
+    proximitySupported && isProximityAlertsEnabled()
+  );
 
   // ── Sorting prefs ──  
   const [venueSortKey, setVenueSortKey] = useState<VenueSortKey>("recentVisit");
@@ -171,6 +177,16 @@ function App() {
     showNotification("App reset to a blank state.", "info");
   };
 
+  const handleProximityToggle = async () => {
+    if (!proximitySupported) {
+      showNotification("Proximity alerts are only available in the iOS app.", "info");
+      return;
+    }
+    const next = !proximityEnabled;
+    setProximityAlertsEnabled(next);
+    setProximityEnabled(next);
+  };
+
   const handleClearAchievements = () => {
     if (
       !window.confirm(
@@ -222,6 +238,38 @@ function App() {
       document.body.style.overflow = "auto";
     };
   }, [showSettings, showProfile, showAddModal, editingPerson, personToDelete, sortSheet]);
+
+  useEffect(() => {
+    if (!proximitySupported && isProximityAlertsEnabled()) {
+      setProximityAlertsEnabled(false);
+      setProximityEnabled(false);
+    }
+  }, [proximitySupported]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!proximityEnabled || !proximitySupported) {
+      stopProximityAlerts();
+      return;
+    }
+    (async () => {
+      const result = await startProximityAlerts(venues);
+      if (!cancelled && !result.ok) {
+        setProximityAlertsEnabled(false);
+        setProximityEnabled(false);
+        showNotification(result.error ?? "Unable to enable proximity alerts.", "error");
+      }
+    })();
+    return () => {
+      cancelled = true;
+      stopProximityAlerts();
+    };
+  }, [proximityEnabled, showNotification]);
+
+  useEffect(() => {
+    if (!proximityEnabled || !proximitySupported) return;
+    refreshMonitoredVenues(venues);
+  }, [venues, proximityEnabled, proximitySupported]);
 
   const sortedVenues = useVenueSort(
     venues,
@@ -483,6 +531,9 @@ function App() {
         onResetData={handleResetData}
         onResetApp={handleResetApp}
         onClearAchievements={handleClearAchievements}
+        proximityEnabled={proximityEnabled}
+        onToggleProximity={handleProximityToggle}
+        proximitySupported={proximitySupported}
       />
 
       <ProfilePanel
