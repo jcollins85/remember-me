@@ -1,3 +1,8 @@
+/**
+ * Lightweight proximity alert helper for the mobile build.
+ * Keeps the app-side logic clean by centralising permission checks,
+ * background geolocation wiring, and local notifications.
+ */
 import { Capacitor } from "@capacitor/core";
 import type {
   BackgroundGeolocationPlugin,

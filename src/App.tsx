@@ -246,6 +246,7 @@ function App() {
     }
   }, [proximitySupported]);
 
+  // Kick off / stop the native watcher whenever the global toggle or permissions change.
   useEffect(() => {
     let cancelled = false;
     if (!proximityEnabled || !proximitySupported) {
@@ -266,6 +267,7 @@ function App() {
     };
   }, [proximityEnabled, showNotification]);
 
+  // Keep the watcher in sync with current venue coordinates/toggles.
   useEffect(() => {
     if (!proximityEnabled || !proximitySupported) return;
     refreshMonitoredVenues(venues);
