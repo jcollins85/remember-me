@@ -42,7 +42,6 @@ export default function PersonForm({
   hideActions = false,
   onSubmittingChange,
 }: Props) {
-const showLocationControls = true;
 const mapPreviewPlaceholder =
   "data:image/svg+xml,%3Csvg width='640' height='360' viewBox='0 0 640 360' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='640' height='360' fill='%23f8f4ef'/%3E%3Cpath d='M0 40h640M0 120h640M0 200h640M0 280h640' stroke='%23e5dbcf' stroke-width='2'/%3E%3Cpath d='M80 0v360M200 0v360M320 0v360M440 0v360M560 0v360' stroke='%23e5dbcf' stroke-width='2'/%3E%3Cpath d='M0 260l80-40 60 30 100-50 90 60 90-80 120 40 100-70 0 210H0z' fill='%23d5e5f0'/%3E%3Cpath d='M0 300l90-60 120 70 120-70 120 50 190-140V360H0z' fill='%23c7e0da'/%3E%3C/svg%3E";
   const { showNotification } = useNotification();
@@ -184,6 +183,13 @@ const mapPreviewPlaceholder =
   const [showReplaceModal, setShowReplaceModal] = useState(false);
   const [replaceVenue, setReplaceVenue] = useState<Venue | null>(null);
   const [pendingReplaceAction, setPendingReplaceAction] = useState<(() => Promise<void>) | null>(null);
+  const [showPlaceSearch, setShowPlaceSearch] = useState(false);
+  const [placeQuery, setPlaceQuery] = useState("");
+  const [placeResults, setPlaceResults] = useState<
+    { name: string; address: string; lat: number; lng: number }[]
+  >([]);
+  const [placeLoading, setPlaceLoading] = useState(false);
+  const [placeError, setPlaceError] = useState<string | null>(null);
   useEffect(() => {
     if (coords && !Number.isNaN(coords.lat) && !Number.isNaN(coords.lon)) {
       const latString = coords.lat.toFixed(4);
@@ -237,10 +243,12 @@ const mapPreviewPlaceholder =
           spanMeters: 800,
         });
         if (!cancelled) {
+          const newLabel = result.address || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
           setMapSnapshot(`data:image/png;base64,${result.imageData}`);
           setSnapshotError(null);
-          if (result.address) {
-            setLocationTag(result.address);
+          if (newLabel !== locationTag) {
+            setLocationTag(newLabel);
+            await autoAttachVenue(coords, newLabel, { silent: true });
           }
         }
       } catch (error) {
@@ -262,6 +270,49 @@ const mapPreviewPlaceholder =
       cancelled = true;
     };
   }, [coords, locationTag, venue]);
+
+  useEffect(() => {
+    if (!showPlaceSearch) {
+      setPlaceQuery("");
+      setPlaceResults([]);
+      setPlaceLoading(false);
+      setPlaceError(null);
+      return;
+    }
+    const trimmed = placeQuery.trim();
+    if (trimmed.length < 2 || !Capacitor.isNativePlatform()) {
+      setPlaceResults([]);
+      setPlaceLoading(false);
+      return;
+    }
+    let cancelled = false;
+    const handler = window.setTimeout(async () => {
+      try {
+        setPlaceLoading(true);
+        setPlaceError(null);
+        const { results } = await MapKitBridge.searchPlaces({
+          query: trimmed,
+          near: coords ? { lat: coords.lat, lng: coords.lon } : undefined,
+        });
+        if (!cancelled) {
+          setPlaceResults(results);
+        }
+      } catch (error) {
+        console.warn("Place search error", error);
+        if (!cancelled) {
+          setPlaceError("Couldn't search right now");
+        }
+      } finally {
+        if (!cancelled) {
+          setPlaceLoading(false);
+        }
+      }
+    }, 250);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(handler);
+    };
+  }, [placeQuery, showPlaceSearch, coords]);
 
   const getCurrentCoordinates = async () => {
     try {
@@ -313,24 +364,38 @@ const mapPreviewPlaceholder =
   };
 
   const captureCurrentLocation = async () => {
-    const selectedVenue = getSelectedVenue();
-    if (selectedVenue?.coords) {
-      setReplaceVenue(selectedVenue);
-      setPendingReplaceAction(() => runCurrentCapture);
-      setShowReplaceModal(true);
+    if (maybeConfirmReplace(runCurrentCapture)) {
       return;
     }
     await runCurrentCapture();
   };
 
+  const runPlaceAttach = (place: { name: string; address: string; lat: number; lng: number }) => async () => {
+    const coordsPayload = { lat: place.lat, lon: place.lng };
+    setCoords(coordsPayload);
+    setLocationTag(place.address);
+    await autoAttachVenue(coordsPayload, place.address);
+    showNotification(`Location set to ${place.name}`, "info");
+  };
+
+  const handlePlaceSelect = (place: { name: string; address: string; lat: number; lng: number }) => {
+    setShowPlaceSearch(false);
+    setPlaceQuery("");
+    setPlaceResults([]);
+    if (maybeConfirmReplace(runPlaceAttach(place))) {
+      return;
+    }
+    runPlaceAttach(place)();
+  };
+
   const autoAttachVenue = async (
     coordinates: { lat: number; lon: number },
-    label: string
+    label: string,
+    options?: { silent?: boolean }
   ) => {
-    const selectedVenue = getSelectedVenue();
+    let selectedVenue = getSelectedVenue();
     if (!selectedVenue) {
-      showNotification("Select a venue to attach this location.", "error");
-      return;
+      selectedVenue = resolveVenue();
     }
     try {
       setIsSavingVenueLocation(true);
@@ -340,8 +405,10 @@ const mapPreviewPlaceholder =
         locationTag: label,
       });
       setLocationTag(label);
-      setRecentlyAttached(true);
-      showNotification(`Location saved to ${selectedVenue.name}`, "success");
+      if (!options?.silent) {
+        setRecentlyAttached(true);
+        showNotification(`Location saved to ${selectedVenue.name}`, "success");
+      }
     } catch (err) {
       console.warn("Venue attach error", err);
       setAttachError("Couldn't save the pin. Try again?");
@@ -365,6 +432,17 @@ const mapPreviewPlaceholder =
     setShowReplaceModal(false);
     setReplaceVenue(null);
     setPendingReplaceAction(null);
+  };
+
+  const maybeConfirmReplace = (action: () => Promise<void>): boolean => {
+    const venueRecord = getSelectedVenue();
+    if (venueRecord?.coords) {
+      setReplaceVenue(venueRecord);
+      setPendingReplaceAction(() => action);
+      setShowReplaceModal(true);
+      return true;
+    }
+    return false;
   };
 
   // ── Prevent blur on suggestion click ──
@@ -480,6 +558,16 @@ const mapPreviewPlaceholder =
   const venueRail = useOverflowIndicator([venueSuggestions.length]);
   const appliedTagsRail = useOverflowIndicator([currentTags.length]);
   const suggestionRail = useOverflowIndicator([suggestions.length, currentInput]);
+  const canUseLocation = Boolean(venue.trim());
+
+  useEffect(() => {
+    if (!showPlaceSearch) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [showPlaceSearch]);
 
   return (
     <>
@@ -544,6 +632,9 @@ const mapPreviewPlaceholder =
         <label htmlFor="venue" className={labelClass}>
           Venue (optional)
         </label>
+        <p className="text-xs text-[var(--color-text-secondary)] mb-2">
+          Name or select the venue to enable location tools.
+        </p>
         <input
           id="venue"
           type="text"
@@ -609,8 +700,15 @@ const mapPreviewPlaceholder =
           </div>
         </div>
       )}
-      {showLocationControls && (
-        <section className="mt-6 space-y-4">
+      <AnimatePresence>
+      {canUseLocation && (
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          transition={{ duration: 0.2 }}
+          className="mt-6 space-y-4"
+        >
           <div>
             <p className={labelClass.replace("mb-2", "")}>Location</p>
             <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
@@ -629,7 +727,13 @@ const mapPreviewPlaceholder =
             </button>
             <button
               type="button"
-              onClick={() => showNotification("Search coming soon", "info")}
+              onClick={() => {
+                if (!Capacitor.isNativePlatform()) {
+                  showNotification("Search is available on device only.", "info");
+                  return;
+                }
+                setShowPlaceSearch(true);
+              }}
               className="rounded-full border border-white/40 bg-[var(--color-card)] px-4 py-1.5 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_6px_18px_rgba(0,0,0,0.08)]"
             >
               Search for a place
@@ -739,8 +843,9 @@ const mapPreviewPlaceholder =
           )}
           </AnimatePresence>
           {formErrors.coords && <p className="text-red-500 text-xs">{formErrors.coords}</p>}
-        </section>
+        </motion.section>
       )}
+      </AnimatePresence>
 
       {/* Description */}
       <div>
@@ -953,6 +1058,60 @@ const mapPreviewPlaceholder =
             >
               Replace location
             </button>
+          </div>
+        </div>
+      </div>
+    )}
+    {showPlaceSearch && (
+      <div className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none bg-[var(--color-card)]/50 backdrop-blur-md">
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="pointer-events-auto w-[min(80vw,380px)] rounded-[30px] bg-white p-5 shadow-[0_25px_60px_rgba(15,23,42,0.45)] space-y-4 max-h-[80vh] flex flex-col border border-black/5"
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
+              Search for a place
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowPlaceSearch(false)}
+              className="text-lg font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-accent)]"
+            >
+              ×
+            </button>
+          </div>
+          <div className="rounded-[26px] border border-black/10 bg-white px-4 py-2 flex items-center gap-3 shadow-[inset_0_1px_2px_rgba(15,23,42,0.08)]">
+            <span className="text-[var(--color-text-secondary)]">⌕</span>
+            <input
+              type="text"
+              value={placeQuery}
+              onChange={(e) => setPlaceQuery(e.target.value)}
+              placeholder="Search (e.g. Bar Raval)"
+              className="flex-1 bg-transparent text-base text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-secondary)]"
+              autoFocus
+            />
+          </div>
+          <div className="max-h-[55vh] overflow-y-auto pr-1 flex-1 bg-white rounded-[20px] px-2 py-2 space-y-1">
+            {placeLoading && (
+              <p className="text-xs text-[var(--color-text-secondary)] px-1">Searching…</p>
+            )}
+            {placeError && (
+              <p className="text-xs text-red-500 px-1">{placeError}</p>
+            )}
+            {!placeLoading && !placeError && placeResults.length === 0 && placeQuery.trim().length >= 2 && (
+              <p className="text-xs text-[var(--color-text-secondary)] px-1">No matches found.</p>
+            )}
+            {placeResults.slice(0, 5).map((place) => (
+              <button
+                key={`${place.name}-${place.lat}-${place.lng}`}
+                onClick={() => handlePlaceSelect(place)}
+                className="w-full rounded-[18px] border border-black/5 bg-white px-4 py-3 text-left shadow-[0_8px_20px_rgba(15,23,42,0.05)] transition hover:bg-[var(--color-card)]/70 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+              >
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">{place.name}</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">{place.address}</p>
+              </button>
+            ))}
           </div>
         </div>
       </div>
