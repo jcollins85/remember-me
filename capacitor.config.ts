@@ -14,7 +14,7 @@ const config: ExtendedCapConfig = {
   webDir: 'dist',
   ios: {
     swiftPackageManager: {
-      packageClassList: ['HapticsPlugin'],
+      packageClassList: ['HapticsPlugin', 'CapacitorCommunityBackgroundGeolocationPlugin'],
     },
   },
 };

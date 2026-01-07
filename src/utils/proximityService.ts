@@ -3,7 +3,7 @@
  * Keeps the app-side logic clean by centralising permission checks,
  * background geolocation wiring, and local notifications.
  */
-import { Capacitor } from "@capacitor/core";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 import type {
   BackgroundGeolocationPlugin,
   WatcherOptions,
@@ -14,9 +14,11 @@ import { LocalNotifications } from "@capacitor/local-notifications";
 import { Venue } from "../types";
 import { isProximityAlertsEnabled } from "./proximityAlerts";
 
-const backgroundGeolocation = (Capacitor as any).Plugins
-  ?.BackgroundGeolocation as BackgroundGeolocationPlugin | undefined;
-const isNative = Capacitor.isNativePlatform() && Boolean(backgroundGeolocation);
+const BackgroundGeolocation = registerPlugin<BackgroundGeolocationPlugin>(
+  "BackgroundGeolocation"
+);
+const pluginAvailable = () => Capacitor.isPluginAvailable("BackgroundGeolocation");
+const isNative = Capacitor.isNativePlatform();
 
 const PROXIMITY_RADIUS_METERS = 100;
 const ALERT_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
@@ -64,7 +66,7 @@ const notifyNearVenue = async (venue: Venue) => {
 };
 
 const createWatcher = async () => {
-  if (!backgroundGeolocation) {
+  if (!pluginAvailable()) {
     throw new Error("Background geolocation not available.");
   }
 
@@ -76,7 +78,7 @@ const createWatcher = async () => {
     stale: false,
   };
 
-  watcherId = await backgroundGeolocation.addWatcher(options, (location: Location | undefined, error?: CallbackError) => {
+  watcherId = await BackgroundGeolocation.addWatcher(options, (location: Location | undefined, error?: CallbackError) => {
     if (error || !location?.latitude || !location?.longitude) {
       return;
     }
@@ -98,18 +100,26 @@ const createWatcher = async () => {
 
 export const startProximityAlerts = async (venues: Venue[]) => {
   venuesSnapshot = venues;
-  if (!isNative) {
+  if (!isNative || !pluginAvailable()) {
     return { ok: false, error: "Proximity alerts are only available on the app." };
   }
 
   try {
+    const locationPerm = await BackgroundGeolocation.checkPermissions();
+    if (locationPerm.location !== "granted") {
+      const requested = await BackgroundGeolocation.requestPermissions();
+      if (requested.location !== "granted") {
+        return { ok: false, error: "Location access is required to enable proximity alerts." };
+      }
+    }
+
     const notifPerm = await LocalNotifications.requestPermissions();
     if (notifPerm.display !== "granted") {
       return { ok: false, error: "Notifications are disabled. Enable them in Settings." };
     }
 
-    if (watcherId && backgroundGeolocation) {
-      await backgroundGeolocation.removeWatcher({ id: watcherId });
+    if (watcherId) {
+      await BackgroundGeolocation.removeWatcher({ id: watcherId });
       watcherId = null;
     }
 
@@ -122,11 +132,11 @@ export const startProximityAlerts = async (venues: Venue[]) => {
 };
 
 export const stopProximityAlerts = async () => {
-  if (!isNative) return;
-  if (watcherId && backgroundGeolocation) {
-    await backgroundGeolocation.removeWatcher({ id: watcherId });
-    watcherId = null;
-  }
+  if (!isNative || !pluginAvailable()) return;
+  if (watcherId) {
+    await BackgroundGeolocation.removeWatcher({ id: watcherId });
+      watcherId = null;
+    }
 };
 
 export const refreshMonitoredVenues = (venues: Venue[]) => {
