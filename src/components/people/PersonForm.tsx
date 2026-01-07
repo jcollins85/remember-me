@@ -390,15 +390,23 @@ const mapPreviewPlaceholder =
     });
   };
 
-  const runCurrentCapture = async () => {
+  const runCurrentCapture = async (coordsPayload: { lat: number; lon: number }) => {
+    setCoords(coordsPayload);
+    const autoLabel = `${coordsPayload.lat.toFixed(4)}, ${coordsPayload.lon.toFixed(4)}`;
+    setLocationTag((prev) => prev || autoLabel);
+    await autoAttachVenue(coordsPayload, locationTag || autoLabel);
+    showNotification("Location captured", "info");
+  };
+
+  const captureCurrentLocation = async () => {
     try {
       setIsCapturingLocation(true);
-      const { lat, lon } = await getCurrentCoordinates();
-      setCoords({ lat, lon });
-      const autoLabel = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
-      setLocationTag((prev) => prev || autoLabel);
-      await autoAttachVenue({ lat, lon }, locationTag || autoLabel);
-      showNotification("Location captured", "info");
+      const coordsPayload = await getCurrentCoordinates();
+      const action = () => runCurrentCapture(coordsPayload);
+      if (maybeConfirmReplace(coordsPayload, action)) {
+        return;
+      }
+      await action();
     } catch (error: any) {
       console.warn("Location capture error", error);
       const message =
@@ -410,15 +418,10 @@ const mapPreviewPlaceholder =
     }
   };
 
-  const captureCurrentLocation = async () => {
-    if (maybeConfirmReplace(runCurrentCapture)) {
-      return;
-    }
-    await runCurrentCapture();
-  };
-
-  const runPlaceAttach = (place: { name: string; address: string; lat: number; lng: number }) => async () => {
-    const coordsPayload = { lat: place.lat, lon: place.lng };
+  const runPlaceAttach = async (
+    place: { name: string; address: string; lat: number; lng: number },
+    coordsPayload: { lat: number; lon: number }
+  ) => {
     setCoords(coordsPayload);
     setLocationTag(place.address);
     await autoAttachVenue(coordsPayload, place.address);
@@ -429,10 +432,12 @@ const mapPreviewPlaceholder =
     setShowPlaceSearch(false);
     setPlaceQuery("");
     setPlaceResults([]);
-    if (maybeConfirmReplace(runPlaceAttach(place))) {
+    const coordsPayload = { lat: place.lat, lon: place.lng };
+    const action = () => runPlaceAttach(place, coordsPayload);
+    if (maybeConfirmReplace(coordsPayload, action)) {
       return;
     }
-    runPlaceAttach(place)();
+    action();
   };
 
   const autoAttachVenue = async (
@@ -481,9 +486,19 @@ const mapPreviewPlaceholder =
     setPendingReplaceAction(null);
   };
 
-  const maybeConfirmReplace = (action: () => Promise<void>): boolean => {
+  const maybeConfirmReplace = (
+    nextCoords: { lat: number; lon: number } | null,
+    action: () => Promise<void>
+  ): boolean => {
     const venueRecord = getSelectedVenue();
     if (venueRecord?.coords) {
+      if (
+        nextCoords &&
+        Math.abs(venueRecord.coords.lat - nextCoords.lat) < 0.0005 &&
+        Math.abs(venueRecord.coords.lon - nextCoords.lon) < 0.0005
+      ) {
+        return false;
+      }
       setReplaceVenue(venueRecord);
       setPendingReplaceAction(() => action);
       setShowReplaceModal(true);
