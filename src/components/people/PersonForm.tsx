@@ -199,6 +199,43 @@ const mapPreviewPlaceholder =
       setLocationTag((prev) => prev || `${latString}, ${lonString}`);
     }
   }, [coords]);
+
+  // Hydrate previously saved location data when an existing venue is selected.
+  useEffect(() => {
+    const typed = venue.trim();
+    if (!typed) {
+      setCoords(null);
+      setLocationTag("");
+      setMapSnapshot(null);
+      setSnapshotError(null);
+      return;
+    }
+    const existing = venues.find(
+      (v) => v.name.trim().toLowerCase() === typed.toLowerCase()
+    );
+    if (!existing) {
+      if (coords) {
+        setCoords(null);
+      }
+      setLocationTag("");
+      setMapSnapshot(null);
+      setSnapshotError(null);
+      return;
+    }
+    if (!existing.coords) {
+      return;
+    }
+    const sameCoords =
+      coords &&
+      Math.abs(coords.lat - existing.coords.lat) < 0.000001 &&
+      Math.abs(coords.lon - existing.coords.lon) < 0.000001;
+    if (!sameCoords) {
+      setCoords({ lat: existing.coords.lat, lon: existing.coords.lon });
+    }
+    if (existing.locationTag && existing.locationTag !== locationTag) {
+      setLocationTag(existing.locationTag);
+    }
+  }, [venue, venues, coords, locationTag]);
   const updateCoordsFromManual = (latStr: string, lonStr: string) => {
     const latVal = parseFloat(latStr);
     const lonVal = parseFloat(lonStr);
@@ -650,11 +687,11 @@ const mapPreviewPlaceholder =
         )}
       </div>
       {venueSuggestions.length > 0 && (
-        <div className="mt-2 space-y-1">
+        <div className="mt-1.5 mb-1 space-y-1">
           <p className="text-[11px] uppercase tracking-wide text-[var(--color-text-secondary)]">Suggested venues</p>
           <div
             ref={venueRail.ref}
-            className="relative overflow-x-auto whitespace-nowrap gap-2 px-1 pb-3 pr-10 tag-suggestion-rail"
+            className="relative overflow-x-auto whitespace-nowrap gap-2 px-1 pb-1.5 pr-10 tag-suggestion-rail"
             style={{ scrollbarGutter: "stable", WebkitOverflowScrolling: "touch" }}
           >
             {venueSuggestions.map((name) => {
@@ -700,140 +737,144 @@ const mapPreviewPlaceholder =
           </div>
         </div>
       )}
-      <AnimatePresence>
-      {canUseLocation && (
-        <motion.section
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 10 }}
-          transition={{ duration: 0.2 }}
-          className="mt-6 space-y-4"
-        >
-          <div>
-            <p className={labelClass.replace("mb-2", "")}>Location (optional)</p>
-            <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
-              Capture or search to pin this venue
-            </p>
-          </div>
 
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={captureCurrentLocation}
-              disabled={isCapturingLocation}
-              className="rounded-full bg-[var(--color-accent)] px-4 py-1.5 text-xs font-semibold text-white shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition hover:brightness-110 disabled:opacity-60"
-            >
-              {isCapturingLocation ? "Capturing…" : "Use current location"}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (!Capacitor.isNativePlatform()) {
-                  showNotification("Search is available on device only.", "info");
-                  return;
-                }
-                setShowPlaceSearch(true);
-              }}
-              className="rounded-full border border-white/40 bg-[var(--color-card)] px-4 py-1.5 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_6px_18px_rgba(0,0,0,0.08)]"
-            >
-              Search for a place
-            </button>
-          </div>
+      {/* Location section */}
+      <AnimatePresence mode="wait" initial={false}>
+        {canUseLocation ? (
+          <motion.section
+            key="location-section"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className="mt-1.5 space-y-4"
+          >
+            <div>
+              <p className={labelClass.replace("mb-2", "")}>Location (optional)</p>
+              <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
+                Add a map pin for this venue (optional).
+              </p>
+            </div>
 
-          <AnimatePresence mode="wait" initial={false}>
-          {coords ? (
-            <motion.div
-              key="map-card"
-              initial={{ opacity: 0, y: 12, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 12, scale: 0.98 }}
-              transition={{ duration: 0.22, ease: "easeOut" }}
-              className="space-y-4 rounded-[30px] border border-[var(--color-card-border)] bg-[var(--color-card)]/95 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.15)]"
-            >
-              <div className="relative overflow-hidden rounded-[26px] border border-white/15 bg-[var(--color-card)]/60">
-                <img
-                  src={mapSnapshot ?? mapPreviewPlaceholder}
-                  alt="Map preview"
-                  className="h-48 w-full object-cover transition-opacity"
-                />
-                {!mapSnapshot && coords && (
-                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90">
-                      <div className="h-6 w-6 rounded-full bg-[var(--color-accent)] shadow-lg" />
-                    </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={captureCurrentLocation}
+                disabled={isCapturingLocation}
+                className="rounded-full bg-[var(--color-accent)] px-4 py-1.5 text-xs font-semibold text-white shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition hover:brightness-110 disabled:opacity-60"
+              >
+                {isCapturingLocation ? "Capturing…" : "Use current location"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!Capacitor.isNativePlatform()) {
+                    showNotification("Search is available on device only.", "info");
+                    return;
+                  }
+                  setShowPlaceSearch(true);
+                }}
+                className="rounded-full border border-white/40 bg-[var(--color-card)] px-4 py-1.5 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_6px_18px_rgba(0,0,0,0.08)]"
+              >
+                Search for a place
+              </button>
+            </div>
+
+            <AnimatePresence mode="wait" initial={false}>
+              {coords ? (
+                <motion.div
+                  key="map-card"
+                  initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 12, scale: 0.98 }}
+                  transition={{ duration: 0.22, ease: "easeOut" }}
+                  className="space-y-4 rounded-[30px] border border-[var(--color-card-border)] bg-[var(--color-card)]/95 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.15)]"
+                >
+                  <div className="relative overflow-hidden rounded-[26px] border border-white/15 bg-[var(--color-card)]/60">
+                    <img
+                      src={mapSnapshot ?? mapPreviewPlaceholder}
+                      alt="Map preview"
+                      className="h-48 w-full object-cover transition-opacity"
+                    />
+                    {!mapSnapshot && coords && (
+                      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90">
+                          <div className="h-6 w-6 rounded-full bg-[var(--color-accent)] shadow-lg" />
+                        </div>
+                      </div>
+                    )}
+                    {isSnapshotLoading && (
+                      <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[var(--color-card)]/50 text-xs font-semibold text-[var(--color-text-secondary)]">
+                        Generating preview…
+                      </div>
+                    )}
+                    {coords && venue.trim() && (recentlyAttached || attachError) && (
+                      recentlyAttached && !attachError ? (
+                        <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-[var(--color-card)]/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-primary)]">
+                          Saved to “{venue.trim()}”
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => autoAttachVenue(coords, locationTag || venue.trim())}
+                          className="absolute left-3 top-3 rounded-full bg-red-600/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white"
+                        >
+                          Retry pin save
+                        </button>
+                      )
+                    )}
                   </div>
-                )}
-                {isSnapshotLoading && (
-                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[var(--color-card)]/50 text-xs font-semibold text-[var(--color-text-secondary)]">
-                    Generating preview…
+
+                  <div className="space-y-1">
+                    <p className="text-base font-semibold text-[var(--color-text-primary)]">
+                      {venue.trim() || "The Broadview Rooftop"}
+                    </p>
+                    {coords && (
+                      <p className="text-sm text-[var(--color-text-secondary)]">
+                        {locationTag || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`}
+                      </p>
+                    )}
                   </div>
-                )}
-                {coords && venue.trim() && (recentlyAttached || attachError) && (
-                  recentlyAttached && !attachError ? (
-                    <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-[var(--color-card)]/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-primary)]">
-                      Saved to “{venue.trim()}”
-                    </div>
-                  ) : (
+
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => autoAttachVenue(coords, locationTag || venue.trim())}
-                      className="absolute left-3 top-3 rounded-full bg-red-600/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white"
+                      onClick={() => {
+                        const text =
+                          locationTag?.trim() || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
+                        navigator.clipboard
+                          ?.writeText(text)
+                          .then(() => showNotification("Coordinates copied", "info"))
+                          .catch(() => showNotification("Unable to copy coordinates.", "error"));
+                      }}
+                      className="rounded-full border border-[var(--color-card-border)] px-3 py-1 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
                     >
-                      Retry pin save
+                      Copy address
                     </button>
-                  )
-                )}
-              </div>
+                    <button
+                      type="button"
+                      disabled={!coords}
+                      onClick={() => {
+                        if (coords) {
+                          if (Capacitor.isNativePlatform()) {
+                            window.open(`maps://?ll=${coords.lat},${coords.lon}`, "_blank");
+                          } else {
+                            window.open(`https://maps.google.com/?q=${coords.lat},${coords.lon}`, "_blank");
+                          }
+                        }
+                      }}
+                      className="rounded-full border border-[var(--color-card-border)] px-3 py-1 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
+                    >
+                      Open in Maps
+                    </button>
+                  </div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
 
-              <div className="space-y-1">
-                <p className="text-base font-semibold text-[var(--color-text-primary)]">
-                  {venue.trim() || "The Broadview Rooftop"}
-                </p>
-                {coords && (
-                  <p className="text-sm text-[var(--color-text-secondary)]">
-                    {locationTag || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const text =
-                      locationTag?.trim() || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
-                    navigator.clipboard
-                      ?.writeText(text)
-                      .then(() => showNotification("Coordinates copied", "info"))
-                      .catch(() => showNotification("Unable to copy coordinates.", "error"));
-                  }}
-                  className="rounded-full border border-[var(--color-card-border)] px-3 py-1 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
-                >
-                  Copy address
-                </button>
-                <button
-                  type="button"
-                  disabled={!coords}
-                  onClick={() => {
-                    if (coords) {
-                      if (Capacitor.isNativePlatform()) {
-                        window.open(`maps://?ll=${coords.lat},${coords.lon}`, "_blank");
-                      } else {
-                        window.open(`https://maps.google.com/?q=${coords.lat},${coords.lon}`, "_blank");
-                      }
-                    }
-                  }}
-                  className="rounded-full border border-[var(--color-card-border)] px-3 py-1 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
-                >
-                  Open in Maps
-                </button>
-              </div>
-            </motion.div>
-          ) : null}
-         </AnimatePresence>
-          {formErrors.coords && <p className="text-red-500 text-xs">{formErrors.coords}</p>}
-        </motion.section>
-      )}
+            {formErrors.coords && <p className="text-red-500 text-xs">{formErrors.coords}</p>}
+          </motion.section>
+        ) : null}
       </AnimatePresence>
 
       {/* Description */}
