@@ -190,6 +190,8 @@ const mapPreviewPlaceholder =
   >([]);
   const [placeLoading, setPlaceLoading] = useState(false);
   const [placeError, setPlaceError] = useState<string | null>(null);
+  const defaultSearchPlaceholder = "Search by name or address";
+  const [searchPlaceholder, setSearchPlaceholder] = useState(defaultSearchPlaceholder);
   useEffect(() => {
     if (coords && !Number.isNaN(coords.lat) && !Number.isNaN(coords.lon)) {
       const latString = coords.lat.toFixed(4);
@@ -309,6 +311,14 @@ const mapPreviewPlaceholder =
   }, [coords, locationTag, venue]);
 
   useEffect(() => {
+    if (showPlaceSearch) {
+      const currentVenueName = venue.trim();
+      if (currentVenueName) {
+        setSearchPlaceholder(`Search (e.g. ${currentVenueName})`);
+      } else {
+        setSearchPlaceholder(defaultSearchPlaceholder);
+      }
+    }
     if (!showPlaceSearch) {
       setPlaceQuery("");
       setPlaceResults([]);
@@ -349,7 +359,7 @@ const mapPreviewPlaceholder =
       cancelled = true;
       window.clearTimeout(handler);
     };
-  }, [placeQuery, showPlaceSearch, coords]);
+  }, [placeQuery, showPlaceSearch, coords, venue]);
 
   const getCurrentCoordinates = async () => {
     try {
@@ -1101,7 +1111,7 @@ const mapPreviewPlaceholder =
         >
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
-              Search for a place
+              Search by name or address
             </p>
             <button
               type="button"
@@ -1117,7 +1127,7 @@ const mapPreviewPlaceholder =
               type="text"
               value={placeQuery}
               onChange={(e) => setPlaceQuery(e.target.value)}
-              placeholder="Search (e.g. Bar Raval)"
+              placeholder={searchPlaceholder}
               className="flex-1 bg-transparent text-base text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-secondary)]"
               autoFocus
             />
@@ -1132,6 +1142,19 @@ const mapPreviewPlaceholder =
             {!placeLoading && !placeError && placeResults.length === 0 && placeQuery.trim().length >= 2 && (
               <p className="text-xs text-[var(--color-text-secondary)] px-1">No matches found.</p>
             )}
+            {!placeLoading &&
+              !placeError &&
+              placeResults.slice(0, 5).map((place) => (
+                <button
+                  key={`${place.lat}-${place.lng}-${place.address}`}
+                  type="button"
+                  onClick={() => handlePlaceSelect(place)}
+                  className="w-full text-left rounded-[18px] border border-black/5 bg-white px-3 py-2 shadow-[0_4px_12px_rgba(15,23,42,0.05)] hover:bg-[var(--color-card)]/30 transition"
+                >
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">{place.name}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">{place.address}</p>
+                </button>
+              ))}
           </div>
         </div>
       </div>
