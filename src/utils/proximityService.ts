@@ -1,116 +1,79 @@
 /**
- * Lightweight proximity alert helper for the mobile build.
- * Keeps the app-side logic clean by centralising permission checks,
- * background geolocation wiring, and local notifications.
+ * Proximity alert helper built on top of the local geofence bridge.
  */
-import { Capacitor, registerPlugin } from "@capacitor/core";
-import type {
-  BackgroundGeolocationPlugin,
-  WatcherOptions,
-  Location,
-  CallbackError,
-} from "@capacitor-community/background-geolocation";
+import { Capacitor } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
+import type { PluginListenerHandle } from "@capacitor/core";
+import { GeofenceBridge } from "geofence-bridge";
 import { Venue } from "../types";
 import { isProximityAlertsEnabled } from "./proximityAlerts";
 
-const BackgroundGeolocation = registerPlugin<BackgroundGeolocationPlugin>(
-  "BackgroundGeolocation"
-);
-const pluginAvailable = () => Capacitor.isPluginAvailable("BackgroundGeolocation");
-const isNative = Capacitor.isNativePlatform();
-
-const PROXIMITY_RADIUS_METERS = 100;
-const ALERT_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
-
-let watcherId: string | null = null;
-let venuesSnapshot: Venue[] = [];
-const lastAlertTimestamps: Record<string, number> = {};
-
-const toRadians = (value: number) => (value * Math.PI) / 180;
-
-const getDistanceMeters = (
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-) => {
-  const dLat = toRadians(lat2 - lat1);
-  const dLon = toRadians(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRadians(lat1)) *
-      Math.cos(toRadians(lat2)) *
-      Math.sin(dLon / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return 6371000 * c;
+export type MonitoredVenue = Venue & {
+  proximityMeta?: {
+    totalPeople: number;
+    favoriteNames: string[];
+  };
 };
 
-const notifyNearVenue = async (venue: Venue) => {
+const isNative = Capacitor.isNativePlatform();
+const ALERT_COOLDOWN_MS = 30 * 60 * 1000;
+let regionListener: PluginListenerHandle | null = null;
+const lastAlertTimestamps: Record<string, number> = {};
+let venuesSnapshot: MonitoredVenue[] = [];
+
+const scheduleNotification = async (venueId: string) => {
+  const venue = venuesSnapshot.find((v) => v.id === venueId);
+  if (!venue) return;
   const now = Date.now();
-  if (lastAlertTimestamps[venue.id] && now - lastAlertTimestamps[venue.id] < ALERT_COOLDOWN_MS) {
+  if (lastAlertTimestamps[venueId] && now - lastAlertTimestamps[venueId] < ALERT_COOLDOWN_MS) {
     return;
   }
-
+  const total = venue.proximityMeta?.totalPeople ?? 0;
+  const favoriteNames = venue.proximityMeta?.favoriteNames ?? [];
+  const totalText =
+    total > 0
+      ? `You know ${total} ${total === 1 ? "person" : "people"} here.`
+      : "You haven't logged anyone here yet.";
+  let favoriteText = "";
+  if (favoriteNames.length > 0) {
+    const preview = favoriteNames.slice(0, 2).join(", ");
+    const remainder = favoriteNames.length - 2;
+    favoriteText =
+      favoriteNames.length > 2
+        ? ` Favorites: ${preview} +${remainder} more.`
+        : ` Favorites: ${preview}.`;
+  }
+  const venueLine = `You're near ${venue.name}.`;
   await LocalNotifications.schedule({
     notifications: [
       {
         title: "Nearby venue",
-        body: `You're near ${venue.name}`,
-        id: Number.parseInt(venue.id.replace(/\D/g, "").slice(-6), 10) || Date.now(),
+        body: `${venueLine} ${totalText}${favoriteText}`.trim(),
+        id: Number.parseInt(venueId.replace(/\D/g, "").slice(-6), 10) || Date.now(),
       },
     ],
   });
-
-  lastAlertTimestamps[venue.id] = now;
+  lastAlertTimestamps[venueId] = now;
 };
 
-const createWatcher = async () => {
-  if (!pluginAvailable()) {
-    throw new Error("Background geolocation not available.");
-  }
-
-  const options: WatcherOptions = {
-    backgroundMessage: "We use your location to alert you when you're near saved venues.",
-    backgroundTitle: "Proximity Alerts",
-    distanceFilter: 50,
-    requestPermissions: true,
-    stale: false,
-  };
-
-  watcherId = await BackgroundGeolocation.addWatcher(options, (location: Location | undefined, error?: CallbackError) => {
-    if (error || !location?.latitude || !location?.longitude) {
-      return;
-    }
-
-    if (!isProximityAlertsEnabled()) {
-      return;
-    }
-
-    const { latitude, longitude } = location;
-    venuesSnapshot.forEach((venue) => {
-      if (!venue.coords || venue.proximityAlertsEnabled === false) return;
-      const distance = getDistanceMeters(latitude, longitude, venue.coords.lat, venue.coords.lon);
-      if (distance <= PROXIMITY_RADIUS_METERS) {
-        notifyNearVenue(venue);
-      }
-    });
+const attachRegionListener = async () => {
+  regionListener?.remove();
+  regionListener = await GeofenceBridge.addListener("regionEnter", async (event) => {
+    if (!isProximityAlertsEnabled()) return;
+    await scheduleNotification(event.id);
   });
 };
 
-export const startProximityAlerts = async (venues: Venue[]) => {
+export const startProximityAlerts = async (venues: MonitoredVenue[]) => {
   venuesSnapshot = venues;
-  if (!isNative || !pluginAvailable()) {
-    return { ok: false, error: "Proximity alerts are only available on the app." };
+  if (!isNative) {
+    return { ok: false, error: "Proximity alerts are only available on device." };
   }
 
   try {
-    const locationPerm = await BackgroundGeolocation.checkPermissions();
-    if (locationPerm.location !== "granted") {
-      const requested = await BackgroundGeolocation.requestPermissions();
-      if (requested.location !== "granted") {
-        return { ok: false, error: "Location access is required to enable proximity alerts." };
-      }
+    const permResult = await GeofenceBridge.requestPermissions();
+    if (permResult.location !== "granted") {
+      return { ok: false, error: "Location access is required to enable proximity alerts." };
     }
 
     const notifPerm = await LocalNotifications.requestPermissions();
@@ -118,12 +81,17 @@ export const startProximityAlerts = async (venues: Venue[]) => {
       return { ok: false, error: "Notifications are disabled. Enable them in Settings." };
     }
 
-    if (watcherId) {
-      await BackgroundGeolocation.removeWatcher({ id: watcherId });
-      watcherId = null;
-    }
-
-    await createWatcher();
+    await attachRegionListener();
+    await GeofenceBridge.startMonitoring({
+      venues: venues
+        .filter((venue) => venue.coords && venue.proximityAlertsEnabled !== false)
+        .map((venue) => ({
+          id: venue.id,
+          lat: venue.coords!.lat,
+          lon: venue.coords!.lon,
+          name: venue.name,
+        })),
+    });
     return { ok: true };
   } catch (error) {
     console.warn("Unable to start proximity alerts", error);
@@ -132,13 +100,31 @@ export const startProximityAlerts = async (venues: Venue[]) => {
 };
 
 export const stopProximityAlerts = async () => {
-  if (!isNative || !pluginAvailable()) return;
-  if (watcherId) {
-    await BackgroundGeolocation.removeWatcher({ id: watcherId });
-      watcherId = null;
-    }
+  regionListener?.remove();
+  regionListener = null;
+  if (!isNative) return;
+  try {
+    await GeofenceBridge.stopMonitoring();
+  } catch (error) {
+    console.warn("Unable to stop geofence monitoring", error);
+  }
 };
 
-export const refreshMonitoredVenues = (venues: Venue[]) => {
+export const refreshMonitoredVenues = async (venues: MonitoredVenue[]) => {
   venuesSnapshot = venues;
+  if (!isNative) return;
+  try {
+    await GeofenceBridge.startMonitoring({
+      venues: venues
+        .filter((venue) => venue.coords && venue.proximityAlertsEnabled !== false)
+        .map((venue) => ({
+          id: venue.id,
+          lat: venue.coords!.lat,
+          lon: venue.coords!.lon,
+          name: venue.name,
+        })),
+    });
+  } catch (error) {
+    console.warn("Unable to refresh geofence monitoring", error);
+  }
 };

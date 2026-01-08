@@ -1,0 +1,1 @@
+import{W as e}from"./index-c4365437.js";class o extends e{async requestPermissions(){return{location:"denied",notifications:"denied"}}async startMonitoring(){console.warn("GeofenceBridge: startMonitoring is only available on native platforms.")}async stopMonitoring(){}async openSettings(){}addListener(){return{remove:()=>{}}}}export{o as GeofenceBridgeWeb};

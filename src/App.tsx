@@ -31,10 +31,16 @@ import { UNCLASSIFIED } from "./constants";
 import { samplePeople, sampleTags, sampleVenues } from "./data";
 
 import { Capacitor, registerPlugin } from "@capacitor/core";
+import { Geolocation } from "@capacitor/geolocation";
 
 import { MapKitBridge } from "mapkit-bridge";
 import { isProximityAlertsEnabled, setProximityAlertsEnabled } from "./utils/proximityAlerts";
-import { refreshMonitoredVenues, startProximityAlerts, stopProximityAlerts } from "./utils/proximityService";
+import {
+  refreshMonitoredVenues,
+  startProximityAlerts,
+  stopProximityAlerts,
+  type MonitoredVenue,
+} from "./utils/proximityService";
 
 type VenueView = "all" | "favs";
 
@@ -71,6 +77,29 @@ function App() {
   const [venueSortKey, setVenueSortKey] = useState<VenueSortKey>("recentVisit");
   const [venueSortDir, setVenueSortDir] = useState<"asc" | "desc">("desc");
   const [venueView, setVenueView] = useState<VenueView>("all");
+  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchLocation = async () => {
+      try {
+        await Geolocation.requestPermissions();
+        const position = await Geolocation.getCurrentPosition();
+        if (!cancelled) {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+          });
+        }
+      } catch (err) {
+        console.warn("Unable to fetch current location", err);
+      }
+    };
+    fetchLocation();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
 
   const {
@@ -93,6 +122,49 @@ function App() {
     () => Object.fromEntries(venues.map((v) => [v.id, v])) as Record<string, Venue>,
     [venues]
   );  
+
+  const monitoredVenues = useMemo<MonitoredVenue[]>(() => {
+    return venues.map((venue) => {
+      if (!venue.id) {
+        return venue;
+      }
+      const peopleAtVenue = people.filter((person) => person.venueId === venue.id);
+      const favoriteNames = peopleAtVenue
+        .filter((person) => person.favorite)
+        .map((person) => person.name);
+      return {
+        ...venue,
+        proximityMeta: {
+          totalPeople: peopleAtVenue.length,
+          favoriteNames,
+        },
+      };
+    });
+  }, [venues, people]);
+
+  const venueDistanceLabels = useMemo(() => {
+    if (!userLocation) return {};
+    const toRad = (value: number) => (value * Math.PI) / 180;
+    const R = 6371000;
+    return monitoredVenues.reduce<Record<string, string>>((acc, venue) => {
+      if (!venue.coords) return acc;
+      const dLat = toRad(venue.coords.lat - userLocation.lat);
+      const dLon = toRad(venue.coords.lon - userLocation.lon);
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(userLocation.lat)) *
+          Math.cos(toRad(venue.coords.lat)) *
+          Math.sin(dLon / 2) ** 2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distance = R * c;
+      const label =
+        distance < 1000
+          ? `${Math.round(distance)} m away`
+          : `${(distance / 1000).toFixed(1)} km away`;
+      acc[venue.name] = label;
+      return acc;
+    }, {});
+  }, [monitoredVenues, userLocation]);
 
   // ── Filter & sort hook ──
   const [sortField, sortDir] = personSort.split("-") as [SortKey, "asc" | "desc"];
@@ -254,7 +326,7 @@ function App() {
       return;
     }
     (async () => {
-      const result = await startProximityAlerts(venues);
+      const result = await startProximityAlerts(monitoredVenues);
       if (!cancelled && !result.ok) {
         setProximityAlertsEnabled(false);
         setProximityEnabled(false);
@@ -265,13 +337,13 @@ function App() {
       cancelled = true;
       stopProximityAlerts();
     };
-  }, [proximityEnabled, showNotification]);
+  }, [proximityEnabled, showNotification, monitoredVenues, proximitySupported]);
 
   // Keep the watcher in sync with current venue coordinates/toggles.
   useEffect(() => {
     if (!proximityEnabled || !proximitySupported) return;
-    refreshMonitoredVenues(venues);
-  }, [venues, proximityEnabled, proximitySupported]);
+    refreshMonitoredVenues(monitoredVenues);
+  }, [monitoredVenues, proximityEnabled, proximitySupported]);
 
   const sortedVenues = useVenueSort(
     venues,
@@ -509,6 +581,7 @@ function App() {
               if (p) updatePerson({ ...p, favorite: !p.favorite });
             }}
             searchQuery={searchQuery}
+            distanceLabels={venueDistanceLabels}
           /> 
         </div>
       </main>

@@ -80,7 +80,7 @@ public class MapKitBridgePlugin: CAPPlugin, CAPBridgedPlugin {
       
       let width = call.getInt("width") ?? 640
       let height = call.getInt("height") ?? 360
-      let spanMeters = call.getDouble("spanMeters") ?? 2000
+      let spanMeters = call.getDouble("spanMeters") ?? 1000
       
       let options = MKMapSnapshotter.Options()
       options.region = MKCoordinateRegion(

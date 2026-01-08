@@ -23,6 +23,7 @@ interface VenueGroupListProps {
   favoriteVenues: string[];
   setFavoriteVenues: React.Dispatch<React.SetStateAction<string[]>>;
   searchQuery: string;
+  distanceLabel?: string;
 }
 
 export default function VenueGroupList({
@@ -40,6 +41,7 @@ export default function VenueGroupList({
   setFavoriteVenues,
   getTagNameById,
   searchQuery,
+  distanceLabel,
 }: VenueGroupListProps) {
   const { trackEvent } = useAnalytics();
   const groupList = Array.isArray(group) ? group : [];
@@ -136,6 +138,12 @@ export default function VenueGroupList({
           </button>
         )}
       </div>
+      {distanceLabel && (
+        <p className="flex items-center gap-1 text-xs text-[var(--color-text-secondary)] ml-7 -mt-1">
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--color-accent-muted)]" />
+          {distanceLabel}
+        </p>
+      )}
 
       {isUnclassified && (
         <p className="text-xs text-[var(--color-text-secondary)] mb-2">

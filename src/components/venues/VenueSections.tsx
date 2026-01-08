@@ -18,6 +18,7 @@ interface Props {
   onDelete: (id: string, name: string) => void;
   onToggleFavorite: (id: string) => void;
   searchQuery: string;
+  distanceLabels: Record<string, string>;
 }
 
 export default function VenueSections({
@@ -36,6 +37,7 @@ export default function VenueSections({
   onDelete,
   onToggleFavorite,
   searchQuery,
+  distanceLabels,
 }: Props) {
   const emptyMessage =
     viewMode === "favs"
@@ -73,6 +75,7 @@ export default function VenueSections({
           onDelete={onDelete}
           onToggleFavorite={onToggleFavorite}
           searchQuery={searchQuery}
+          distanceLabel={distanceLabels[venueName]}
         />
       ))}
     </div>

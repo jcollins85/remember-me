@@ -30,6 +30,7 @@
     "@capacitor/local-notifications": "^8.0.0",
     "firebase": "^12.7.0",
     "framer-motion": "^12.12.2",
+    "geofence-bridge": "file:geofence-bridge",
     "lucide-react": "^0.525.0",
     "mapkit-bridge": "file:mapkit-bridge",
     "react": "^18.2.0",
