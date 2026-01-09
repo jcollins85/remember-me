@@ -49,6 +49,7 @@ export const NotificationProvider = ({ children, duration = 3000 }: Notification
     };
 
     setNotifications((prev) => [entry, ...prev].slice(0, 25));
+    // We only keep the last two live toasts on screen so the UI never overwhelms mobile viewports.
     setToasts((prev) => [...prev, entry].slice(-2));
     setTimeout(() => {
       setToasts((prev) => prev.filter((toast) => toast.id !== entry.id));

@@ -81,6 +81,8 @@ function App() {
   const [venueView, setVenueView] = useState<VenueView>("all");
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
 
+  // Capture a lightweight location snapshot so we can show venue distances and feed smart
+  // monitoring without aggressively polling the GPS (500m distance filter keeps battery happy).
   useEffect(() => {
     let cancelled = false;
     let watchId: string | null = null;
@@ -218,6 +220,7 @@ function App() {
     sortDir === "asc"
   );
 
+  // Debounce search logging so analytics only records deliberate queries (prevents spam per keypress).
   useEffect(() => {
     const trimmed = searchQuery.trim();
     if (!trimmed) {
@@ -299,6 +302,7 @@ function App() {
     const next = !proximityEnabled;
     setProximityAlertsEnabled(next);
     setProximityEnabled(next);
+    trackEvent("proximity_toggle", { enabled: next });
   };
 
   const handleClearAchievements = () => {
@@ -353,6 +357,7 @@ function App() {
     };
   }, [showSettings, showProfile, showAddModal, editingPerson, personToDelete, sortSheet]);
 
+  // Guard against someone syncing an “on” toggle from device and then opening the PWA.
   useEffect(() => {
     if (!proximitySupported && isProximityAlertsEnabled()) {
       setProximityAlertsEnabled(false);
@@ -360,7 +365,7 @@ function App() {
     }
   }, [proximitySupported]);
 
-  // Kick off / stop the native watcher whenever the global toggle or permissions change.
+  // Kick off / stop the native watcher whenever the global toggle or monitored venues change.
   useEffect(() => {
     let cancelled = false;
     if (!proximityEnabled || !proximitySupported) {
@@ -373,6 +378,10 @@ function App() {
         setProximityAlertsEnabled(false);
         setProximityEnabled(false);
         showNotification(result.error ?? "Unable to enable proximity alerts.", "error");
+        trackEvent("proximity_error", { message: result.error ?? "unknown" });
+      }
+      if (!cancelled && result.ok) {
+        trackEvent("proximity_started", { monitoredVenues: monitoredSubset.length });
       }
     })();
     return () => {

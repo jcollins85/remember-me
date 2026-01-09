@@ -19,6 +19,7 @@ export interface AchievementProgress extends AchievementDefinition {
   unlockedAt?: string;
 }
 
+// Central library of every milestone (kept in-code for now so we can tweak copy/targets easily).
 const DEFINITIONS: AchievementDefinition[] = [
   {
     id: "people_first",
@@ -198,6 +199,7 @@ interface LifetimeStats {
   favoritesMax: number;
 }
 
+// Computes progress + persists unlock timestamps so achievements survive reloads/offline sessions.
 export function useAchievements(
   people: Person[],
   venues: Venue[],
@@ -239,6 +241,7 @@ export function useAchievements(
     };
   }, [favoriteVenues, people, venues]);
 
+  // Track highest counts ever reached so we don't lose milestone progress when someone deletes data.
   useEffect(() => {
     setLifetimeStats((prev) => {
       const next: LifetimeStats = {

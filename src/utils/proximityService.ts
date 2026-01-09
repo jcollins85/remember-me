@@ -7,6 +7,7 @@ import type { PluginListenerHandle } from "@capacitor/core";
 import { GeofenceBridge } from "geofence-bridge";
 import { Venue } from "../types";
 import { isProximityAlertsEnabled } from "./proximityAlerts";
+import { trackEvent } from "./analytics";
 
 export type MonitoredVenue = Venue & {
   proximityMeta?: {
@@ -21,6 +22,7 @@ let regionListener: PluginListenerHandle | null = null;
 const lastAlertTimestamps: Record<string, number> = {};
 let venuesSnapshot: MonitoredVenue[] = [];
 
+// Builds the native/local notification payload for a venue and rate-limits per venue ID.
 const scheduleNotification = async (venueId: string) => {
   const venue = venuesSnapshot.find((v) => v.id === venueId);
   if (!venue) return;
@@ -54,16 +56,24 @@ const scheduleNotification = async (venueId: string) => {
     ],
   });
   lastAlertTimestamps[venueId] = now;
+  trackEvent("proximity_notification_sent", {
+    venue_id: venueId,
+    total_people: total,
+    favorite_count: favoriteNames.length,
+  });
 };
 
+// Only one listener can be active at a time – re-register whenever we restart monitoring.
 const attachRegionListener = async () => {
   regionListener?.remove();
   regionListener = await GeofenceBridge.addListener("regionEnter", async (event) => {
     if (!isProximityAlertsEnabled()) return;
+    trackEvent("proximity_region_enter", { venue_id: event.id });
     await scheduleNotification(event.id);
   });
 };
 
+// Requests the required permissions, subscribes to region events, and seeds the native geofences.
 export const startProximityAlerts = async (venues: MonitoredVenue[]) => {
   venuesSnapshot = venues;
   if (!isNative) {
@@ -72,29 +82,46 @@ export const startProximityAlerts = async (venues: MonitoredVenue[]) => {
 
   try {
     const permResult = await GeofenceBridge.requestPermissions();
+    trackEvent("proximity_permission_checked", {
+      scope: "location",
+      status: permResult.location,
+    });
     if (permResult.location !== "granted") {
       return { ok: false, error: "Location access is required to enable proximity alerts." };
     }
 
     const notifPerm = await LocalNotifications.requestPermissions();
+    trackEvent("proximity_permission_checked", {
+      scope: "notifications",
+      status: notifPerm.display,
+    });
     if (notifPerm.display !== "granted") {
       return { ok: false, error: "Notifications are disabled. Enable them in Settings." };
     }
 
     await attachRegionListener();
+    const venuesToMonitor = venues
+      .filter((venue) => venue.coords && venue.proximityAlertsEnabled !== false)
+      .map((venue) => ({
+        id: venue.id,
+        lat: venue.coords!.lat,
+        lon: venue.coords!.lon,
+        name: venue.name,
+      }));
     await GeofenceBridge.startMonitoring({
-      venues: venues
-        .filter((venue) => venue.coords && venue.proximityAlertsEnabled !== false)
-        .map((venue) => ({
-          id: venue.id,
-          lat: venue.coords!.lat,
-          lon: venue.coords!.lon,
-          name: venue.name,
-        })),
+      venues: venuesToMonitor,
+    });
+    trackEvent("proximity_monitoring_update", {
+      action: "start",
+      venue_count: venuesToMonitor.length,
     });
     return { ok: true };
-  } catch (error) {
+  } catch (error: any) {
     console.warn("Unable to start proximity alerts", error);
+    trackEvent("proximity_monitoring_error", {
+      stage: "start",
+      message: typeof error?.message === "string" ? error.message : "unknown",
+    });
     return { ok: false, error: "Unable to start proximity alerts right now." };
   }
 };
@@ -110,21 +137,31 @@ export const stopProximityAlerts = async () => {
   }
 };
 
+// Called whenever coords or toggles change so the native layer always mirrors the latest data.
 export const refreshMonitoredVenues = async (venues: MonitoredVenue[]) => {
   venuesSnapshot = venues;
   if (!isNative) return;
   try {
+    const venuesToMonitor = venues
+      .filter((venue) => venue.coords && venue.proximityAlertsEnabled !== false)
+      .map((venue) => ({
+        id: venue.id,
+        lat: venue.coords!.lat,
+        lon: venue.coords!.lon,
+        name: venue.name,
+      }));
     await GeofenceBridge.startMonitoring({
-      venues: venues
-        .filter((venue) => venue.coords && venue.proximityAlertsEnabled !== false)
-        .map((venue) => ({
-          id: venue.id,
-          lat: venue.coords!.lat,
-          lon: venue.coords!.lon,
-          name: venue.name,
-        })),
+      venues: venuesToMonitor,
     });
-  } catch (error) {
+    trackEvent("proximity_monitoring_update", {
+      action: "refresh",
+      venue_count: venuesToMonitor.length,
+    });
+  } catch (error: any) {
     console.warn("Unable to refresh geofence monitoring", error);
+    trackEvent("proximity_monitoring_error", {
+      stage: "refresh",
+      message: typeof error?.message === "string" ? error.message : "unknown",
+    });
   }
 };

@@ -10,6 +10,8 @@ interface NotificationProps {
   meta?: Record<string, unknown>;
 }
 
+// All non-achievement toasts share the same base shell, so this map keeps the palette/animation
+// differences declarative (success/info/error). The “celebration” path below bypasses this entirely.
 const typeMeta: Record<Exclude<NotificationType, "celebration">, {
   label: string;
   icon: ReactNode;
@@ -51,6 +53,8 @@ export default function Notification({
   meta = {},
 }: NotificationProps) {
 
+  // Achievements use a bespoke “celebration” card with shimmer + star—it’s visually louder than
+  // regular toasts, so we short-circuit here instead of trying to shoehorn it into typeMeta.
   if (type === "celebration") {
     return (
       <motion.div
@@ -91,6 +95,8 @@ export default function Notification({
   }
   const visualMeta = typeMeta[type as Exclude<NotificationType, "celebration">];
 
+  // Base toast shell (success/info/error) reuses the same motion wrapper; per-type animation tweaks
+  // come from the metadata above so the component stays declarative.
   return (
     <motion.div
       initial={{ opacity: 0, y: 20, scale: 0.96 }}

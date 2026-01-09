@@ -16,6 +16,7 @@ interface Props {
 
 const escapeRegex = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+// Lightweight highlight helper so search terms glow in place without re-rendering the entire card.
 function Highlight({ text, query }: { text?: string; query: string }) {
   if (!text) return null;
   const trimmed = query.trim();
@@ -38,6 +39,7 @@ function Highlight({ text, query }: { text?: string; query: string }) {
   );
 }
 
+// Displays the rich person summary plus inline favourite + tag filter affordances.
 export default function PersonCard({
   person,
   onEdit,

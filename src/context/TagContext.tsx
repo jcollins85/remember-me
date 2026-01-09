@@ -14,6 +14,7 @@ interface TagContextType {
   replaceTags: (next: Tag[]) => void;
 }
 
+// Tag metadata powers chips, insights, and achievements—keep it centralized here.
 const TagContext = createContext<TagContextType | undefined>(undefined);
 
 interface TagProviderProps {

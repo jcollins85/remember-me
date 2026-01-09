@@ -39,6 +39,7 @@ const sanitizeCoords = (value: unknown) => {
     : undefined;
 };
 
+// Enforces shape/limits on imported people so corrupt backups can't crash the UI.
 function sanitizePeople(raw: unknown): Person[] {
   if (!Array.isArray(raw)) {
     throw new Error("People data missing or malformed.");
@@ -88,6 +89,7 @@ function sanitizePeople(raw: unknown): Person[] {
   });
 }
 
+// Same guard rail for venues; also ensures coords/locationTag fields stay optional.
 function sanitizeVenues(raw: unknown): Venue[] {
   if (!Array.isArray(raw)) {
     throw new Error("Venue data missing or malformed.");
@@ -119,6 +121,7 @@ function sanitizeVenues(raw: unknown): Venue[] {
   });
 }
 
+// Tags store usage counts for achievements/filter chips, so keep them sane too.
 function sanitizeTags(raw: unknown): Tag[] {
   if (!Array.isArray(raw)) {
     throw new Error("Tag data missing or malformed.");
@@ -195,6 +198,8 @@ function parseBackup(text: string): BackupFile {
   };
 }
 
+// Provides export/import helpers that validate payloads before touching state.
+// This keeps the Settings panel lean and centralizes backup schemas in one place.
 export function useDataBackup(
   favoriteVenues: string[],
   setFavoriteVenues: Dispatch<SetStateAction<string[]>>
@@ -204,6 +209,7 @@ export function useDataBackup(
   const { venues, replaceVenues } = useVenues();
   const { showNotification } = useNotification();
 
+  // Client-side export just serializes the sanitized contexts into a downloadable JSON blob.
   const exportBackup = useCallback(() => {
     try {
       const payload: BackupFile = {

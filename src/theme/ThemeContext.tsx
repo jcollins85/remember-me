@@ -19,6 +19,7 @@ interface ThemeProviderProps {
   children: ReactNode;
 }
 
+// Centralizes theme selection so CSS variables + analytics stay in sync across the whole app.
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Determine initial theme: localStorage → OS preference → default
   const getInitialTheme = (): ThemeKey => {

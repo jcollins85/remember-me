@@ -13,6 +13,7 @@ interface PeopleContextType {
   replacePeople: (people: Person[]) => void;
 }
 
+// Stores the canonical list of people in localStorage so the PWA and Capacitor build share state.
 const PeopleContext = createContext<PeopleContextType | undefined>(undefined);
 
 interface PeopleProviderProps {

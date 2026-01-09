@@ -1,3 +1,4 @@
+// Tiny helper that tracks whether the user wants global proximity monitoring enabled.
 const storageKey = "rememberme:proximity-alerts-enabled";
 
 let proximityEnabled = true;
@@ -29,4 +30,5 @@ export const setProximityAlertsEnabled = (enabled: boolean) => {
   }
 };
 
+// Keep radius centralized so we can tweak sensitivity without touching native bridge wiring.
 export const PROXIMITY_RADIUS_METERS = 100;

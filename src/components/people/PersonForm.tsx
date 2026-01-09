@@ -12,6 +12,7 @@ import { triggerImpact, ImpactStyle } from "../../utils/haptics";
 import { Capacitor } from "@capacitor/core";
 import { Geolocation } from "@capacitor/geolocation";
 import { MapKitBridge } from "mapkit-bridge";
+import { useAnalytics } from "../../context/AnalyticsContext";
 
 interface Props {
   initialData?: Partial<Person>;
@@ -45,6 +46,7 @@ export default function PersonForm({
 const mapPreviewPlaceholder =
   "data:image/svg+xml,%3Csvg width='640' height='360' viewBox='0 0 640 360' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='640' height='360' fill='%23f8f4ef'/%3E%3Cpath d='M0 40h640M0 120h640M0 200h640M0 280h640' stroke='%23e5dbcf' stroke-width='2'/%3E%3Cpath d='M80 0v360M200 0v360M320 0v360M440 0v360M560 0v360' stroke='%23e5dbcf' stroke-width='2'/%3E%3Cpath d='M0 260l80-40 60 30 100-50 90 60 90-80 120 40 100-70 0 210H0z' fill='%23d5e5f0'/%3E%3Cpath d='M0 300l90-60 120 70 120-70 120 50 190-140V360H0z' fill='%23c7e0da'/%3E%3C/svg%3E";
   const { showNotification } = useNotification();
+  const { trackEvent } = useAnalytics();
   // ── Basic fields ──
   const [name, setName] = useState(initialData.name || "");
   const [position, setPosition] = useState(initialData.position || "");
@@ -274,6 +276,8 @@ const mapPreviewPlaceholder =
     setLocationTag(`${latVal.toFixed(4)}, ${lonVal.toFixed(4)}`);
   };
 
+  // Whenever coords change we ask the native MapKit bridge for a new snapshot so the preview,
+  // reverse-geocoded label, and cached venue attachment stay in sync. Falls back gracefully on web.
   useEffect(() => {
     let cancelled = false;
 
@@ -291,6 +295,7 @@ const mapPreviewPlaceholder =
     }
 
     const fetchSnapshot = async () => {
+      const venueLabel = venue.trim() || "unspecified";
       try {
         setIsSnapshotLoading(true);
         const result = await MapKitBridge.getSnapshot({
@@ -304,17 +309,25 @@ const mapPreviewPlaceholder =
           const newLabel = result.address || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
           setMapSnapshot(`data:image/png;base64,${result.imageData}`);
           setSnapshotError(null);
+          trackEvent("map_snapshot_success", {
+            venueName: venueLabel,
+            hasAddress: Boolean(result.address),
+          });
           if (newLabel !== locationTag) {
             setLocationTag(newLabel);
             await autoAttachVenue(coords, newLabel, { silent: true });
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.warn("Map snapshot error", error);
         if (!cancelled) {
           setMapSnapshot(null);
           setSnapshotError("Preview unavailable");
         }
+        trackEvent("map_snapshot_error", {
+          venueName: venue.trim() || "unspecified",
+          message: typeof error?.message === "string" ? error.message : "unknown",
+        });
       } finally {
         if (!cancelled) {
           setIsSnapshotLoading(false);
@@ -327,8 +340,9 @@ const mapPreviewPlaceholder =
     return () => {
       cancelled = true;
     };
-  }, [coords, locationTag, venue]);
+  }, [coords, locationTag, venue, trackEvent]);
 
+  // Drive the place-search sheet: debounce the query, run MapKit search, and capture analytics/errors.
   useEffect(() => {
     if (showPlaceSearch) {
       const currentVenueName = venue.trim();
@@ -362,12 +376,19 @@ const mapPreviewPlaceholder =
         });
         if (!cancelled) {
           setPlaceResults(results);
+          trackEvent("place_search_results", {
+            query_length: trimmed.length,
+            result_count: results.length,
+          });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.warn("Place search error", error);
         if (!cancelled) {
           setPlaceError("Couldn't search right now");
         }
+        trackEvent("place_search_error", {
+          message: typeof error?.message === "string" ? error.message : "unknown",
+        });
       } finally {
         if (!cancelled) {
           setPlaceLoading(false);
@@ -378,7 +399,7 @@ const mapPreviewPlaceholder =
       cancelled = true;
       window.clearTimeout(handler);
     };
-  }, [placeQuery, showPlaceSearch, coords, venue]);
+  }, [placeQuery, showPlaceSearch, coords, venue, trackEvent]);
 
   const getCurrentCoordinates = async () => {
     try {
@@ -426,6 +447,7 @@ const mapPreviewPlaceholder =
         return;
       }
       await action();
+      trackEvent("venue_pin_captured", { source: "current_location", venueName: venue });
     } catch (error: any) {
       console.warn("Location capture error", error);
       const message =
@@ -445,6 +467,7 @@ const mapPreviewPlaceholder =
     setLocationTag(place.address);
     await autoAttachVenue(coordsPayload, place.address);
     showNotification(`Location set to ${place.name}`, "info");
+    trackEvent("venue_pin_captured", { source: "search", venueName: venue });
   };
 
   const handlePlaceSelect = (place: { name: string; address: string; lat: number; lng: number }) => {
@@ -827,6 +850,9 @@ const mapPreviewPlaceholder =
                     showNotification("Search is available on device only.", "info");
                     return;
                   }
+                  trackEvent("place_search_opened", {
+                    venueName: venue.trim() || "unspecified",
+                  });
                   setShowPlaceSearch(true);
                 }}
                 className="rounded-full border border-white/40 bg-[var(--color-card)] px-4 py-1.5 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_6px_18px_rgba(0,0,0,0.08)]"
@@ -1091,6 +1117,7 @@ const mapPreviewPlaceholder =
                       await triggerImpact(ImpactStyle.Light);
                       commitTag(pendingTag);
                       clearInput();
+                      trackEvent("custom_tag_created", { tag: pendingTag });
                     }}
                     className="inline-block mr-3 px-3 py-1 rounded-full text-sm border border-dashed border-[var(--color-accent)] text-[var(--color-accent)] bg-white/70 hover:bg-white"
                   >

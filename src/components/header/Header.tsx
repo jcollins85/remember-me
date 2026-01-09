@@ -65,6 +65,7 @@ const Header: React.FC<HeaderProps> = ({
   return (
     <>
       <div className="sticky z-40" style={{ top: 0 }}>
+        {/* Two-layer approach: a glass backdrop spanning the safe area plus the actual header content */}
         <div className="relative">
           <div
             className="absolute inset-x-0 pointer-events-none bg-[var(--color-surface)]/92 backdrop-blur-[30px] border-b border-[var(--color-card-border)]/70 shadow-[0_12px_28px_rgba(15,23,42,0.18)]"
@@ -156,6 +157,7 @@ const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
+      {/* Sort sheet reuses the Modal glass visual but stays scoped to the header */}
       <AnimatePresence>
         {sortSheet && (
           <motion.div

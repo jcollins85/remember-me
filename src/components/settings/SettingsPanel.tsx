@@ -57,8 +57,10 @@ const themes: Array<{
   },
 ];
 
-// SettingsPanel exposes theme, backup, and developer utilities inside
-// a single sheet so users can tweak global behavior without leaving home.
+// SettingsPanel exposes theme, backup, notification, and developer utilities inside
+// a single glass sheet so users can tweak global behavior without leaving the home view.
+// It’s intentionally dense (palettes + data tools + experimental toggles) so we lean on icons
+// and section headings rather than splitting into multiple modals.
 export default function SettingsPanel({
   open,
   onClose,
@@ -296,6 +298,7 @@ export default function SettingsPanel({
                 className="space-y-2 border-t border-transparent pt-4"
                 style={{ borderColor: "color-mix(in srgb, var(--color-accent) 60%, transparent)" }}
               >
+                {/* Backup/restore lives here so QA/devs can quickly snapshot or recover data while testing. */}
                 <div className="flex items-center gap-2">
                   <CloudUpload size={16} className="text-[var(--color-accent)]" />
                   <div>
@@ -351,6 +354,7 @@ export default function SettingsPanel({
               </section>
 
               <section className="space-y-2 border-t border-[var(--color-accent)]/60 pt-4">
+                {/* Dev utilities—kept in app for internal QA so we can reseed dummy data or nuke everything */}
                 <div className="flex items-center gap-2">
                   <Wrench size={16} className="text-[var(--color-accent)]" />
                   <div>

@@ -11,6 +11,7 @@ interface VenueContextType {
   replaceVenues: (venues: Venue[]) => void;
 }
 
+// Venue store mirrors People/Tags so all spatial metadata (coords, proximity toggles) stay in sync.
 const VenueContext = createContext<VenueContextType | undefined>(undefined);
 
 export const VenueProvider = ({ children }: { children: ReactNode }) => {

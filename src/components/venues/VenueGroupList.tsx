@@ -26,6 +26,7 @@ interface VenueGroupListProps {
   distanceLabel?: string;
 }
 
+// Each venue card collapses/expands and houses the PersonCard list plus favourite toggle.
 export default function VenueGroupList({
   venue,
   group,
@@ -45,6 +46,7 @@ export default function VenueGroupList({
 }: VenueGroupListProps) {
   const { trackEvent } = useAnalytics();
   const groupList = Array.isArray(group) ? group : [];
+  // Keep favourite folks near the top and then respect the chosen person sort key.
   const sortedGroup = [...groupList].sort((a, b) => {
     if (a.favorite && !b.favorite) return -1;
     if (!a.favorite && b.favorite) return 1;

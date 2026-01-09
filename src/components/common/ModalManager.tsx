@@ -26,6 +26,8 @@ interface Props {
   onDeleteConfirm: (id: string) => void;
 }
 
+// Centralizes modal orchestration so we only deal with framer-motion stacks in one place.
+// Keeps add/edit/delete mutually exclusive and preserves exit animations even when state flips fast.
 export default function ModalManager({
   showAdd,
   onAddCancel,
@@ -76,6 +78,7 @@ export default function ModalManager({
       </AnimatePresence>
 
       <AnimatePresence mode="wait" initial={false}>
+        {/* Delete lives in its own layer so it can slide independently of add/edit */}
         {personToDelete && (
           <DeleteConfirmModal
             key="delete-person"

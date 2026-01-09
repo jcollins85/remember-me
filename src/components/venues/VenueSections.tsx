@@ -21,6 +21,7 @@ interface Props {
   distanceLabels: Record<string, string>;
 }
 
+// Renders the masonry of venue cards (favourites vs all) and handles the empty state messaging.
 export default function VenueSections({
   groupedPeople,
   favoriteVenues,

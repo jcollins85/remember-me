@@ -45,7 +45,8 @@ const sectionMeta = {
   favorites: { label: "Favourites", icon: <Star size={14} /> },
 } as const;
 
-// ProfilePanel summarizes usage insights and lifetime achievements.
+// ProfilePanel summarizes usage insights and lifetime achievements. It’s intentionally rich so the
+// user can review progress without leaving the app; keeping it in a glass panel mirrors Settings UI.
 export default function ProfilePanel({
   open,
   onClose,
@@ -60,6 +61,7 @@ export default function ProfilePanel({
     favorites: false,
   });
 
+  // Collapse achievements by type so each accordion section can render its respective milestones.
   const grouped = achievements.reduce<Record<string, typeof achievements>>((acc, item) => {
     if (!acc[item.type]) acc[item.type] = [];
     acc[item.type].push(item);
