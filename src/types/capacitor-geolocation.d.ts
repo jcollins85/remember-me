@@ -5,6 +5,10 @@ declare module "@capacitor/geolocation" {
     maximumAge?: number;
   }
 
+  export interface WatchPositionOptions extends PositionOptions {
+    distanceFilter?: number;
+  }
+
   export interface GeolocationPosition {
     coords: {
       latitude: number;
@@ -21,5 +25,10 @@ declare module "@capacitor/geolocation" {
   export const Geolocation: {
     requestPermissions: () => Promise<void>;
     getCurrentPosition: (options?: PositionOptions) => Promise<GeolocationPosition>;
+    watchPosition: (
+      options: WatchPositionOptions,
+      callback: (position: GeolocationPosition | null, error?: any) => void
+    ) => Promise<string>;
+    clearWatch: (options: { id: string }) => Promise<void>;
   };
 }

@@ -31,6 +31,7 @@ import { UNCLASSIFIED } from "./constants";
 import { samplePeople, sampleTags, sampleVenues } from "./data";
 
 import { Capacitor, registerPlugin } from "@capacitor/core";
+import { Geolocation as CapacitorGeolocation } from "@capacitor/geolocation";
 import { Geolocation } from "@capacitor/geolocation";
 
 import { MapKitBridge } from "mapkit-bridge";
@@ -43,6 +44,7 @@ import {
 } from "./utils/proximityService";
 
 type VenueView = "all" | "favs";
+const SMART_MONITOR_LIMIT = 12;
 
 // App orchestrates all persistent providers and renders the main layout,
 // wiring together search, sorting, modals, notifications, and persisted data.
@@ -81,16 +83,27 @@ function App() {
 
   useEffect(() => {
     let cancelled = false;
+    let watchId: string | null = null;
     const fetchLocation = async () => {
       try {
-        await Geolocation.requestPermissions();
-        const position = await Geolocation.getCurrentPosition();
+        await CapacitorGeolocation.requestPermissions();
+        const position = await CapacitorGeolocation.getCurrentPosition();
         if (!cancelled) {
           setUserLocation({
             lat: position.coords.latitude,
             lon: position.coords.longitude,
           });
         }
+        watchId = await CapacitorGeolocation.watchPosition(
+          { enableHighAccuracy: false, distanceFilter: 500 },
+          (position, error) => {
+            if (error || !position || cancelled) return;
+            setUserLocation({
+              lat: position.coords.latitude,
+              lon: position.coords.longitude,
+            });
+          }
+        );
       } catch (err) {
         console.warn("Unable to fetch current location", err);
       }
@@ -98,6 +111,9 @@ function App() {
     fetchLocation();
     return () => {
       cancelled = true;
+      if (watchId) {
+        CapacitorGeolocation.clearWatch({ id: watchId });
+      }
     };
   }, []);
 
@@ -141,6 +157,32 @@ function App() {
       };
     });
   }, [venues, people]);
+
+  const monitoredSubset = useMemo<MonitoredVenue[]>(() => {
+    if (!userLocation) return monitoredVenues;
+    const toRad = (value: number) => (value * Math.PI) / 180;
+    const R = 6371000;
+    const withDistance = monitoredVenues
+      .filter((venue) => venue.coords)
+      .map((venue) => {
+        const dLat = toRad(venue.coords!.lat - userLocation.lat);
+        const dLon = toRad(venue.coords!.lon - userLocation.lon);
+        const a =
+          Math.sin(dLat / 2) ** 2 +
+          Math.cos(toRad(userLocation.lat)) *
+            Math.cos(toRad(venue.coords!.lat)) *
+            Math.sin(dLon / 2) ** 2;
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c;
+        return { venue, distance };
+      })
+      .sort((a, b) => a.distance - b.distance);
+    const selected = withDistance
+      .slice(0, SMART_MONITOR_LIMIT)
+      .map((item) => item.venue);
+    const withoutCoords = monitoredVenues.filter((venue) => !venue.coords);
+    return [...selected, ...withoutCoords];
+  }, [monitoredVenues, userLocation]);
 
   const venueDistanceLabels = useMemo(() => {
     if (!userLocation) return {};
@@ -326,7 +368,7 @@ function App() {
       return;
     }
     (async () => {
-      const result = await startProximityAlerts(monitoredVenues);
+      const result = await startProximityAlerts(monitoredSubset);
       if (!cancelled && !result.ok) {
         setProximityAlertsEnabled(false);
         setProximityEnabled(false);
@@ -337,13 +379,13 @@ function App() {
       cancelled = true;
       stopProximityAlerts();
     };
-  }, [proximityEnabled, showNotification, monitoredVenues, proximitySupported]);
+  }, [proximityEnabled, showNotification, monitoredSubset, proximitySupported]);
 
   // Keep the watcher in sync with current venue coordinates/toggles.
   useEffect(() => {
     if (!proximityEnabled || !proximitySupported) return;
-    refreshMonitoredVenues(monitoredVenues);
-  }, [monitoredVenues, proximityEnabled, proximitySupported]);
+    refreshMonitoredVenues(monitoredSubset);
+  }, [monitoredSubset, proximityEnabled, proximitySupported]);
 
   const sortedVenues = useVenueSort(
     venues,
