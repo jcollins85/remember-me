@@ -4,7 +4,7 @@
 import { Capacitor } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import type { PluginListenerHandle } from "@capacitor/core";
-import { GeofenceBridge } from "geofence-bridge";
+import { GeofenceBridge } from "../plugins/geofenceBridge";
 import { Venue } from "../types";
 import { isProximityAlertsEnabled } from "./proximityAlerts";
 import { trackEvent } from "./analytics";
