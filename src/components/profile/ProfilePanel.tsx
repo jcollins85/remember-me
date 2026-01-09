@@ -116,7 +116,7 @@ export default function ProfilePanel({
                 </div>
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--color-text-secondary)]">Your Profile</p>
-                  <h2 className="text-2xl font-semibold text-[var(--color-text-primary)]">Remember Me</h2>
+                  <h2 className="text-2xl font-semibold text-[var(--color-text-primary)]">MetHere</h2>
                   <p className="text-xs text-[var(--color-text-secondary)]">Lifetime overview of your connections</p>
                 </div>
               </div>

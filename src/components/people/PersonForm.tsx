@@ -2,17 +2,14 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useVenues } from "../../context/VenueContext";
 import { UNCLASSIFIED } from "../../constants";
-import { Person, Tag, Venue } from "../../types";
+import { Person, Tag } from "../../types";
 import { v4 as uuidv4 } from "uuid";
 import { useTagInput } from "../../hooks/useTagInput";
 import { useVenueInput } from "../../hooks/useVenueInput";
 import { validatePersonForm, ValidationErrors } from "../../utils/validation";
-import { useNotification } from "../../context/NotificationContext";
 import { triggerImpact, ImpactStyle } from "../../utils/haptics";
-import { Capacitor } from "@capacitor/core";
-import { Geolocation } from "@capacitor/geolocation";
-import { MapKitBridge } from "mapkit-bridge";
 import { useAnalytics } from "../../context/AnalyticsContext";
+import LocationSection from "./LocationSection";
 
 interface Props {
   initialData?: Partial<Person>;
@@ -43,9 +40,6 @@ export default function PersonForm({
   hideActions = false,
   onSubmittingChange,
 }: Props) {
-const mapPreviewPlaceholder =
-  "data:image/svg+xml,%3Csvg width='640' height='360' viewBox='0 0 640 360' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='640' height='360' fill='%23f8f4ef'/%3E%3Cpath d='M0 40h640M0 120h640M0 200h640M0 280h640' stroke='%23e5dbcf' stroke-width='2'/%3E%3Cpath d='M80 0v360M200 0v360M320 0v360M440 0v360M560 0v360' stroke='%23e5dbcf' stroke-width='2'/%3E%3Cpath d='M0 260l80-40 60 30 100-50 90 60 90-80 120 40 100-70 0 210H0z' fill='%23d5e5f0'/%3E%3Cpath d='M0 300l90-60 120 70 120-70 120 50 190-140V360H0z' fill='%23c7e0da'/%3E%3C/svg%3E";
-  const { showNotification } = useNotification();
   const { trackEvent } = useAnalytics();
   // ── Basic fields ──
   const [name, setName] = useState(initialData.name || "");
@@ -153,412 +147,25 @@ const mapPreviewPlaceholder =
     onInputBlur();
   };  
 
-  // ── Date, coords, locationTag ──
+  // ── Date & location metadata (validation only) ──
   const today = new Date().toISOString().split("T")[0];
   const [dateMet, setDateMet] = useState(
     initialData.dateMet ? initialData.dateMet.split("T")[0] : today
   );
-  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(
-    initialVenueRecord?.coords ?? null
-  );
-  const [manualLat, setManualLat] = useState(
-    initialVenueRecord?.coords ? initialVenueRecord.coords.lat.toFixed(4) : ""
-  );
-  const [manualLon, setManualLon] = useState(
-    initialVenueRecord?.coords ? initialVenueRecord.coords.lon.toFixed(4) : ""
-  );
-  const [locationTag, setLocationTag] = useState<string>(
-    initialVenueRecord?.locationTag ?? ""
-  );
-  const [venueProximityEnabled, setVenueProximityEnabled] = useState(
-    initialVenueRecord?.proximityAlertsEnabled !== false
-  );
-  const [recentlyAttached, setRecentlyAttached] = useState(false);
-  const [attachError, setAttachError] = useState<string | null>(null);
-  useEffect(() => {
-    if (!recentlyAttached) return;
-    const timer = window.setTimeout(() => setRecentlyAttached(false), 1500);
-    return () => window.clearTimeout(timer);
-  }, [recentlyAttached]);
-  const [isCapturingLocation, setIsCapturingLocation] = useState(false);
-  const [isSavingVenueLocation, setIsSavingVenueLocation] = useState(false);
-  const [mapSnapshot, setMapSnapshot] = useState<string | null>(null);
-  const [isSnapshotLoading, setIsSnapshotLoading] = useState(false);
-  const [snapshotError, setSnapshotError] = useState<string | null>(null);
-  const [showReplaceModal, setShowReplaceModal] = useState(false);
-  const [replaceVenue, setReplaceVenue] = useState<Venue | null>(null);
-  const [pendingReplaceAction, setPendingReplaceAction] = useState<(() => Promise<void>) | null>(null);
-  const [showPlaceSearch, setShowPlaceSearch] = useState(false);
-  const [placeQuery, setPlaceQuery] = useState("");
-  const [placeResults, setPlaceResults] = useState<
-    { name: string; address: string; lat: number; lng: number }[]
-  >([]);
-  const [placeLoading, setPlaceLoading] = useState(false);
-  const [placeError, setPlaceError] = useState<string | null>(null);
-  const defaultSearchPlaceholder = "Search by name or address";
-  const [searchPlaceholder, setSearchPlaceholder] = useState(defaultSearchPlaceholder);
-  useEffect(() => {
-    if (coords && !Number.isNaN(coords.lat) && !Number.isNaN(coords.lon)) {
-      const latString = coords.lat.toFixed(4);
-      const lonString = coords.lon.toFixed(4);
-      setManualLat(latString);
-      setManualLon(lonString);
-      setLocationTag((prev) => prev || `${latString}, ${lonString}`);
-    }
-  }, [coords]);
-
-  useEffect(() => {
-    const typed = venue.trim();
-    if (!typed) {
-      setVenueProximityEnabled(true);
-      return;
-    }
-    const existing = venues.find(
-      (v) => v.name.trim().toLowerCase() === typed.toLowerCase()
-    );
-    if (existing) {
-      setVenueProximityEnabled(existing.proximityAlertsEnabled !== false);
-    } else {
-      setVenueProximityEnabled(true);
-    }
-  }, [venue, venues]);
-
-  // Hydrate previously saved location data when an existing venue is selected.
-  useEffect(() => {
-    const typed = venue.trim();
-    if (!typed) {
-      setCoords(null);
-      setLocationTag("");
-      setMapSnapshot(null);
-      setSnapshotError(null);
-      return;
-    }
-    const existing = venues.find(
-      (v) => v.name.trim().toLowerCase() === typed.toLowerCase()
-    );
-    if (!existing) {
-      if (coords) {
-        setCoords(null);
-      }
-      setLocationTag("");
-      setMapSnapshot(null);
-      setSnapshotError(null);
-      return;
-    }
-    if (!existing.coords) {
-      return;
-    }
-    const sameCoords =
-      coords &&
-      Math.abs(coords.lat - existing.coords.lat) < 0.000001 &&
-      Math.abs(coords.lon - existing.coords.lon) < 0.000001;
-    if (!sameCoords) {
-      setCoords({ lat: existing.coords.lat, lon: existing.coords.lon });
-    }
-    if (existing.locationTag && existing.locationTag !== locationTag) {
-      setLocationTag(existing.locationTag);
-    }
-  }, [venue, venues, coords, locationTag]);
-  const updateCoordsFromManual = (latStr: string, lonStr: string) => {
-    const latVal = parseFloat(latStr);
-    const lonVal = parseFloat(lonStr);
-    if (
-      !latStr ||
-      !lonStr ||
-      Number.isNaN(latVal) ||
-      Number.isNaN(lonVal)
-    ) {
-      setCoords(null);
-      setLocationTag("");
-      return;
-    }
-    setCoords({ lat: latVal, lon: lonVal });
-    setLocationTag(`${latVal.toFixed(4)}, ${lonVal.toFixed(4)}`);
-  };
-
-  // Whenever coords change we ask the native MapKit bridge for a new snapshot so the preview,
-  // reverse-geocoded label, and cached venue attachment stay in sync. Falls back gracefully on web.
-  useEffect(() => {
-    let cancelled = false;
-
-    if (!coords) {
-      setMapSnapshot(null);
-      setSnapshotError(null);
-      setIsSnapshotLoading(false);
-      return;
-    }
-
-    if (!Capacitor.isNativePlatform()) {
-      setMapSnapshot(null);
-      setSnapshotError("Preview available on device");
-      return;
-    }
-
-    const fetchSnapshot = async () => {
-      const venueLabel = venue.trim() || "unspecified";
-      try {
-        setIsSnapshotLoading(true);
-        const result = await MapKitBridge.getSnapshot({
-          lat: coords.lat,
-          lng: coords.lon,
-          width: 640,
-          height: 288,
-          spanMeters: 800,
-        });
-        if (!cancelled) {
-          const newLabel = result.address || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
-          setMapSnapshot(`data:image/png;base64,${result.imageData}`);
-          setSnapshotError(null);
-          trackEvent("map_snapshot_success", {
-            venueName: venueLabel,
-            hasAddress: Boolean(result.address),
-          });
-          if (newLabel !== locationTag) {
-            setLocationTag(newLabel);
-            await autoAttachVenue(coords, newLabel, { silent: true });
-          }
-        }
-      } catch (error: any) {
-        console.warn("Map snapshot error", error);
-        if (!cancelled) {
-          setMapSnapshot(null);
-          setSnapshotError("Preview unavailable");
-        }
-        trackEvent("map_snapshot_error", {
-          venueName: venue.trim() || "unspecified",
-          message: typeof error?.message === "string" ? error.message : "unknown",
-        });
-      } finally {
-        if (!cancelled) {
-          setIsSnapshotLoading(false);
-        }
-      }
-    };
-
-    fetchSnapshot();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [coords, locationTag, venue, trackEvent]);
-
-  // Drive the place-search sheet: debounce the query, run MapKit search, and capture analytics/errors.
-  useEffect(() => {
-    if (showPlaceSearch) {
-      const currentVenueName = venue.trim();
-      if (currentVenueName) {
-        setSearchPlaceholder(`Search (e.g. ${currentVenueName})`);
-      } else {
-        setSearchPlaceholder(defaultSearchPlaceholder);
-      }
-    }
-    if (!showPlaceSearch) {
-      setPlaceQuery("");
-      setPlaceResults([]);
-      setPlaceLoading(false);
-      setPlaceError(null);
-      return;
-    }
-    const trimmed = placeQuery.trim();
-    if (trimmed.length < 2 || !Capacitor.isNativePlatform()) {
-      setPlaceResults([]);
-      setPlaceLoading(false);
-      return;
-    }
-    let cancelled = false;
-    const handler = window.setTimeout(async () => {
-      try {
-        setPlaceLoading(true);
-        setPlaceError(null);
-        const { results } = await MapKitBridge.searchPlaces({
-          query: trimmed,
-          near: coords ? { lat: coords.lat, lng: coords.lon } : undefined,
-        });
-        if (!cancelled) {
-          setPlaceResults(results);
-          trackEvent("place_search_results", {
-            query_length: trimmed.length,
-            result_count: results.length,
-          });
-        }
-      } catch (error: any) {
-        console.warn("Place search error", error);
-        if (!cancelled) {
-          setPlaceError("Couldn't search right now");
-        }
-        trackEvent("place_search_error", {
-          message: typeof error?.message === "string" ? error.message : "unknown",
-        });
-      } finally {
-        if (!cancelled) {
-          setPlaceLoading(false);
-        }
-      }
-    }, 250);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(handler);
-    };
-  }, [placeQuery, showPlaceSearch, coords, venue, trackEvent]);
-
-  const getCurrentCoordinates = async () => {
-    try {
-      if (Capacitor.isNativePlatform()) {
-        await Geolocation.requestPermissions();
-      }
-      const position = await Geolocation.getCurrentPosition({
-        enableHighAccuracy: true,
-      });
+  const [locationValidationCoords, setLocationValidationCoords] = useState<{
+    lat: string;
+    lon: string;
+  } | null>(() => {
+    if (initialVenueRecord?.coords) {
       return {
-        lat: position.coords.latitude,
-        lon: position.coords.longitude,
+        lat: initialVenueRecord.coords.lat.toFixed(4),
+        lon: initialVenueRecord.coords.lon.toFixed(4),
       };
-    } catch (nativeError) {
-      console.warn("Native geolocation error", nativeError);
     }
-    if (!navigator.geolocation) {
-      throw new Error("Geolocation not supported on this device.");
-    }
-    return new Promise<{ lat: number; lon: number }>((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-        },
-        (err) => reject(err),
-        { enableHighAccuracy: true }
-      );
-    });
-  };
+    return null;
+  });
 
-  const runCurrentCapture = async (coordsPayload: { lat: number; lon: number }) => {
-    setCoords(coordsPayload);
-    const autoLabel = `${coordsPayload.lat.toFixed(4)}, ${coordsPayload.lon.toFixed(4)}`;
-    setLocationTag((prev) => prev || autoLabel);
-    await autoAttachVenue(coordsPayload, locationTag || autoLabel);
-    showNotification("Location captured", "info");
-  };
 
-  const captureCurrentLocation = async () => {
-    try {
-      setIsCapturingLocation(true);
-      const coordsPayload = await getCurrentCoordinates();
-      const action = () => runCurrentCapture(coordsPayload);
-      if (maybeConfirmReplace(coordsPayload, action)) {
-        return;
-      }
-      await action();
-      trackEvent("venue_pin_captured", { source: "current_location", venueName: venue });
-    } catch (error: any) {
-      console.warn("Location capture error", error);
-      const message =
-        (typeof error?.message === "string" && error.message) ||
-        "Couldn't access your location.";
-      showNotification(message, "error");
-    } finally {
-      setIsCapturingLocation(false);
-    }
-  };
-
-  const runPlaceAttach = async (
-    place: { name: string; address: string; lat: number; lng: number },
-    coordsPayload: { lat: number; lon: number }
-  ) => {
-    setCoords(coordsPayload);
-    setLocationTag(place.address);
-    await autoAttachVenue(coordsPayload, place.address);
-    showNotification(`Location set to ${place.name}`, "info");
-    trackEvent("venue_pin_captured", { source: "search", venueName: venue });
-  };
-
-  const handlePlaceSelect = (place: { name: string; address: string; lat: number; lng: number }) => {
-    setShowPlaceSearch(false);
-    setPlaceQuery("");
-    setPlaceResults([]);
-    const coordsPayload = { lat: place.lat, lon: place.lng };
-    const action = () => runPlaceAttach(place, coordsPayload);
-    if (maybeConfirmReplace(coordsPayload, action)) {
-      return;
-    }
-    action();
-  };
-
-  const toggleVenueProximityAlerts = () => {
-    const next = !venueProximityEnabled;
-    setVenueProximityEnabled(next);
-    const venueRecord = getSelectedVenue() ?? resolveVenue();
-    updateVenue({
-      ...venueRecord,
-      proximityAlertsEnabled: next,
-    });
-  };
-
-  const autoAttachVenue = async (
-    coordinates: { lat: number; lon: number },
-    label: string,
-    options?: { silent?: boolean }
-  ) => {
-    let selectedVenue = getSelectedVenue();
-    if (!selectedVenue) {
-      selectedVenue = resolveVenue();
-    }
-    try {
-      setIsSavingVenueLocation(true);
-      updateVenue({
-        ...selectedVenue,
-        coords: { lat: coordinates.lat, lon: coordinates.lon },
-        locationTag: label,
-        proximityAlertsEnabled: venueProximityEnabled,
-      });
-      setLocationTag(label);
-      if (!options?.silent) {
-        setRecentlyAttached(true);
-        showNotification(`Location saved to ${selectedVenue.name}`, "success");
-      }
-    } catch (err) {
-      console.warn("Venue attach error", err);
-      setAttachError("Couldn't save the pin. Try again?");
-      showNotification("Unable to update venue location.", "error");
-    } finally {
-      setIsSavingVenueLocation(false);
-    }
-  };
-
-  const handleReplaceConfirm = async () => {
-    setShowReplaceModal(false);
-    setReplaceVenue(null);
-    const action = pendingReplaceAction;
-    setPendingReplaceAction(null);
-    if (action) {
-      await action();
-    }
-  };
-
-  const handleReplaceCancel = () => {
-    setShowReplaceModal(false);
-    setReplaceVenue(null);
-    setPendingReplaceAction(null);
-  };
-
-  const maybeConfirmReplace = (
-    nextCoords: { lat: number; lon: number } | null,
-    action: () => Promise<void>
-  ): boolean => {
-    const venueRecord = getSelectedVenue();
-    if (venueRecord?.coords) {
-      if (
-        nextCoords &&
-        Math.abs(venueRecord.coords.lat - nextCoords.lat) < 0.0005 &&
-        Math.abs(venueRecord.coords.lon - nextCoords.lon) < 0.0005
-      ) {
-        return false;
-      }
-      setReplaceVenue(venueRecord);
-      setPendingReplaceAction(() => action);
-      setShowReplaceModal(true);
-      return true;
-    }
-    return false;
-  };
 
   // ── Prevent blur on suggestion click ──
   const ignoreBlurRef = useRef(false);
@@ -582,8 +189,8 @@ const mapPreviewPlaceholder =
       tags: currentTags,
       position,
       description,
-      latitude: manualLat,
-      longitude: manualLon,
+      latitude: locationValidationCoords?.lat ?? "",
+      longitude: locationValidationCoords?.lon ?? "",
     });
     if (!isValid) {
       triggerImpact(ImpactStyle.Heavy);
@@ -674,15 +281,6 @@ const mapPreviewPlaceholder =
   const appliedTagsRail = useOverflowIndicator([currentTags.length]);
   const suggestionRail = useOverflowIndicator([suggestions.length, currentInput]);
   const canUseLocation = Boolean(venue.trim());
-
-  useEffect(() => {
-    if (!showPlaceSearch) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [showPlaceSearch]);
 
   return (
     <>
@@ -816,169 +414,16 @@ const mapPreviewPlaceholder =
         </div>
       )}
 
-      {/* Location section */}
-      <AnimatePresence mode="wait" initial={false}>
-        {canUseLocation ? (
-          <motion.section
-            key="location-section"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 12 }}
-            transition={{ duration: 0.22, ease: "easeOut" }}
-            className="mt-1.5 space-y-4"
-          >
-            <div>
-              <p className={labelClass.replace("mb-2", "")}>Location (optional)</p>
-              <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
-                Add a map pin for this venue (optional).
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={captureCurrentLocation}
-                disabled={isCapturingLocation}
-                className="rounded-full bg-[var(--color-accent)] px-4 py-1.5 text-xs font-semibold text-white shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition hover:brightness-110 disabled:opacity-60"
-              >
-                {isCapturingLocation ? "Capturing…" : "Use current location"}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!Capacitor.isNativePlatform()) {
-                    showNotification("Search is available on device only.", "info");
-                    return;
-                  }
-                  trackEvent("place_search_opened", {
-                    venueName: venue.trim() || "unspecified",
-                  });
-                  setShowPlaceSearch(true);
-                }}
-                className="rounded-full border border-white/40 bg-[var(--color-card)] px-4 py-1.5 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_6px_18px_rgba(0,0,0,0.08)]"
-              >
-                Search for a place
-              </button>
-            </div>
-
-            <AnimatePresence mode="wait" initial={false}>
-              {coords ? (
-                <motion.div
-                  key="map-card"
-                  initial={{ opacity: 0, y: 12, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 12, scale: 0.98 }}
-                  transition={{ duration: 0.22, ease: "easeOut" }}
-                  className="space-y-4 rounded-[30px] border border-[var(--color-card-border)] bg-[var(--color-card)]/95 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.15)]"
-                >
-                  <div className="relative overflow-hidden rounded-[26px] border border-white/15 bg-[var(--color-card)]/60">
-                    <img
-                      src={mapSnapshot ?? mapPreviewPlaceholder}
-                      alt="Map preview"
-                      className="h-48 w-full object-cover transition-opacity"
-                    />
-                    {!mapSnapshot && coords && (
-                      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90">
-                          <div className="h-6 w-6 rounded-full bg-[var(--color-accent)] shadow-lg" />
-                        </div>
-                      </div>
-                    )}
-                    {isSnapshotLoading && (
-                      <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[var(--color-card)]/50 text-xs font-semibold text-[var(--color-text-secondary)]">
-                        Generating preview…
-                      </div>
-                    )}
-                    {coords && venue.trim() && (recentlyAttached || attachError) && (
-                      recentlyAttached && !attachError ? (
-                        <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-[var(--color-card)]/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-primary)]">
-                          Saved to “{venue.trim()}”
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => autoAttachVenue(coords, locationTag || venue.trim())}
-                          className="absolute left-3 top-3 rounded-full bg-red-600/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white"
-                        >
-                          Retry pin save
-                        </button>
-                      )
-                    )}
-                  </div>
-
-                  <div className="space-y-1">
-                    <p className="text-base font-semibold text-[var(--color-text-primary)]">
-                      {venue.trim() || "The Broadview Rooftop"}
-                    </p>
-                    {coords && (
-                      <p className="text-sm text-[var(--color-text-secondary)]">
-                        {locationTag || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const text =
-                          locationTag?.trim() || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
-                        navigator.clipboard
-                          ?.writeText(text)
-                          .then(() => showNotification("Coordinates copied", "info"))
-                          .catch(() => showNotification("Unable to copy coordinates.", "error"));
-                      }}
-                      className="rounded-full border border-[var(--color-card-border)] px-3 py-1 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
-                    >
-                      Copy address
-                    </button>
-                    <button
-                      type="button"
-                      disabled={!coords}
-                      onClick={() => {
-                        if (coords) {
-                          if (Capacitor.isNativePlatform()) {
-                            window.open(`maps://?ll=${coords.lat},${coords.lon}`, "_blank");
-                          } else {
-                            window.open(`https://maps.google.com/?q=${coords.lat},${coords.lon}`, "_blank");
-                          }
-                        }
-                      }}
-                      className="rounded-full border border-[var(--color-card-border)] px-3 py-1 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
-                    >
-                      Open in Maps
-                    </button>
-                  </div>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
-
-            {coords && (
-              <div className="rounded-2xl border border-[var(--color-card-border)] bg-[var(--color-card)]/80 px-4 py-3 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">Proximity alert</p>
-                  <p className="text-xs text-[var(--color-text-secondary)]">Notify me when I’m near this venue.</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={toggleVenueProximityAlerts}
-                  className={`relative inline-flex h-6 w-12 items-center rounded-full transition ${
-                    venueProximityEnabled ? "bg-[var(--color-accent)]" : "bg-[var(--color-card-border)]"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                      venueProximityEnabled ? "translate-x-6" : "translate-x-1"
-                    }`}
-                  />
-                </button>
-              </div>
-            )}
-
-            {formErrors.coords && <p className="text-red-500 text-xs">{formErrors.coords}</p>}
-          </motion.section>
-        ) : null}
-      </AnimatePresence>
+      <LocationSection
+        venueName={venue}
+        canUseLocation={canUseLocation}
+        labelClass={labelClass}
+        formError={formErrors.coords}
+        resolveVenue={resolveVenue}
+        getSelectedVenue={getSelectedVenue}
+        updateVenue={updateVenue}
+        onValidationCoordsChange={setLocationValidationCoords}
+      />
 
       {/* Description */}
       <div>
@@ -1162,97 +607,6 @@ const mapPreviewPlaceholder =
         </div>
       )}
     </form>
-    {showReplaceModal && replaceVenue && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="w-full max-w-sm rounded-[32px] bg-[var(--color-card)] p-6 shadow-[0_20px_50px_rgba(15,23,42,0.4)] text-center space-y-4"
-        >
-          <div>
-            <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-              Replace saved pin?
-            </p>
-            <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-              “{replaceVenue.name}” already has a location. Replacing it will update the pin for everyone linked to this venue.
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-            <button
-              type="button"
-              onClick={handleReplaceCancel}
-              className="rounded-full border border-[var(--color-card-border)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/80"
-            >
-              Keep existing
-            </button>
-            <button
-              type="button"
-              onClick={handleReplaceConfirm}
-              className="rounded-full bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(0,0,0,0.25)] hover:brightness-110"
-            >
-              Replace location
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
-    {showPlaceSearch && (
-      <div className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none bg-[var(--color-card)]/50 backdrop-blur-md">
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="pointer-events-auto w-[min(80vw,380px)] rounded-[30px] bg-white p-5 shadow-[0_25px_60px_rgba(15,23,42,0.45)] space-y-4 max-h-[80vh] flex flex-col border border-black/5"
-        >
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
-              Search by name or address
-            </p>
-            <button
-              type="button"
-              onClick={() => setShowPlaceSearch(false)}
-              className="text-lg font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-accent)]"
-            >
-              ×
-            </button>
-          </div>
-          <div className="rounded-[26px] border border-black/10 bg-white px-4 py-2 flex items-center gap-3 shadow-[inset_0_1px_2px_rgba(15,23,42,0.08)]">
-            <span className="text-[var(--color-text-secondary)]">⌕</span>
-            <input
-              type="text"
-              value={placeQuery}
-              onChange={(e) => setPlaceQuery(e.target.value)}
-              placeholder={searchPlaceholder}
-              className="flex-1 bg-transparent text-base text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-secondary)]"
-              autoFocus
-            />
-          </div>
-          <div className="max-h-[55vh] overflow-y-auto pr-1 flex-1 bg-white rounded-[20px] px-2 py-2 space-y-1">
-            {placeLoading && (
-              <p className="text-xs text-[var(--color-text-secondary)] px-1">Searching…</p>
-            )}
-            {placeError && (
-              <p className="text-xs text-red-500 px-1">{placeError}</p>
-            )}
-            {!placeLoading && !placeError && placeResults.length === 0 && placeQuery.trim().length >= 2 && (
-              <p className="text-xs text-[var(--color-text-secondary)] px-1">No matches found.</p>
-            )}
-            {!placeLoading &&
-              !placeError &&
-              placeResults.slice(0, 5).map((place) => (
-                <button
-                  key={`${place.lat}-${place.lng}-${place.address}`}
-                  type="button"
-                  onClick={() => handlePlaceSelect(place)}
-                  className="w-full text-left rounded-[18px] border border-black/5 bg-white px-3 py-2 shadow-[0_4px_12px_rgba(15,23,42,0.05)] hover:bg-[var(--color-card)]/30 transition"
-                >
-                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">{place.name}</p>
-                  <p className="text-xs text-[var(--color-text-secondary)]">{place.address}</p>
-                </button>
-              ))}
-          </div>
-        </div>
-      </div>
-    )}
     </>
   );
 }

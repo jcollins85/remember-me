@@ -1,4 +1,4 @@
-// Design Tokens for Remember Me App
+// Design Tokens for MetHere
 // Single source of truth for colors, typography, spacing, shadows, etc.
 
 export const tokens = {

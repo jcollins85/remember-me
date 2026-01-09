@@ -25,11 +25,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>This app uses your location to tag venues and notify you when you’re near saved spots.</string>
+	<string>Remember Me uses your location to tag venues and alert you when you’re nearby.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app uses your location to tag venues and people.</string>
+	<string>Allow location access so you can pin venues and people while using Remember Me.</string>
 	<key>NSUserNotificationUsageDescription</key>
-	<string>We send alerts when you’re near saved venues.</string>
+	<string>We send gentle alerts when you’re close to your saved venues.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

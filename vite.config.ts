@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Remember Me',
-        short_name: 'RememberMe',
+        name: 'MetHere',
+        short_name: 'MetHere',
         description: 'People you meet. Remember who, where, and why.',
         theme_color: '#ffffff',
         background_color: '#f3f4f6',
