@@ -34,7 +34,6 @@ import { Capacitor, registerPlugin } from "@capacitor/core";
 import { Geolocation as CapacitorGeolocation } from "@capacitor/geolocation";
 import { Geolocation } from "@capacitor/geolocation";
 
-import { MapKitBridge } from "mapkit-bridge";
 import { isProximityAlertsEnabled, setProximityAlertsEnabled } from "./utils/proximityAlerts";
 import {
   refreshMonitoredVenues,

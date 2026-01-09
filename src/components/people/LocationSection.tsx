@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Capacitor } from "@capacitor/core";
 import { Geolocation } from "@capacitor/geolocation";
-import { MapKitBridge } from "mapkit-bridge";
+import { MapKitBridge } from "../../plugins/mapkitBridge";
 import type { Venue } from "../../types";
 import { useNotification } from "../../context/NotificationContext";
 import { useAnalytics } from "../../context/AnalyticsContext";
