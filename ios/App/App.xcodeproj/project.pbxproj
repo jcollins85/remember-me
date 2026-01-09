@@ -17,6 +17,9 @@
 		8F83486D2F03897D006B7CAC /* CapacitorHaptics in Frameworks */ = {isa = PBXBuildFile; productRef = 8F83486C2F03897D006B7CAC /* CapacitorHaptics */; };
 		8F8348712F04CFAF006B7CAC /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8F8348702F04CFAE006B7CAC /* GoogleService-Info.plist */; };
 		8FF020E92F0EC011007818A0 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 8FF020E82F0EC011007818A0 /* CapApp-SPM */; };
+		8FF020EC2F10B867007818A0 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 8FF020EB2F10B867007818A0 /* FirebaseAnalytics */; };
+		8FF020EE2F10B867007818A0 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 8FF020ED2F10B867007818A0 /* FirebaseCrashlytics */; };
+		8FF020F02F10B867007818A0 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 8FF020EF2F10B867007818A0 /* FirebaseMessaging */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -39,7 +42,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				8FF020E92F0EC011007818A0 /* CapApp-SPM in Frameworks */,
+				8FF020EE2F10B867007818A0 /* FirebaseCrashlytics in Frameworks */,
+				8FF020F02F10B867007818A0 /* FirebaseMessaging in Frameworks */,
 				8F83486D2F03897D006B7CAC /* CapacitorHaptics in Frameworks */,
+				8FF020EC2F10B867007818A0 /* FirebaseAnalytics in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -99,6 +105,9 @@
 			packageProductDependencies = (
 				8F83486C2F03897D006B7CAC /* CapacitorHaptics */,
 				8FF020E82F0EC011007818A0 /* CapApp-SPM */,
+				8FF020EB2F10B867007818A0 /* FirebaseAnalytics */,
+				8FF020ED2F10B867007818A0 /* FirebaseCrashlytics */,
+				8FF020EF2F10B867007818A0 /* FirebaseMessaging */,
 			);
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
@@ -133,6 +142,7 @@
 			packageReferences = (
 				8F83486B2F03897D006B7CAC /* XCLocalSwiftPackageReference "../../node_modules/@capacitor/haptics" */,
 				8FF020E72F0EC011007818A0 /* XCLocalSwiftPackageReference "CapApp-SPM" */,
+				8FF020EA2F10B867007818A0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
 			projectDirPath = "";
@@ -397,6 +407,17 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		8FF020EA2F10B867007818A0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.7.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		8F83486C2F03897D006B7CAC /* CapacitorHaptics */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -410,6 +431,21 @@
 		8FF020E82F0EC011007818A0 /* CapApp-SPM */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = "CapApp-SPM";
+		};
+		8FF020EB2F10B867007818A0 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8FF020EA2F10B867007818A0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		8FF020ED2F10B867007818A0 /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8FF020EA2F10B867007818A0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
+		};
+		8FF020EF2F10B867007818A0 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8FF020EA2F10B867007818A0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
