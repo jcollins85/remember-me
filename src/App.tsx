@@ -451,6 +451,18 @@ function App() {
   }, [achievements, showNotification]);
 
   const usageInsights = useMemo(() => {
+    const extractRegion = (venueId?: string) => {
+      if (!venueId) return null;
+      const venue = venuesById[venueId];
+      const tag = venue?.locationTag;
+      if (!tag) return null;
+      const parts = tag.split(",").map((part) => part.trim()).filter(Boolean);
+      if (parts.length === 0) return null;
+      const regionParts = parts.slice(-2);
+      const region = regionParts.join(", ");
+      return region || null;
+    };
+
     const venueUsage = people.reduce<Record<string, number>>((acc, person) => {
       const venueName = person.venueId
         ? venuesById[person.venueId]?.name ?? UNCLASSIFIED
@@ -461,6 +473,17 @@ function App() {
     const topVenueEntry = Object.entries(venueUsage).sort((a, b) => b[1] - a[1])[0];
     const topVenue = topVenueEntry
       ? { name: topVenueEntry[0], count: topVenueEntry[1] }
+      : undefined;
+
+    const regionUsage = people.reduce<Record<string, number>>((acc, person) => {
+      const region = extractRegion(person.venueId);
+      if (!region) return acc;
+      acc[region] = (acc[region] || 0) + 1;
+      return acc;
+    }, {});
+    const topRegionEntry = Object.entries(regionUsage).sort((a, b) => b[1] - a[1])[0];
+    const topRegion = topRegionEntry
+      ? { name: topRegionEntry[0], count: topRegionEntry[1] }
       : undefined;
 
     const tagUsage = people.reduce<Record<string, number>>((acc, person) => {
@@ -487,6 +510,7 @@ function App() {
 
     return {
       topVenue,
+      topRegion,
       topTag,
       favoritesCount,
       lastInteraction,

@@ -12,12 +12,14 @@ import {
   TrendingUp,
   Heart,
   Clock,
+  Globe,
 } from "lucide-react";
 import type { AchievementProgress, AchievementStats } from "../../hooks/useAchievements";
 import { triggerImpact, ImpactStyle } from "../../utils/haptics";
 
 interface UsageInsights {
   topVenue?: { name: string; count: number };
+  topRegion?: { name: string; count: number };
   topTag?: { name: string; count: number };
   favoritesCount: number;
   lastInteraction?: { name: string; date: string };
@@ -164,6 +166,24 @@ export default function ProfilePanel({
                       <div>
                         <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Top venue</p>
                         <p className="text-xs text-[var(--color-text-secondary)]">No venue data yet.</p>
+                      </div>
+                    </div>
+                  )}
+                  {insights.topRegion ? (
+                    <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left shadow-level1 flex items-center gap-3">
+                      <Globe size={18} className="text-[var(--color-accent)]" />
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Most active region</p>
+                        <p className="font-semibold text-[var(--color-text-primary)]">{insights.topRegion.name}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)]">{insights.topRegion.count} people logged here</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left shadow-level1 flex items-center gap-3">
+                      <Globe size={18} className="text-[var(--color-accent)]" />
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Most active region</p>
+                        <p className="text-xs text-[var(--color-text-secondary)]">Add map pins to unlock this insight.</p>
                       </div>
                     </div>
                   )}

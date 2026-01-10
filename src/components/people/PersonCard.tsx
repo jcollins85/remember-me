@@ -75,7 +75,7 @@ export default function PersonCard({
                 onToggleFavorite(person.id);
               }}
               title="Toggle favorite"
-              className={`w-8 h-8 flex items-center justify-center rounded-full border relative overflow-hidden ${
+              className={`w-7 h-7 flex items-center justify-center rounded-full border relative overflow-hidden ${
                 person.favorite
                   ? "bg-[var(--color-accent-muted)] text-[var(--color-accent)] border-[var(--color-accent)]"
                   : "bg-[var(--color-card)] text-[var(--color-text-secondary)] border-[var(--color-card-border)]"
