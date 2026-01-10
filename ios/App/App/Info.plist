@@ -25,9 +25,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Remember Me uses your location to tag venues and alert you when you’re nearby.</string>
+	<string>MetHere uses your location to tag venues and alert you when you’re nearby.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Allow location access so you can pin venues and people while using Remember Me.</string>
+	<string>Allow location access so you can pin venues and people while using MetHere.</string>
 	<key>NSUserNotificationUsageDescription</key>
 	<string>We send gentle alerts when you’re close to your saved venues.</string>
 	<key>UILaunchStoryboardName</key>
