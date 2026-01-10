@@ -11,6 +11,12 @@ import { triggerImpact, ImpactStyle } from "../../utils/haptics";
 const mapPreviewPlaceholder =
   "data:image/svg+xml,%3Csvg width='640' height='360' viewBox='0 0 640 360' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='640' height='360' fill='%23f8f4ef'/%3E%3Cpath d='M0 40h640M0 120h640M0 200h640M0 280h640' stroke='%23e5dbcf' stroke-width='2'/%3E%3Cpath d='M80 0v360M200 0v360M320 0v360M440 0v360M560 0v360' stroke='%23e5dbcf' stroke-width='2'/%3E%3Cpath d='M0 260l80-40 60 30 100-50 90 60 90-80 120 40 100-70 0 210H0z' fill='%23d5e5f0'/%3E%3Cpath d='M0 300l90-60 120 70 120-70 120 50 190-140V360H0z' fill='%23c7e0da'/%3E%3C/svg%3E";
 
+type PendingLocationPayload = {
+  coords: { lat: number; lon: number } | null;
+  locationTag: string;
+  proximityEnabled: boolean;
+};
+
 interface LocationSectionProps {
   venueName: string;
   canUseLocation: boolean;
@@ -18,8 +24,8 @@ interface LocationSectionProps {
   formError?: string;
   resolveVenue: () => Venue;
   getSelectedVenue: () => Venue | null;
-  updateVenue: (venue: Venue) => void;
   onValidationCoordsChange?: (coords: { lat: string; lon: string } | null) => void;
+  onPendingChange?: (data: PendingLocationPayload | null) => void;
 }
 
 const defaultSearchPlaceholder = "Search by name or address";
@@ -35,8 +41,8 @@ const LocationSection: React.FC<LocationSectionProps> = ({
   formError,
   resolveVenue,
   getSelectedVenue,
-  updateVenue,
   onValidationCoordsChange,
+  onPendingChange,
 }) => {
   const { showNotification } = useNotification();
   const { trackEvent } = useAnalytics();
@@ -48,8 +54,6 @@ const LocationSection: React.FC<LocationSectionProps> = ({
   const [venueProximityEnabled, setVenueProximityEnabled] = useState(
     initialVenue?.proximityAlertsEnabled !== false
   );
-  const [recentlyAttached, setRecentlyAttached] = useState(false);
-  const [attachError, setAttachError] = useState<string | null>(null);
   const [isCapturingLocation, setIsCapturingLocation] = useState(false);
   const [mapSnapshot, setMapSnapshot] = useState<string | null>(null);
   const [isSnapshotLoading, setIsSnapshotLoading] = useState(false);
@@ -74,10 +78,16 @@ const LocationSection: React.FC<LocationSectionProps> = ({
   }, [coords, onValidationCoordsChange]);
 
   useEffect(() => {
-    if (!recentlyAttached) return;
-    const timer = window.setTimeout(() => setRecentlyAttached(false), 1500);
-    return () => window.clearTimeout(timer);
-  }, [recentlyAttached]);
+    if (!canUseLocation) {
+      onPendingChange?.(null);
+      return;
+    }
+    onPendingChange?.({
+      coords,
+      locationTag,
+      proximityEnabled: venueProximityEnabled,
+    });
+  }, [coords, locationTag, venueProximityEnabled, canUseLocation, onPendingChange]);
 
   useEffect(() => {
     if (!venueName.trim()) {
@@ -103,10 +113,6 @@ const LocationSection: React.FC<LocationSectionProps> = ({
     }
     const existing = getSelectedVenue();
     if (!existing) {
-      setCoords(null);
-      setLocationTag("");
-      setMapSnapshot(null);
-      setSnapshotError(null);
       return;
     }
     if (!existing.coords) {
@@ -162,7 +168,6 @@ const LocationSection: React.FC<LocationSectionProps> = ({
           });
           if (newLabel !== locationTag) {
             setLocationTag(newLabel);
-            await autoAttachVenue(coords, newLabel, { silent: true });
           }
         }
       } catch (error: any) {
@@ -307,39 +312,10 @@ const LocationSection: React.FC<LocationSectionProps> = ({
     });
   };
 
-  const autoAttachVenue = async (
-    coordinates: { lat: number; lon: number },
-    label: string,
-    options?: { silent?: boolean }
-  ) => {
-    let selectedVenue = getSelectedVenue();
-    if (!selectedVenue) {
-      selectedVenue = resolveVenue();
-    }
-    try {
-      updateVenue({
-        ...selectedVenue,
-        coords: { lat: coordinates.lat, lon: coordinates.lon },
-        locationTag: label,
-        proximityAlertsEnabled: venueProximityEnabled,
-      });
-      setLocationTag(label);
-      if (!options?.silent) {
-        setRecentlyAttached(true);
-        showNotification(`Location saved to ${selectedVenue.name}`, "success");
-      }
-    } catch (err) {
-      console.warn("Venue attach error", err);
-      setAttachError("Couldn't save the pin. Try again?");
-      showNotification("Unable to update venue location.", "error");
-    }
-  };
-
   const runCurrentCapture = async (coordsPayload: { lat: number; lon: number }) => {
     setCoords(coordsPayload);
     const autoLabel = `${coordsPayload.lat.toFixed(4)}, ${coordsPayload.lon.toFixed(4)}`;
     setLocationTag((prev) => prev || autoLabel);
-    await autoAttachVenue(coordsPayload, locationTag || autoLabel);
     showNotification("Location captured", "info");
   };
 
@@ -389,23 +365,18 @@ const LocationSection: React.FC<LocationSectionProps> = ({
     }
   };
 
-  const runPlaceAttach = async (
-    place: { name: string; address: string; lat: number; lng: number },
-    coordsPayload: { lat: number; lon: number }
-  ) => {
-    setCoords(coordsPayload);
-    setLocationTag(place.address);
-    await autoAttachVenue(coordsPayload, place.address);
-    showNotification(`Location set to ${place.name}`, "info");
-    trackEvent("venue_pin_captured", { source: "search", venueName: venueName });
-  };
-
   const handlePlaceSelect = (place: { name: string; address: string; lat: number; lng: number }) => {
     setShowPlaceSearch(false);
     setPlaceQuery("");
     setPlaceResults([]);
     const coordsPayload = { lat: place.lat, lon: place.lng };
-    const action = () => runPlaceAttach(place, coordsPayload);
+    const action = () => {
+      setCoords(coordsPayload);
+      setLocationTag(place.address);
+      showNotification(`Location set to ${place.name}`, "info");
+      trackEvent("venue_pin_captured", { source: "search", venueName: venueName });
+      return Promise.resolve();
+    };
     if (maybeConfirmReplace(coordsPayload, action)) {
       return;
     }
@@ -415,11 +386,6 @@ const LocationSection: React.FC<LocationSectionProps> = ({
   const toggleVenueProximityAlerts = () => {
     const next = !venueProximityEnabled;
     setVenueProximityEnabled(next);
-    const venueRecord = getSelectedVenue() ?? resolveVenue();
-    updateVenue({
-      ...venueRecord,
-      proximityAlertsEnabled: next,
-    });
   };
 
   const handleReplaceConfirm = async () => {
@@ -438,26 +404,25 @@ const LocationSection: React.FC<LocationSectionProps> = ({
     setPendingReplaceAction(null);
   };
 
-  if (!canUseLocation) {
-    return null;
-  }
-
   return (
     <>
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.section
-          key="location-section"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 12 }}
-          transition={{ duration: 0.22, ease: "easeOut" }}
-          className="mt-1.5 space-y-4"
-        >
-          <div>
-            <p className={labelClass.replace("mb-2", "")}>Location (optional)</p>
-            <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
-              Add a map pin for this venue (optional).
-            </p>
+      <AnimatePresence mode="sync">
+        {canUseLocation && (
+          <motion.section
+            key="location-section"
+            layout
+            layoutId="location-section"
+            initial={{ y: -10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -10, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.4, 0.0, 0.2, 1] }}
+            className="mt-1.5 space-y-4 will-change-transform"
+          >
+            <div>
+              <p className={labelClass.replace("mb-2", "")}>Location (optional)</p>
+              <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
+                Add a map pin for this venue (optional).
+              </p>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -517,21 +482,6 @@ const LocationSection: React.FC<LocationSectionProps> = ({
                     <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[var(--color-card)]/50 text-xs font-semibold text-[var(--color-text-secondary)]">
                       Generating preview…
                     </div>
-                  )}
-                  {coords && venueName.trim() && (recentlyAttached || attachError) && (
-                    recentlyAttached && !attachError ? (
-                      <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-[var(--color-card)]/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-primary)]">
-                        Saved to “{venueName.trim()}”
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => coords && autoAttachVenue(coords, locationTag || venueName.trim())}
-                        className="absolute left-3 top-3 rounded-full bg-red-600/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white"
-                      >
-                        Retry pin save
-                      </button>
-                    )
                   )}
                 </div>
 
@@ -605,8 +555,9 @@ const LocationSection: React.FC<LocationSectionProps> = ({
             </div>
           )}
 
-          {formError && <p className="text-red-500 text-xs">{formError}</p>}
-        </motion.section>
+            {formError && <p className="text-red-500 text-xs">{formError}</p>}
+          </motion.section>
+        )}
       </AnimatePresence>
 
       {showReplaceModal && replaceVenue && (

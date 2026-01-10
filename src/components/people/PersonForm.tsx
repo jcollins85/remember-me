@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useVenues } from "../../context/VenueContext";
 import { UNCLASSIFIED } from "../../constants";
-import { Person, Tag } from "../../types";
+import { Person, Tag, Venue } from "../../types";
 import { v4 as uuidv4 } from "uuid";
 import { useTagInput } from "../../hooks/useTagInput";
 import { useVenueInput } from "../../hooks/useVenueInput";
@@ -86,6 +86,11 @@ export default function PersonForm({
   const [touchedName, setTouchedName] = useState(false);
   const [formErrors, setFormErrors] = useState<ValidationErrors>({});
   const [venuePulse, setVenuePulse] = useState<string | null>(null);
+  const [pendingLocation, setPendingLocation] = useState<{
+    coords: { lat: number; lon: number } | null;
+    locationTag: string;
+    proximityEnabled: boolean;
+  } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   useEffect(() => {
     return () => {
@@ -171,6 +176,29 @@ export default function PersonForm({
   const ignoreBlurRef = useRef(false);
 
   // ── Submit handler ──
+  const persistLocationForVenue = (venueRecord: Venue) => {
+    if (!pendingLocation) return;
+    const { coords, locationTag: pendingTag, proximityEnabled } = pendingLocation;
+    const currentTag = venueRecord.locationTag ?? "";
+    const targetTag = pendingTag || currentTag;
+    const currentProximity = venueRecord.proximityAlertsEnabled !== false;
+    const needsCoords =
+      coords &&
+      (!venueRecord.coords ||
+        Math.abs(venueRecord.coords.lat - coords.lat) > 0.000001 ||
+        Math.abs(venueRecord.coords.lon - coords.lon) > 0.000001);
+    const needsTag = pendingTag && pendingTag !== currentTag;
+    const needsProximity = proximityEnabled !== currentProximity;
+    if (!needsCoords && !needsTag && !needsProximity) return;
+    updateVenue({
+      ...venueRecord,
+      coords: coords ?? venueRecord.coords,
+      locationTag: targetTag,
+      proximityAlertsEnabled: proximityEnabled,
+    });
+    setPendingLocation(null);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
@@ -235,6 +263,7 @@ export default function PersonForm({
     onSubmittingChange?.(true);
     try {
       onSubmit(person);
+      persistLocationForVenue(matchedVenue);
     } finally {
       setIsSubmitting(false);
       onSubmittingChange?.(false);
@@ -421,8 +450,8 @@ export default function PersonForm({
         formError={formErrors.coords}
         resolveVenue={resolveVenue}
         getSelectedVenue={getSelectedVenue}
-        updateVenue={updateVenue}
         onValidationCoordsChange={setLocationValidationCoords}
+        onPendingChange={setPendingLocation}
       />
 
       {/* Description */}
