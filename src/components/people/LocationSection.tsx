@@ -429,17 +429,6 @@ const LocationSection: React.FC<LocationSectionProps> = ({
             <button
               type="button"
               onClick={() => {
-                triggerImpact(ImpactStyle.Light);
-                captureCurrentLocation();
-              }}
-              disabled={isCapturingLocation}
-              className="rounded-full bg-[var(--color-accent)] px-4 py-1.5 text-xs font-semibold text-white shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition hover:brightness-110 disabled:opacity-60"
-            >
-              {isCapturingLocation ? "Capturing…" : "Use current location"}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
                 if (!Capacitor.isNativePlatform()) {
                   showNotification("Search is available on device only.", "info");
                   return;
@@ -449,9 +438,20 @@ const LocationSection: React.FC<LocationSectionProps> = ({
                 });
                 setShowPlaceSearch(true);
               }}
+              className="rounded-full bg-[var(--color-accent)] px-4 py-1.5 text-xs font-semibold text-white shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition hover:brightness-110 disabled:opacity-60"
+            >
+              Choose a place
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                triggerImpact(ImpactStyle.Light);
+                captureCurrentLocation();
+              }}
+              disabled={isCapturingLocation}
               className="rounded-full border border-white/40 bg-[var(--color-card)] px-4 py-1.5 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_6px_18px_rgba(0,0,0,0.08)]"
             >
-              Search for a place
+              {isCapturingLocation ? "Capturing…" : "Use current location"}
             </button>
           </div>
 
