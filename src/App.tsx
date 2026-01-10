@@ -500,22 +500,14 @@ function App() {
         usage.set(tagId, (usage.get(tagId) ?? 0) + 1);
       });
     });
-    let changed = false;
-    const cleaned = tags.filter((tag) => {
-      const count = usage.get(tag.id) ?? 0;
-      if (count === 0) {
-        changed = true;
-        return false;
-      }
-      return true;
-    });
-    const normalized = cleaned.map((tag) => {
+    const normalized = tags.map((tag) => {
       const count = usage.get(tag.id) ?? 0;
       if (tag.count !== count) {
-        changed = true;
+        return { ...tag, count };
       }
-      return { ...tag, count };
+      return tag;
     });
+    const changed = normalized.some((tag, idx) => tag !== tags[idx]);
     if (changed) {
       replaceTags(normalized);
     }

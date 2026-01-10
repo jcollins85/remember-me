@@ -209,12 +209,12 @@ export default function SettingsPanel({
                 className="space-y-3 border-t border-transparent pt-4"
                 style={{ borderColor: "color-mix(in srgb, var(--color-accent) 50%, transparent)" }}
               >
-                <div className="flex items-center gap-2">
-                  <MapPin size={16} className="text-[var(--color-accent)]" />
+                <div className="flex items-center gap-2 text-[var(--color-accent)]">
+                  <MapPin size={20} strokeWidth={2.3} />
                   <div>
                     <p className="text-sm font-semibold text-[var(--color-text-primary)]">Proximity alerts</p>
                     <p className="text-xs text-[var(--color-text-secondary)]">
-                      Get a notification when you’re near saved venues.
+                      Get a notification when you’re near saved venues. Works only while MetHere stays in the background.
                     </p>
                   </div>
                 </div>

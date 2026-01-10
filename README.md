@@ -32,7 +32,7 @@ Visit `http://localhost:5173` in your browser.
 
 ## Mobile-only niceties
 - **Haptics** – centralised in `src/utils/haptics.ts`, with a Settings toggle that writes to `localStorage`.
-- **Proximity alerts** – `src/utils/proximityService.ts` registers a background geolocation watcher (Capacitor + community plugin) and posts local notifications when you’re within ~100 m of a venue that has a saved pin. The global toggle in Settings controls the watcher and is disabled on web by default.
+- **Proximity alerts** – `src/utils/proximityService.ts` registers a background geolocation watcher (Capacitor + community plugin) and posts local notifications when you’re within ~100 m of a venue that has a saved pin. The app must stay running (foreground or background); iOS clears geofences if the app is force-quit. The global toggle in Settings controls the watcher and is disabled on web by default.
 - When testing native features run `npm run ios:sync` after installing deps so Capacitor picks up the plugins, and ensure iOS location + notification permissions are granted.
 
 ## Styling Philosophy
@@ -52,7 +52,7 @@ Visit `http://localhost:5173` in your browser.
    npm install
    npx cap sync ios
    ```
-2. Open `ios/App/App.xcworkspace` in Xcode, confirm the bundle ID + marketing version, and run the **Release** scheme on a device to smoke-test proximity alerts, haptics, achievements, and add/edit flows.
+2. Open `ios/App/App.xcworkspace` in Xcode, confirm the bundle ID + marketing version, and run the **Release** scheme on a device to smoke-test proximity alerts (leave the app in the background), haptics, achievements, and add/edit flows.
 3. Archive via Product ▸ Archive and upload from the Organizer to TestFlight (Apple IDs need App Store Connect access).
 
 ## Release Checklist
