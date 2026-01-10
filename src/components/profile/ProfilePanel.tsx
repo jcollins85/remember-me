@@ -23,6 +23,7 @@ interface UsageInsights {
   topTag?: { name: string; count: number };
   favoritesCount: number;
   lastInteraction?: { name: string; date: string };
+  regionCount?: number;
 }
 
 interface ProfilePanelProps {
@@ -122,19 +123,22 @@ export default function ProfilePanel({
                   <p className="text-xs text-[var(--color-text-secondary)]">Lifetime overview of your connections</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3 text-center">
+              <div className="grid grid-cols-2 gap-2.5 text-center">
                 {[
-                  { label: "People tracked", value: stats.peopleCount },
-                  { label: "Venues logged", value: stats.venuesWithPeople },
-                  { label: "Favourite venues", value: stats.favoriteVenueCount },
-                  { label: "Tags applied", value: stats.uniqueTagCount },
+                  { label: "People tracked", value: stats.peopleCount, icon: <UserRound size={16} className="text-[var(--color-accent)]" /> },
+                  { label: "Venues logged", value: stats.venuesWithPeople, icon: <MapPin size={16} className="text-[var(--color-accent)]" /> },
+                  { label: "Tags applied", value: stats.uniqueTagCount, icon: <TagIcon size={16} className="text-[var(--color-accent)]" /> },
+                  { label: "Regions pinned", value: insights.regionCount ?? 0, icon: <Globe size={16} className="text-[var(--color-accent)]" /> },
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className="rounded-2xl bg-[var(--color-card)] px-3 py-4 shadow-level1"
+                    className="rounded-2xl bg-[var(--color-card)] px-3 py-3 shadow-level1 flex flex-col items-center gap-1.5"
                   >
-                    <p className="text-2xl font-semibold text-[var(--color-text-primary)]">{item.value}</p>
-                    <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">{item.label}</p>
+                    <div className="h-7 w-7 rounded-2xl bg-[var(--color-accent-muted)] text-[var(--color-accent)] flex items-center justify-center shadow-level1/40">
+                      {item.icon}
+                    </div>
+                    <p className="text-xl font-semibold text-[var(--color-text-primary)]">{item.value}</p>
+                    <p className="text-[11px] uppercase tracking-wide text-[var(--color-text-secondary)]">{item.label}</p>
                   </div>
                 ))}
               </div>

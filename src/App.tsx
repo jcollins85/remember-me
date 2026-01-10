@@ -481,6 +481,7 @@ function App() {
       acc[region] = (acc[region] || 0) + 1;
       return acc;
     }, {});
+    const regionCount = Object.keys(regionUsage).length;
     const topRegionEntry = Object.entries(regionUsage).sort((a, b) => b[1] - a[1])[0];
     const topRegion = topRegionEntry
       ? { name: topRegionEntry[0], count: topRegionEntry[1] }
@@ -514,6 +515,7 @@ function App() {
       topTag,
       favoritesCount,
       lastInteraction,
+      regionCount,
     };
   }, [people, venuesById, getTagNameById]);
 
