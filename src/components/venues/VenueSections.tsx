@@ -1,6 +1,7 @@
-import React from 'react';
-import VenueGroupList from './VenueGroupList';
-import type { Person } from '../../types';
+import React from "react";
+import VenueGroupList from "./VenueGroupList";
+import type { Person } from "../../types";
+import InlineLogo from "../../assets/brand/MetHere-inline-clean-transparent-tight.svg";
 
 interface Props {
   groupedPeople: Record<string, Person[]>;
@@ -47,9 +48,9 @@ export default function VenueSections({
 
   if (visibleVenueNames.length === 0) {
     return (
-      <div className="glass-panel px-6 py-10 text-center text-[var(--color-text-secondary)] space-y-3">
-        <div className="w-12 h-12 mx-auto rounded-full bg-[var(--color-accent-muted)] flex items-center justify-center text-[var(--color-accent)] text-xl">
-          ☁️
+      <div className="glass-panel px-6 py-10 text-center text-[var(--color-text-secondary)] space-y-4">
+        <div className="w-full flex items-center justify-center pb-1">
+          <img src={InlineLogo} alt="MetHere logo" className="h-6 w-auto opacity-70" />
         </div>
         <p className="text-lg font-semibold text-[var(--color-text-primary)]">Nothing to show yet</p>
         <p className="text-sm">{emptyMessage}</p>

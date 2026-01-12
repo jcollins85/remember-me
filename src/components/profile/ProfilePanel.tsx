@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import type { AchievementProgress, AchievementStats } from "../../hooks/useAchievements";
 import { triggerImpact, ImpactStyle } from "../../utils/haptics";
+import PinLogo from "../../assets/brand/MetHere-pin.svg";
 
 interface UsageInsights {
   topVenue?: { name: string; count: number };
@@ -114,12 +115,12 @@ export default function ProfilePanel({
 
             <div className="overflow-y-auto px-6 pb-6 pt-6 space-y-6" style={{ scrollbarGutter: "stable" }}>
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-2xl bg-[var(--color-accent-muted)] text-[var(--color-accent)] flex items-center justify-center shadow-level1">
-                  <UserRound size={18} />
+                <div className="h-10 w-10 rounded-2xl bg-[var(--color-accent-muted)] flex items-center justify-center shadow-level1">
+                  <img src={PinLogo} alt="MetHere badge" className="h-7 w-7" />
                 </div>
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--color-text-secondary)]">Your Profile</p>
-                  <h2 className="text-2xl font-semibold text-[var(--color-text-primary)]">MetHere</h2>
+                  <h2 className="text-2xl font-semibold text-[var(--color-text-primary)] leading-tight">Insights</h2>
                   <p className="text-xs text-[var(--color-text-secondary)]">Lifetime overview of your connections</p>
                 </div>
               </div>
