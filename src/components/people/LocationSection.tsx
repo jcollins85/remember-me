@@ -191,7 +191,7 @@ const LocationSection: React.FC<LocationSectionProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [coords, venueName, locationTag, trackEvent]);
+  }, [coords, venueName, trackEvent]);
 
   useEffect(() => {
     if (showPlaceSearch) {
