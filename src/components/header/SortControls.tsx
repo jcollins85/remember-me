@@ -90,7 +90,7 @@ export default function SortControls({
           <HelperIcon size={18} />
         </div>
         <div>
-          <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">{label}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">{label}</p>
           <p className="text-sm text-[var(--color-text-secondary)]/90">Choose how {isVenue ? "venues" : "people"} are ordered.</p>
         </div>
       </div>

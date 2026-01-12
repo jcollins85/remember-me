@@ -157,7 +157,7 @@ export default function SettingsPanel({
                   <Settings size={18} />
                 </div>
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--color-text-secondary)]">Personalize</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">Personalize</p>
                   <h3 className="text-xl font-semibold text-[var(--color-text-primary)]">Settings</h3>
                   <p className="text-xs text-[var(--color-text-secondary)]">Tune the theme, data tools, and notifications.</p>
                 </div>
@@ -403,7 +403,7 @@ export default function SettingsPanel({
               </section>
 
               <section className="space-y-2 border-t border-white/40 pt-4 text-[var(--color-text-secondary)]">
-                <p className="text-[11px] uppercase tracking-wide">About</p>
+                <p className="text-xs font-semibold uppercase tracking-wide">About</p>
                 <div className="rounded-2xl bg-[var(--color-card)]/95 text-xs space-y-1 shadow-level1/40 mt-1.5">
                   <p>Version v{APP_VERSION} · Made by Era One</p>
                   <div className="flex gap-4 text-[var(--color-text-secondary)]">

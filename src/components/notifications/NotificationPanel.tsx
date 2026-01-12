@@ -59,7 +59,7 @@ export default function NotificationPanel({
           >
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
               Activity
             </p>
             <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
@@ -110,7 +110,7 @@ export default function NotificationPanel({
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-[var(--color-text-primary)]">{entry.message}</p>
-                    <p className="text-[11px] text-[var(--color-text-secondary)] mt-1">
+                    <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)] mt-1">
                       {new Date(entry.timestamp).toLocaleString()}
                     </p>
                   </div>

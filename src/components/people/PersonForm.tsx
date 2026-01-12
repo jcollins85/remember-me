@@ -393,7 +393,7 @@ export default function PersonForm({
       </div>
       {venueSuggestions.length > 0 && (
         <div className="mt-1.5 mb-1 space-y-1">
-          <p className="text-[11px] uppercase tracking-wide text-[var(--color-text-secondary)]">Suggested venues</p>
+          <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Suggested venues</p>
           <div
             ref={venueRail.ref}
             className="relative overflow-x-auto whitespace-nowrap gap-2 px-1 pb-1.5 pr-10 tag-suggestion-rail"
@@ -519,7 +519,7 @@ export default function PersonForm({
         <div className="text-xs text-[var(--color-text-secondary)] text-right mt-1">{currentInput.length} / 25</div>
         <div className="mt-3 space-y-1">
           {suggestions.length > 0 && (
-            <p className="text-[11px] uppercase tracking-wide text-[var(--color-text-secondary)]">Suggested tags</p>
+            <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Suggested tags</p>
           )}
           <div
             ref={suggestionRail.ref}

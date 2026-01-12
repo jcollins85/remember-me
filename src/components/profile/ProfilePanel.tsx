@@ -119,7 +119,7 @@ export default function ProfilePanel({
                   <img src={PinLogo} alt="MetHere badge" className="h-7 w-7" />
                 </div>
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--color-text-secondary)]">Your Profile</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">Your Profile</p>
                   <h2 className="text-2xl font-semibold text-[var(--color-text-primary)] leading-tight">Insights</h2>
                   <p className="text-xs text-[var(--color-text-secondary)]">Lifetime overview of your connections</p>
                 </div>
@@ -139,7 +139,7 @@ export default function ProfilePanel({
                       {item.icon}
                     </div>
                     <p className="text-xl font-semibold text-[var(--color-text-primary)]">{item.value}</p>
-                    <p className="text-[11px] uppercase tracking-wide text-[var(--color-text-secondary)]">{item.label}</p>
+                    <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">{item.label}</p>
                   </div>
                 ))}
               </div>

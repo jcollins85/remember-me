@@ -84,7 +84,7 @@ export default function Notification({
               </svg>
             </motion.div>
             <div className="flex-1">
-              <p className="text-sm uppercase tracking-[0.3em] text-white/80">Achievement</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-white/80">Achievement</p>
               <p className="text-lg font-semibold leading-snug">{message}</p>
               <p className="text-sm text-white/80 mt-1">{typeof meta?.description === "string" ? meta.description : "Keep going—you’re on a streak."}</p>
             </div>
