@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useAnalytics } from '../context/AnalyticsContext';
 
 // Define available theme keys
@@ -35,10 +35,19 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     return 'light';
   };
 
-  const [theme, setTheme] = useState<ThemeKey>(() => getInitialTheme());
+  const [theme, setThemeState] = useState<ThemeKey>(() => getInitialTheme());
   const { trackEvent } = useAnalytics();
 
-  // Apply theme, persist, and track change
+  const changeTheme = useCallback(
+    (nextTheme: ThemeKey) => {
+      if (nextTheme === theme) return;
+      setThemeState(nextTheme);
+      trackEvent('theme_changed', { theme: nextTheme });
+    },
+    [theme, trackEvent]
+  );
+
+  // Apply theme + persist whenever the state changes
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     try {
@@ -46,11 +55,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     } catch {
       // in case storage is unavailable
     }
-    trackEvent('theme_changed', { theme });
-  }, [theme, trackEvent]);
+  }, [theme]);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme: changeTheme }}>
       {children}
     </ThemeContext.Provider>
   );
