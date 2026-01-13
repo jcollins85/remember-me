@@ -661,6 +661,7 @@ function App() {
             groupedPeople={groupedPeople}
             favoriteVenues={favoriteVenues}
             visibleVenueNames={visibleVenueNames}
+            totalVenueCount={venues.length}
             viewMode={venueView}
             personSort={personSort}
             activeTags={activeTags}

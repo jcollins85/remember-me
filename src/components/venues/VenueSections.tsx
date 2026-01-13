@@ -7,6 +7,7 @@ interface Props {
   groupedPeople: Record<string, Person[]>;
   favoriteVenues: string[];
   visibleVenueNames: string[];
+  totalVenueCount: number;
   viewMode: "all" | "favs";
   personSort: string;
   activeTags: string[];
@@ -27,6 +28,7 @@ export default function VenueSections({
   groupedPeople,
   favoriteVenues,
   visibleVenueNames,
+  totalVenueCount,
   viewMode,
   personSort,
   activeTags,
@@ -41,10 +43,16 @@ export default function VenueSections({
   searchQuery,
   distanceLabels,
 }: Props) {
+  const hasAnyVenues = totalVenueCount > 0;
+  const hasFavorites = favoriteVenues.length > 0;
   const emptyMessage =
     viewMode === "favs"
-      ? "No favourite venues yet. Tap the star next to a venue to pin it here."
-      : "No venues to show. Try adding a person or clearing filters.";
+      ? hasFavorites
+        ? "No favourite venues match your filters. Try clearing search or tags."
+        : "No favourite venues yet. Tap the star next to a venue to pin it here."
+      : hasAnyVenues
+        ? "No venues match your filters. Try clearing search or tags."
+        : "Add your first venue to start remembering where you met people.";
 
   if (visibleVenueNames.length === 0) {
     return (
