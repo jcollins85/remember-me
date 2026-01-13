@@ -1,4 +1,4 @@
-// Tiny helper that tracks whether the user wants global proximity monitoring enabled.
+// Tiny helper that tracks whether the user wants global nearby-venue monitoring enabled.
 const storageKey = "rememberme:proximity-alerts-enabled";
 
 let proximityEnabled = false;

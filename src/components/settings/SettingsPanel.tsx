@@ -212,9 +212,11 @@ export default function SettingsPanel({
                 <div className="flex items-center gap-2 text-[var(--color-accent)]">
                   <MapPin size={20} strokeWidth={2.3} />
                   <div>
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">Proximity alerts</p>
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                      Nearby venue alerts
+                    </p>
                     <p className="text-xs text-[var(--color-text-secondary)]">
-                      Get a notification when you’re near saved venues. iOS will ask for “Always Allow” so alerts keep working when MetHere is in the background.
+                      Alerts when you’re near a saved venue. Requires “Always Allow” on iOS.
                     </p>
                   </div>
                 </div>

@@ -77,7 +77,7 @@ const attachRegionListener = async () => {
 export const startProximityAlerts = async (venues: MonitoredVenue[]) => {
   venuesSnapshot = venues;
   if (!isNative) {
-    return { ok: false, error: "Proximity alerts are only available on device." };
+    return { ok: false, error: "Nearby venue alerts are only available on device." };
   }
 
   try {
@@ -87,7 +87,7 @@ export const startProximityAlerts = async (venues: MonitoredVenue[]) => {
       status: permResult.location,
     });
     if (permResult.location !== "granted") {
-      return { ok: false, error: "Location access is required to enable proximity alerts." };
+      return { ok: false, error: "Location access is required to enable nearby venue alerts." };
     }
 
     const notifPerm = await LocalNotifications.requestPermissions();
@@ -122,7 +122,7 @@ export const startProximityAlerts = async (venues: MonitoredVenue[]) => {
       stage: "start",
       message: typeof error?.message === "string" ? error.message : "unknown",
     });
-    return { ok: false, error: "Unable to start proximity alerts right now." };
+      return { ok: false, error: "Unable to start nearby venue alerts right now." };
   }
 };
 

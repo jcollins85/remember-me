@@ -439,7 +439,7 @@ type PendingAction = (() => Promise<void>) | null;
             <div>
               <p className={labelClass.replace("mb-2", "")}>Location (optional)</p>
               <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
-                Add a map pin for this venue (optional).
+                Add a map pin for this venue.
               </p>
           </div>
 
@@ -551,8 +551,12 @@ type PendingAction = (() => Promise<void>) | null;
           {coords && (
             <div className="rounded-2xl border border-[var(--color-card-border)] bg-[var(--color-card)]/80 px-4 py-3 flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold text-[var(--color-text-primary)]">Proximity alert</p>
-                <p className="text-xs text-[var(--color-text-secondary)]">Notify me when I’m near this venue.</p>
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                  Nearby venue alert
+                </p>
+                <p className="text-xs text-[var(--color-text-secondary)]">
+                  Notify me when I’m near this venue.
+                </p>
               </div>
               <button
                 type="button"
@@ -622,7 +626,7 @@ type PendingAction = (() => Promise<void>) | null;
           >
             <div>
               <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                Enable proximity alerts?
+                Enable nearby venue alerts?
               </p>
               <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
                 Turn on global alerts so this venue can notify you when you’re nearby.

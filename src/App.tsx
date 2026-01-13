@@ -322,7 +322,7 @@ function App() {
 
   const handleProximityToggle = async () => {
     if (!proximitySupported) {
-      showNotification("Proximity alerts are only available in the iOS app.", "info");
+      showNotification("Nearby venue alerts are only available in the iOS app.", "info");
       return;
     }
     const next = !proximityEnabled;
@@ -333,7 +333,7 @@ function App() {
 
   const enableGlobalProximity = () => {
     if (!proximitySupported) {
-      showNotification("Proximity alerts are only available in the iOS app.", "info");
+      showNotification("Nearby venue alerts are only available in the iOS app.", "info");
       return;
     }
     if (proximityEnabled) return;
