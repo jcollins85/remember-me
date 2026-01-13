@@ -16,6 +16,7 @@ import { useAchievements } from "./hooks/useAchievements";
 import VenueSections from './components/venues/VenueSections';
 import ModalManager from './components/common/ModalManager';
 import Header from "./components/header/Header";
+import OnboardingScreen from "./components/onboarding/OnboardingScreen";
 import { useFilteredSortedPeople } from "./components/people/useFilteredSortedPeople";
 import { useVenueSort } from './components/venues/useVenueSort';
 import { useSearchSort } from './components/header/useSearchSort';
@@ -49,8 +50,23 @@ const SMART_MONITOR_LIMIT = 12;
 // wiring together search, sorting, modals, notifications, and persisted data.
 function App() {
   const proximitySupported = Capacitor.isNativePlatform();
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return !localStorage.getItem("onboarding_seen");
+    } catch {
+      return false;
+    }
+  });
   // ── Tag context ──
-  const { tags, createTag, getTagIdByName, getTagNameById, replaceTags } = useTags();  
+  const { tags, createTag, getTagIdByName, getTagNameById, replaceTags } = useTags();
+
+  // ── Venue context & lookup ──
+  const { venues, replaceVenues } = useVenues();
+  const hasPinnedVenue = useMemo(
+    () => venues.some((venue) => Boolean(venue.coords)),
+    [venues]
+  );
   
   // ── UI state ──
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
@@ -83,6 +99,10 @@ function App() {
   // Capture a lightweight location snapshot so we can show venue distances and feed smart
   // monitoring without aggressively polling the GPS (500m distance filter keeps battery happy).
   useEffect(() => {
+    if (showOnboarding || !hasPinnedVenue) {
+      setUserLocation(null);
+      return;
+    }
     let cancelled = false;
     let watchId: string | null = null;
     const fetchLocation = async () => {
@@ -116,7 +136,7 @@ function App() {
         CapacitorGeolocation.clearWatch({ id: watchId });
       }
     };
-  }, []);
+  }, [showOnboarding, hasPinnedVenue]);
 
 
   const {
@@ -133,12 +153,10 @@ function App() {
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const { trackEvent } = useAnalytics();
 
-  // ── Venue context & lookup ──
-  const { venues, replaceVenues } = useVenues();
   const venuesById = useMemo(
     () => Object.fromEntries(venues.map((v) => [v.id, v])) as Record<string, Venue>,
     [venues]
-  );  
+  );
 
   const monitoredVenues = useMemo<MonitoredVenue[]>(() => {
     return venues.map((venue) => {
@@ -234,6 +252,15 @@ function App() {
     return () => window.clearTimeout(handler);
   }, [searchQuery, filteredPeople.length, trackEvent]);
 
+  const handleOnboardingComplete = () => {
+    try {
+      localStorage.setItem("onboarding_seen", "true");
+    } catch {
+      // ignore
+    }
+    setShowOnboarding(false);
+  };
+
   // ── Handlers ──
   const toggleGroup = (venueName: string) => {
     setOpenGroups((prev: Record<string, boolean>) => {
@@ -304,6 +331,17 @@ function App() {
     trackEvent("proximity_toggle", { enabled: next });
   };
 
+  const enableGlobalProximity = () => {
+    if (!proximitySupported) {
+      showNotification("Proximity alerts are only available in the iOS app.", "info");
+      return;
+    }
+    if (proximityEnabled) return;
+    setProximityAlertsEnabled(true);
+    setProximityEnabled(true);
+    trackEvent("proximity_toggle", { enabled: true, source: "venue_toggle" });
+  };
+
   const handleClearAchievements = () => {
     if (
       !window.confirm(
@@ -366,6 +404,10 @@ function App() {
 
   // Kick off / stop the native watcher whenever the global toggle or monitored venues change.
   useEffect(() => {
+    if (showOnboarding) {
+      stopProximityAlerts();
+      return;
+    }
     let cancelled = false;
     if (!proximityEnabled || !proximitySupported) {
       stopProximityAlerts();
@@ -387,7 +429,7 @@ function App() {
       cancelled = true;
       stopProximityAlerts();
     };
-  }, [proximityEnabled, showNotification, monitoredSubset, proximitySupported]);
+  }, [proximityEnabled, showNotification, monitoredSubset, proximitySupported, showOnboarding]);
 
   // Keep the watcher in sync with current venue coordinates/toggles.
   useEffect(() => {
@@ -539,6 +581,10 @@ function App() {
     }
   }, [people, tags, replaceTags]);
 
+  if (showOnboarding) {
+    return <OnboardingScreen onComplete={handleOnboardingComplete} />;
+  }
+
   return (
     <div
       className="flex flex-col min-h-screen bg-[var(--color-background)] text-[var(--color-text-primary)]"
@@ -628,6 +674,8 @@ function App() {
               setPersonToDelete(null);
               showNotification(`${deletedName} deleted`, "info");
             }}
+            globalProximityEnabled={proximityEnabled}
+            onEnableGlobalProximity={enableGlobalProximity}
           />
 
           <VenueSections

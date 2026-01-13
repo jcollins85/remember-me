@@ -26,6 +26,8 @@ interface LocationSectionProps {
   getSelectedVenue: () => Venue | null;
   onValidationCoordsChange?: (coords: { lat: string; lon: string } | null) => void;
   onPendingChange?: (data: PendingLocationPayload | null) => void;
+  globalProximityEnabled: boolean;
+  onEnableGlobalProximity: () => void;
 }
 
 const defaultSearchPlaceholder = "Search by name or address";
@@ -34,16 +36,18 @@ type SearchResult = { name: string; address: string; lat: number; lng: number };
 
 type PendingAction = (() => Promise<void>) | null;
 
-const LocationSection: React.FC<LocationSectionProps> = ({
-  venueName,
-  canUseLocation,
-  labelClass,
-  formError,
-  resolveVenue,
-  getSelectedVenue,
-  onValidationCoordsChange,
-  onPendingChange,
-}) => {
+  const LocationSection: React.FC<LocationSectionProps> = ({
+    venueName,
+    canUseLocation,
+    labelClass,
+    formError,
+    resolveVenue,
+    getSelectedVenue,
+    onValidationCoordsChange,
+    onPendingChange,
+    globalProximityEnabled,
+    onEnableGlobalProximity,
+  }) => {
   const { showNotification } = useNotification();
   const { trackEvent } = useAnalytics();
   const initialVenue = useMemo(() => getSelectedVenue(), [getSelectedVenue]);
@@ -51,9 +55,10 @@ const LocationSection: React.FC<LocationSectionProps> = ({
     initialVenue?.coords ?? null
   );
   const [locationTag, setLocationTag] = useState(initialVenue?.locationTag ?? "");
-  const [venueProximityEnabled, setVenueProximityEnabled] = useState(
-    initialVenue?.proximityAlertsEnabled !== false
-  );
+  const [venueProximityEnabled, setVenueProximityEnabled] = useState(() => {
+    if (!globalProximityEnabled) return false;
+    return initialVenue?.proximityAlertsEnabled !== false;
+  });
   const [isCapturingLocation, setIsCapturingLocation] = useState(false);
   const [mapSnapshot, setMapSnapshot] = useState<string | null>(null);
   const [isSnapshotLoading, setIsSnapshotLoading] = useState(false);
@@ -67,6 +72,7 @@ const LocationSection: React.FC<LocationSectionProps> = ({
   const [placeLoading, setPlaceLoading] = useState(false);
   const [placeError, setPlaceError] = useState<string | null>(null);
   const [searchPlaceholder, setSearchPlaceholder] = useState(defaultSearchPlaceholder);
+  const [showGlobalProximityModal, setShowGlobalProximityModal] = useState(false);
 
   useEffect(() => {
     if (!onValidationCoordsChange) return;
@@ -91,16 +97,20 @@ const LocationSection: React.FC<LocationSectionProps> = ({
 
   useEffect(() => {
     if (!venueName.trim()) {
-      setVenueProximityEnabled(true);
+      setVenueProximityEnabled(globalProximityEnabled);
       return;
     }
     const existing = getSelectedVenue();
     if (existing) {
-      setVenueProximityEnabled(existing.proximityAlertsEnabled !== false);
+      if (globalProximityEnabled) {
+        setVenueProximityEnabled(existing.proximityAlertsEnabled !== false);
+      } else {
+        setVenueProximityEnabled(false);
+      }
     } else {
-      setVenueProximityEnabled(true);
+      setVenueProximityEnabled(globalProximityEnabled);
     }
-  }, [venueName, getSelectedVenue]);
+  }, [venueName, getSelectedVenue, globalProximityEnabled]);
 
   useEffect(() => {
     const typed = venueName.trim();
@@ -385,7 +395,15 @@ const LocationSection: React.FC<LocationSectionProps> = ({
 
   const toggleVenueProximityAlerts = () => {
     const next = !venueProximityEnabled;
-    setVenueProximityEnabled(next);
+    if (!next) {
+      setVenueProximityEnabled(false);
+      return;
+    }
+    if (!globalProximityEnabled) {
+      setShowGlobalProximityModal(true);
+      return;
+    }
+    setVenueProximityEnabled(true);
   };
 
   const handleReplaceConfirm = async () => {
@@ -589,6 +607,45 @@ const LocationSection: React.FC<LocationSectionProps> = ({
                 className="rounded-full bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(0,0,0,0.25)] hover:brightness-110"
               >
                 Replace location
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showGlobalProximityModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="w-full max-w-sm rounded-[32px] bg-[var(--color-card)] p-6 shadow-[0_20px_50px_rgba(15,23,42,0.4)] text-center space-y-4"
+          >
+            <div>
+              <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                Enable proximity alerts?
+              </p>
+              <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+                Turn on global alerts so this venue can notify you when you’re nearby.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+              <button
+                type="button"
+                onClick={() => setShowGlobalProximityModal(false)}
+                className="rounded-full border border-[var(--color-card-border)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/80"
+              >
+                Not now
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowGlobalProximityModal(false);
+                  onEnableGlobalProximity();
+                  setVenueProximityEnabled(true);
+                }}
+                className="rounded-full bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(0,0,0,0.25)] hover:brightness-110"
+              >
+                Enable alerts
               </button>
             </div>
           </div>

@@ -32,7 +32,9 @@ export const TagProvider = ({ children }: TagProviderProps) => {
     [showNotification]
   );
   // Persist tags in localStorage
-  const [tags, setTags] = useLocalStorage<Tag[]>('tags', sampleTags, {
+  const seedTags =
+    import.meta.env.VITE_SHOW_DEV_TOOLS === 'true' ? sampleTags : [];
+  const [tags, setTags] = useLocalStorage<Tag[]>('tags', seedTags, {
     onError: handleStorageError,
   });
 

@@ -1,7 +1,7 @@
 // Tiny helper that tracks whether the user wants global proximity monitoring enabled.
 const storageKey = "rememberme:proximity-alerts-enabled";
 
-let proximityEnabled = true;
+let proximityEnabled = false;
 
 const loadPreference = () => {
   if (typeof window === "undefined") return;

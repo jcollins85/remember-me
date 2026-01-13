@@ -18,6 +18,8 @@ interface Props {
   getTagIdByName: (name: string) => string | null;
   getTagNameById: (id: string) => string;
   createTag: (name: string) => Tag;
+  globalProximityEnabled: boolean;
+  onEnableGlobalProximity: () => void;
 }
 
 // PersonModal wraps PersonForm inside a framer-motion portal so it can
@@ -32,6 +34,8 @@ export default function PersonModal({
   getTagIdByName,
   getTagNameById,
   createTag,
+  globalProximityEnabled,
+  onEnableGlobalProximity,
 }: Props) {
   const title = mode === "add" ? "Add Person" : "Edit Person";
   const [isSaving, setIsSaving] = useState(false);
@@ -119,6 +123,8 @@ export default function PersonModal({
             createTag={createTag}
             hideActions
             onSubmittingChange={setIsSaving}
+            globalProximityEnabled={globalProximityEnabled}
+            onEnableGlobalProximity={onEnableGlobalProximity}
           />
         </div>
 

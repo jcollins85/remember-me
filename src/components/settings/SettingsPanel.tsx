@@ -354,38 +354,60 @@ export default function SettingsPanel({
               </section>
 
               <section className="space-y-2 border-t border-[var(--color-accent)]/60 pt-4">
-                {/* Dev utilities—kept in app for internal QA so we can reseed dummy data or nuke everything */}
-                <div className="flex items-center gap-2">
-                  <Wrench size={16} className="text-[var(--color-accent)]" />
-                  <div>
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">Data tools</p>
-                    <p className="text-xs text-[var(--color-text-secondary)]">
-                      Quickly restore sample data or clear achievements.
-                    </p>
-                  </div>
-                </div>
-                <div className="rounded-2xl bg-[var(--color-card)]/95 space-y-3 shadow-level1/40 mt-1.5">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <button
-                      onClick={async () => {
-                        await triggerImpact(ImpactStyle.Light);
-                        onResetData();
-                      }}
-                      className="px-4 py-3 rounded-2xl border border-[color:var(--color-card-border)] bg-[var(--color-card)] text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/90 transition"
-                    >
-                      Reset sample data
-                    </button>
-                    <button
-                      onClick={async () => {
-                        await triggerImpact(ImpactStyle.Light);
-                        onClearAchievements();
-                      }}
-                      className="px-4 py-3 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] text-sm font-semibold hover:bg-[var(--color-accent-muted)] transition"
-                    >
-                      Clear achievements
-                    </button>
-                  </div>
-                  <div className="space-y-2">
+                {import.meta.env.VITE_SHOW_DEV_TOOLS === "true" ? (
+                  <>
+                    {/* Dev utilities—kept in app for internal QA so we can reseed dummy data or nuke everything */}
+                    <div className="flex items-center gap-2">
+                      <Wrench size={16} className="text-[var(--color-accent)]" />
+                      <div>
+                        <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                          Data tools
+                        </p>
+                        <p className="text-xs text-[var(--color-text-secondary)]">
+                          Quickly restore sample data or clear achievements.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="rounded-2xl bg-[var(--color-card)]/95 space-y-3 shadow-level1/40 mt-1.5">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <button
+                          onClick={async () => {
+                            await triggerImpact(ImpactStyle.Light);
+                            onResetData();
+                          }}
+                          className="px-4 py-3 rounded-2xl border border-[color:var(--color-card-border)] bg-[var(--color-card)] text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/90 transition"
+                        >
+                          Reset sample data
+                        </button>
+                        <button
+                          onClick={async () => {
+                            await triggerImpact(ImpactStyle.Light);
+                            onClearAchievements();
+                          }}
+                          className="px-4 py-3 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] text-sm font-semibold hover:bg-[var(--color-accent-muted)] transition"
+                        >
+                          Clear achievements
+                        </button>
+                      </div>
+                      <div className="space-y-2">
+                        <button
+                          onClick={async () => {
+                            await triggerImpact(ImpactStyle.Heavy);
+                            onResetApp();
+                          }}
+                          className="w-full px-4 py-3 rounded-2xl border border-red-200/60 bg-red-500/10 text-sm font-semibold text-red-500 hover:bg-red-500/15 transition"
+                        >
+                          Reset app (blank state)
+                        </button>
+                        <p className="text-xs text-[var(--color-text-secondary)]">
+                          Removes all venues, people, favourites, tags, and achievements to mimic
+                          a first-time install.
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="rounded-2xl bg-[var(--color-card)]/95 space-y-2 shadow-level1/40 mt-1.5">
                     <button
                       onClick={async () => {
                         await triggerImpact(ImpactStyle.Heavy);
@@ -395,11 +417,12 @@ export default function SettingsPanel({
                     >
                       Reset app (blank state)
                     </button>
-                    <p className="text-xs text-[var(--color-text-secondary)]">
-                      Removes all venues, people, favourites, tags, and achievements to mimic a first-time install.
+                    <p className="px-4 pb-3 text-xs text-[var(--color-text-secondary)]">
+                      Removes all venues, people, favourites, tags, and achievements to mimic a
+                      first-time install.
                     </p>
                   </div>
-                </div>
+                )}
               </section>
 
               <section className="space-y-2 border-t border-white/40 pt-4 text-[var(--color-text-secondary)]">

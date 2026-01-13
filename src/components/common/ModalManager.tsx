@@ -24,6 +24,10 @@ interface Props {
   personToDelete: Person | null;
   onDeleteCancel: () => void;
   onDeleteConfirm: (id: string) => void;
+
+  // Proximity gating
+  globalProximityEnabled: boolean;
+  onEnableGlobalProximity: () => void;
 }
 
 // Centralizes modal orchestration so we only deal with framer-motion stacks in one place.
@@ -43,6 +47,8 @@ export default function ModalManager({
   personToDelete,
   onDeleteCancel,
   onDeleteConfirm,
+  globalProximityEnabled,
+  onEnableGlobalProximity,
 }: Props) {
   return (
     <>
@@ -56,6 +62,8 @@ export default function ModalManager({
             getTagIdByName={getTagIdByName}
             getTagNameById={getTagNameById}
             createTag={createTag}
+            globalProximityEnabled={globalProximityEnabled}
+            onEnableGlobalProximity={onEnableGlobalProximity}
             onSubmit={onAdd}
             onCancel={onAddCancel}
           />
@@ -71,6 +79,8 @@ export default function ModalManager({
             getTagIdByName={getTagIdByName}
             getTagNameById={getTagNameById}
             createTag={createTag}
+            globalProximityEnabled={globalProximityEnabled}
+            onEnableGlobalProximity={onEnableGlobalProximity}
             onSubmit={onEdit}
             onCancel={onEditCancel}
           />

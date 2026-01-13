@@ -319,7 +319,7 @@ export default function ProfilePanel({
                                     </p>
                                     {achievement.unlocked && achievement.unlockedAt && (
                                       <p className="text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)] mt-1">
-                                        {new Date(achievement.unlockedAt).toLocaleDateString()}
+                                        Completed: {new Date(achievement.unlockedAt).toLocaleDateString()}
                                       </p>
                                     )}
                                     {!achievement.unlocked && (

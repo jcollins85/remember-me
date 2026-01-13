@@ -23,6 +23,8 @@ interface Props {
   createTag: (name: string) => Tag;
   hideActions?: boolean;
   onSubmittingChange?: (submitting: boolean) => void;
+  globalProximityEnabled: boolean;
+  onEnableGlobalProximity: () => void;
 }
 
 // PersonForm handles the add/edit workflow, coordinating venue/tag helpers
@@ -39,6 +41,8 @@ export default function PersonForm({
   createTag,
   hideActions = false,
   onSubmittingChange,
+  globalProximityEnabled,
+  onEnableGlobalProximity,
 }: Props) {
   const { trackEvent } = useAnalytics();
   // ── Basic fields ──
@@ -452,6 +456,8 @@ export default function PersonForm({
         getSelectedVenue={getSelectedVenue}
         onValidationCoordsChange={setLocationValidationCoords}
         onPendingChange={setPendingLocation}
+        globalProximityEnabled={globalProximityEnabled}
+        onEnableGlobalProximity={onEnableGlobalProximity}
       />
 
       {/* Description */}
