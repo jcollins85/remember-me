@@ -355,7 +355,10 @@ export default function SettingsPanel({
                 </div>
               </section>
 
-              <section className="space-y-2 border-t border-[var(--color-accent)]/60 pt-4">
+              <section
+                className="space-y-2 border-t border-transparent pt-4"
+                style={{ borderColor: "color-mix(in srgb, var(--color-accent) 60%, transparent)" }}
+              >
                 <div className="flex items-center gap-2">
                   <Wrench size={16} className="text-[var(--color-accent)]" />
                   <div>
@@ -419,10 +422,6 @@ export default function SettingsPanel({
                     >
                       Erase all data
                     </button>
-                    <p className="px-4 pb-3 text-xs text-[var(--color-text-secondary)]">
-                      Removes all venues, people, favourites, tags, and achievements to mimic a
-                      first-time install.
-                    </p>
                   </div>
                 )}
               </section>

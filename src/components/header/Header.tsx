@@ -146,7 +146,7 @@ const Header: React.FC<HeaderProps> = ({
             onClick={() => setShowSortModal(false)}
           >
             <motion.div
-              className="glass-panel w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col relative bg-[var(--color-card)]"
+              className="glass-panel w-full max-w-md max-h-[85vh] overflow-hidden flex flex-col relative bg-[var(--color-card)]"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
