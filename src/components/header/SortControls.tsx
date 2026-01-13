@@ -14,7 +14,6 @@ interface Props {
   setVenueSortDir: (dir: Direction) => void;
   personSort: PersonSortString;
   setPersonSort: (val: PersonSortString) => void;
-  onClose?: () => void;
 }
 
 const venuePresetOptions: Array<{ key: VenueSortKey; dir: Direction; label: string; description: string }> = [
@@ -43,7 +42,6 @@ export default function SortControls({
   setVenueSortDir,
   personSort,
   setPersonSort,
-  onClose,
 }: Props) {
   const venueActiveToken = `${venueSortKey}-${venueSortDir}`;
   const isVenue = variant === "venue";
@@ -61,7 +59,6 @@ export default function SortControls({
             await triggerImpact(active ? ImpactStyle.Light : ImpactStyle.Medium);
             setVenueSortKey(key);
             setVenueSortDir(dir);
-            onClose?.();
           },
         };
       })
@@ -75,7 +72,6 @@ export default function SortControls({
           onSelect: async () => {
             await triggerImpact(active ? ImpactStyle.Light : ImpactStyle.Medium);
             setPersonSort(value);
-            onClose?.();
           },
         };
       });

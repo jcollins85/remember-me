@@ -85,7 +85,7 @@ function App() {
   // ── Settings panel ──
   const [showSettings, setShowSettings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const [sortSheet, setSortSheet] = useState<"venue" | "people" | null>(null);
+  const [showSortModal, setShowSortModal] = useState(false);
   const [proximityEnabled, setProximityEnabled] = useState(() =>
     proximitySupported && isProximityAlertsEnabled()
   );
@@ -387,12 +387,12 @@ function App() {
       showAddModal ||
       editingPerson ||
       personToDelete ||
-      sortSheet !== null;
+      showSortModal;
     document.body.style.overflow = shouldLock ? "hidden" : "auto";
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [showSettings, showProfile, showAddModal, editingPerson, personToDelete, sortSheet]);
+  }, [showSettings, showProfile, showAddModal, editingPerson, personToDelete, showSortModal]);
 
   // Guard against someone syncing an “on” toggle from device and then opening the PWA.
   useEffect(() => {
@@ -573,7 +573,7 @@ function App() {
         paddingRight: "env(safe-area-inset-right)",
       }}
     >
-      <Header
+        <Header
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         activeTags={activeTags}
@@ -591,8 +591,8 @@ function App() {
         setVenueView={setVenueView}
         favoriteVenueCount={favoriteVenueNames.length}
         totalVenueCount={sortedVenueNames.length}
-        sortSheet={sortSheet}
-        setSortSheet={setSortSheet}
+        showSortModal={showSortModal}
+        setShowSortModal={setShowSortModal}
       />
 
       <main

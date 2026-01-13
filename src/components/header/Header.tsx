@@ -1,6 +1,6 @@
 import React, { Dispatch, SetStateAction, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Settings, User, Search, X } from "lucide-react";
+import { Settings, User, Search, X, ListFilter } from "lucide-react";
 import type { SortKey, VenueSortKey } from "../../utils/sortHelpers";
 import SegmentedControl, { Segment } from "../ui/SegmentedControl";
 import SortControls from "./SortControls";
@@ -24,8 +24,8 @@ interface HeaderProps {
   setVenueView: Dispatch<SetStateAction<"all" | "favs">>;
   favoriteVenueCount: number;
   totalVenueCount: number;
-  sortSheet: "venue" | "people" | null;
-  setSortSheet: Dispatch<SetStateAction<"venue" | "people" | null>>;
+  showSortModal: boolean;
+  setShowSortModal: Dispatch<SetStateAction<boolean>>;
 }
 
 // Sticky header that hosts search, sort toggles, and the segmented control
@@ -47,13 +47,9 @@ const Header: React.FC<HeaderProps> = ({
   setVenueView,
   favoriteVenueCount,
   totalVenueCount,
-  sortSheet,
-  setSortSheet,
+  showSortModal,
+  setShowSortModal,
 }) => {
-  const toggleSheet = (sheet: "venue" | "people") => {
-    setSortSheet((prev) => (prev === sheet ? null : sheet));
-  };
-
   const segments: Segment<"all" | "favs">[] = useMemo(
     () => [
       { key: "all", label: `All Venues (${totalVenueCount})` },
@@ -79,7 +75,7 @@ const Header: React.FC<HeaderProps> = ({
             style={{ paddingTop: "calc(env(safe-area-inset-top) + 6px)" }}
           >
       <div className="px-4 sm:px-6 md:px-8 lg:px-10 pb-1">
-        <div className="flex items-center gap-3 max-w-3xl mx-auto w-full">
+        <div className="flex items-center gap-2 max-w-3xl mx-auto w-full">
           <button
             aria-label="Settings"
             onClick={onOpenSettings}
@@ -93,8 +89,8 @@ const Header: React.FC<HeaderProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by person, tag or venue…"
-              className="w-full h-12 pl-11 pr-12 rounded-full bg-[var(--color-card)] backdrop-blur-sm border border-[var(--color-card-border)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]/80 placeholder:text-[0.9rem] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] shadow-level1"
+              placeholder="Search people, tags, venues"
+              className="w-full h-12 pl-11 pr-16 rounded-full bg-[var(--color-card)] backdrop-blur-sm border border-[var(--color-card-border)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]/80 placeholder:text-[0.9rem] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] shadow-level1"
             />
             {searchQuery && (
               <button
@@ -105,6 +101,15 @@ const Header: React.FC<HeaderProps> = ({
                 ×
               </button>
             )}
+            <button
+              aria-label="Sort"
+              className={`absolute top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition ${
+                searchQuery ? "right-9" : "right-3.5"
+              }`}
+              onClick={() => setShowSortModal(true)}
+            >
+              <ListFilter size={18} />
+            </button>
           </div>
           <button
             aria-label="Profile"
@@ -120,33 +125,6 @@ const Header: React.FC<HeaderProps> = ({
       <div className="bg-transparent">
         <div className="px-4 sm:px-6 md:px-8 lg:px-10 pt-1 pb-2 space-y-1.5">
 
-          <div className="flex flex-col items-center gap-1.5 text-[12px]">
-            <div className="flex justify-center gap-3 w-full flex-wrap">
-              <button
-                onClick={() => toggleSheet("venue")}
-                className={`px-4 py-1 rounded-full text-xs font-semibold transition pill-chip ${
-                  sortSheet === "venue"
-                    ? "border-[color:var(--color-accent)] bg-[color:var(--color-accent-muted)] text-[var(--color-accent)] shadow-level1"
-                    : "border-[color:var(--color-card-border)] bg-[var(--color-card)] text-[var(--color-text-primary)]"
-                }`}
-              >
-                Venues · {venueSortKey === "name" ? "Name" : venueSortKey === "recentVisit" ? "Recent" : "Known"}
-                {venueSortDir === "asc" ? " ↑" : " ↓"}
-              </button>
-              <button
-                onClick={() => toggleSheet("people")}
-                className={`px-4 py-1 rounded-full text-xs font-semibold transition pill-chip ${
-                  sortSheet === "people"
-                    ? "border-[color:var(--color-accent)] bg-[color:var(--color-accent-muted)] text-[var(--color-accent)] shadow-level1"
-                    : "border-[color:var(--color-card-border)] bg-[var(--color-card)] text-[var(--color-text-primary)]"
-                }`}
-              >
-                People · {personSort.replace("dateMet", "Met").replace("updatedAt", "Updated").replace("asc", " ↑").replace("desc", " ↓")}
-              </button>
-            </div>
-
-          </div>
-
           {/* Segmented control centered */}
       <div className="flex justify-center pt-1.5">
         <SegmentedControl segments={segments} value={venueView} onChange={setVenueView} className="shadow-level1" />
@@ -159,16 +137,16 @@ const Header: React.FC<HeaderProps> = ({
 
       {/* Sort sheet reuses the Modal glass visual but stays scoped to the header */}
       <AnimatePresence>
-        {sortSheet && (
+        {showSortModal && (
           <motion.div
             className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center px-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setSortSheet(null)}
+            onClick={() => setShowSortModal(false)}
           >
             <motion.div
-              className="glass-panel w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col relative bg-[var(--color-card)]"
+              className="glass-panel w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col relative bg-[var(--color-card)]"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
@@ -181,7 +159,7 @@ const Header: React.FC<HeaderProps> = ({
                 onClick={(event) => {
                   event.stopPropagation();
                   triggerImpact(ImpactStyle.Light);
-                  setSortSheet(null);
+                  setShowSortModal(false);
                 }}
                 aria-label="Close sort options"
               >
@@ -189,14 +167,22 @@ const Header: React.FC<HeaderProps> = ({
               </button>
               <div className="overflow-y-auto px-5 pb-5 pt-6 space-y-4" style={{ scrollbarGutter: "stable" }}>
                 <SortControls
-                  variant={sortSheet}
+                  variant="venue"
                   venueSortKey={venueSortKey}
                   venueSortDir={venueSortDir}
                   setVenueSortKey={setVenueSortKey}
                   setVenueSortDir={setVenueSortDir}
                   personSort={personSort}
                   setPersonSort={setPersonSort}
-                  onClose={() => setSortSheet(null)}
+                />
+                <SortControls
+                  variant="people"
+                  venueSortKey={venueSortKey}
+                  venueSortDir={venueSortDir}
+                  setVenueSortKey={setVenueSortKey}
+                  setVenueSortDir={setVenueSortDir}
+                  personSort={personSort}
+                  setPersonSort={setPersonSort}
                 />
               </div>
             </motion.div>
