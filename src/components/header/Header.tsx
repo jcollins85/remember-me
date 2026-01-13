@@ -71,7 +71,7 @@ const Header: React.FC<HeaderProps> = ({
             }}
           />
           <div
-            className="relative space-y-2.5"
+            className="relative space-y-1"
             style={{ paddingTop: "calc(env(safe-area-inset-top) + 6px)" }}
           >
       <div className="px-4 sm:px-6 md:px-8 lg:px-10 pb-1">
@@ -123,10 +123,10 @@ const Header: React.FC<HeaderProps> = ({
 
       {/* ── Utility Tier ─────────────────────────────────────────── */}
       <div className="bg-transparent">
-        <div className="px-4 sm:px-6 md:px-8 lg:px-10 pt-1 pb-2 space-y-1.5">
+        <div className="px-4 sm:px-6 md:px-8 lg:px-10 pt-0 pb-2 space-y-0.5">
 
           {/* Segmented control centered */}
-      <div className="flex justify-center pt-1.5">
+      <div className="flex justify-center pt-0.5">
         <SegmentedControl segments={segments} value={venueView} onChange={setVenueView} className="shadow-level1" />
       </div>
     </div>

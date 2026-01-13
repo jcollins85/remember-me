@@ -80,7 +80,7 @@ export default function SortControls({
   const HelperIcon = isVenue ? MapPin : Users;
 
   return (
-    <div className="space-y-4 text-left">
+    <div className="space-y-3 text-left">
       <div className="flex items-center gap-3 px-1">
         <div className="w-10 h-10 rounded-2xl bg-[var(--color-accent-muted)] text-[var(--color-accent)] flex items-center justify-center shadow-[0_8px_18px_rgba(15,23,42,0.15)]">
           <HelperIcon size={18} />
@@ -91,27 +91,27 @@ export default function SortControls({
         </div>
       </div>
 
-      <div className="rounded-2xl bg-[var(--color-card)]/95 px-3 py-3 shadow-level1/40">
+      <div className="rounded-2xl bg-[var(--color-card)]/95 px-3 py-2.5 shadow-level1/40">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[13px]">
           {options.map(({ key, label: optionLabel, description, active, onSelect }) => (
             <button
               key={key}
               onClick={onSelect}
-              className={`w-full text-left px-4 py-3 rounded-2xl border transition duration-200 flex items-start justify-between gap-2 ${
+              className={`w-full text-left px-3 py-2.5 rounded-2xl border transition duration-200 flex items-start justify-between gap-2 ${
                 active
                   ? "border-[color:var(--color-accent)] bg-[color:var(--color-accent-muted)] text-[var(--color-accent)]"
                   : "border-[color:var(--color-card-border)] bg-[var(--color-card)] text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/90"
               }`}
             >
               <div>
-                <p className="text-sm font-semibold">{optionLabel}</p>
-                <p className={`text-xs ${active ? "text-[var(--color-accent)]/90" : "text-[var(--color-text-secondary)]"}`}>
+                <p className="text-[13px] font-semibold">{optionLabel}</p>
+                <p className={`text-[11px] ${active ? "text-[var(--color-accent)]/90" : "text-[var(--color-text-secondary)]"}`}>
                   {description}
                 </p>
               </div>
               {active && (
-                <span className="inline-flex h-6 w-6 items-center justify-center self-center rounded-full bg-[var(--color-card)] text-[var(--color-accent)] shadow-[0_4px_10px_rgba(15,23,42,0.12)]">
-                  <Check size={14} className="translate-y-[0.5px]" />
+                <span className="inline-flex h-5 w-5 items-center justify-center self-center rounded-full bg-[var(--color-card)] text-[var(--color-accent)] shadow-[0_4px_10px_rgba(15,23,42,0.12)]">
+                  <Check size={12} className="translate-y-[0.5px]" />
                 </span>
               )}
             </button>
