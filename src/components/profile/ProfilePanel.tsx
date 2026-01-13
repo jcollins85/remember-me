@@ -12,7 +12,6 @@ import {
   TrendingUp,
   Heart,
   Clock,
-  Globe,
 } from "lucide-react";
 import type { AchievementProgress, AchievementStats } from "../../hooks/useAchievements";
 import { triggerImpact, ImpactStyle } from "../../utils/haptics";
@@ -20,11 +19,10 @@ import PinLogo from "../../assets/brand/MetHere-pin.svg";
 
 interface UsageInsights {
   topVenue?: { name: string; count: number };
-  topRegion?: { name: string; count: number };
   topTag?: { name: string; count: number };
   favoritesCount: number;
   lastInteraction?: { name: string; date: string };
-  regionCount?: number;
+  pinsSaved: number;
 }
 
 interface ProfilePanelProps {
@@ -129,7 +127,7 @@ export default function ProfilePanel({
                   { label: "People tracked", value: stats.peopleCount, icon: <UserRound size={16} className="text-[var(--color-accent)]" /> },
                   { label: "Venues logged", value: stats.venuesWithPeople, icon: <MapPin size={16} className="text-[var(--color-accent)]" /> },
                   { label: "Tags applied", value: stats.uniqueTagCount, icon: <TagIcon size={16} className="text-[var(--color-accent)]" /> },
-                  { label: "Regions pinned", value: insights.regionCount ?? 0, icon: <Globe size={16} className="text-[var(--color-accent)]" /> },
+                  { label: "Pins saved", value: insights.pinsSaved, icon: <MapPin size={16} className="text-[var(--color-accent)]" /> },
                 ].map((item) => (
                   <div
                     key={item.label}
@@ -171,24 +169,6 @@ export default function ProfilePanel({
                       <div>
                         <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Top venue</p>
                         <p className="text-xs text-[var(--color-text-secondary)]">No venue data yet.</p>
-                      </div>
-                    </div>
-                  )}
-                  {insights.topRegion ? (
-                    <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left shadow-level1 flex items-center gap-3">
-                      <Globe size={18} className="text-[var(--color-accent)]" />
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Most active region</p>
-                        <p className="font-semibold text-[var(--color-text-primary)]">{insights.topRegion.name}</p>
-                        <p className="text-xs text-[var(--color-text-secondary)]">{insights.topRegion.count} people logged here</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left shadow-level1 flex items-center gap-3">
-                      <Globe size={18} className="text-[var(--color-accent)]" />
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Most active region</p>
-                        <p className="text-xs text-[var(--color-text-secondary)]">Add map pins to unlock this insight.</p>
                       </div>
                     </div>
                   )}
