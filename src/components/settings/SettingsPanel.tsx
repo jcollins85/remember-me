@@ -74,11 +74,15 @@ export default function SettingsPanel({
   proximitySupported,
 }: SettingsPanelProps) {
   const { theme, setTheme } = useContext(ThemeContext);
-  const { exportBackup, importBackupFromFile } = useDataBackup(favoriteVenues, setFavoriteVenues);
+  const { exportBackup, importBackupFromFile, exportCsvBackup, importCsvFromFile } =
+    useDataBackup(favoriteVenues, setFavoriteVenues);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isExportingCsv, setIsExportingCsv] = useState(false);
+  const [isImportingCsv, setIsImportingCsv] = useState(false);
   const [hapticsEnabled, setHapticsEnabled] = useState(isHapticsEnabled());
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const csvFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleExport = () => {
     setIsExporting(true);
@@ -102,6 +106,10 @@ export default function SettingsPanel({
     fileInputRef.current?.click();
   };
 
+  const handleCsvImportClick = () => {
+    csvFileInputRef.current?.click();
+  };
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -110,6 +118,27 @@ export default function SettingsPanel({
       await importBackupFromFile(file);
     } finally {
       setIsImporting(false);
+      event.target.value = "";
+    }
+  };
+
+  const handleCsvExport = () => {
+    setIsExportingCsv(true);
+    try {
+      exportCsvBackup();
+    } finally {
+      setIsExportingCsv(false);
+    }
+  };
+
+  const handleCsvFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setIsImportingCsv(true);
+    try {
+      await importCsvFromFile(file);
+    } finally {
+      setIsImportingCsv(false);
       event.target.value = "";
     }
   };
@@ -320,7 +349,7 @@ export default function SettingsPanel({
                     <Lock size={16} className="text-[var(--color-accent)]" />
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex gap-3">
                     <button
                       onClick={async () => {
                         await triggerImpact(ImpactStyle.Light);
@@ -345,12 +374,47 @@ export default function SettingsPanel({
                     </button>
                   </div>
 
+                  <div className="flex gap-3">
+                    <button
+                      onClick={async () => {
+                        await triggerImpact(ImpactStyle.Light);
+                        handleCsvExport();
+                      }}
+                      disabled={isExportingCsv}
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-[color:var(--color-card-border)] bg-[var(--color-card)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/90 disabled:opacity-60"
+                    >
+                      <Download size={16} />
+                      {isExportingCsv ? "Exporting…" : "Export CSV"}
+                    </button>
+                    <button
+                      onClick={async () => {
+                        await triggerImpact(ImpactStyle.Light);
+                        handleCsvImportClick();
+                      }}
+                      disabled={isImportingCsv}
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] px-4 py-3 text-sm font-semibold hover:bg-[var(--color-accent-muted)] disabled:opacity-60"
+                    >
+                      <Upload size={16} />
+                      {isImportingCsv ? "Importing…" : "Import CSV"}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-[var(--color-text-secondary)]">
+                    CSV columns: id, name, position, dateMet, venueName, tags, favorite, description.
+                  </p>
+
                   <input
                     ref={fileInputRef}
                     type="file"
                     accept="application/json"
                     className="hidden"
                     onChange={handleFileChange}
+                  />
+                  <input
+                    ref={csvFileInputRef}
+                    type="file"
+                    accept=".csv,text/csv"
+                    className="hidden"
+                    onChange={handleCsvFileChange}
                   />
                 </div>
               </section>

@@ -12,6 +12,17 @@ const MAX_PEOPLE = 2000;
 const MAX_VENUES = 500;
 const MAX_TAGS = 500;
 const MAX_FIELD_LENGTH = 512;
+const CSV_VERSION = 1;
+const CSV_HEADERS = [
+  "id",
+  "name",
+  "position",
+  "dateMet",
+  "venueName",
+  "tags",
+  "favorite",
+  "description",
+] as const;
 
 interface BackupFile {
   version: number;
@@ -39,14 +50,64 @@ const sanitizeCoords = (value: unknown) => {
     : undefined;
 };
 
+const escapeCsvValue = (value: string) => {
+  const needsQuotes = /[",\n\r]/.test(value);
+  const escaped = value.replace(/"/g, '""');
+  return needsQuotes ? `"${escaped}"` : escaped;
+};
+
+const parseCsvLine = (line: string) => {
+  const result: string[] = [];
+  let current = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i];
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i += 1;
+        continue;
+      }
+      inQuotes = !inQuotes;
+      continue;
+    }
+    if (char === "," && !inQuotes) {
+      result.push(current);
+      current = "";
+      continue;
+    }
+    current += char;
+  }
+  result.push(current);
+  return result.map((value) => value.trim());
+};
+
+const parseCsv = (text: string) => {
+  const rawLines = text.split(/\r?\n/);
+  const lines = rawLines
+    .map((line, index) => ({ line: line.trim(), lineNumber: index + 1 }))
+    .filter(({ line }) => line.length > 0 && !line.startsWith("#"));
+  if (lines.length === 0) {
+    throw new Error("CSV file is empty.");
+  }
+  const headers = parseCsvLine(lines[0].line).map((header) => header.toLowerCase());
+  const rows = lines.slice(1).map((item) => ({
+    lineNumber: item.lineNumber,
+    values: parseCsvLine(item.line),
+  }));
+  return { headers, rows };
+};
+
 // Enforces shape/limits on imported people so corrupt backups can't crash the UI.
-function sanitizePeople(raw: unknown): Person[] {
+function sanitizePeople(raw: unknown, venues: Venue[], tags: Tag[]): Person[] {
   if (!Array.isArray(raw)) {
     throw new Error("People data missing or malformed.");
   }
   if (raw.length > MAX_PEOPLE) {
     throw new Error(`Backup has too many people (max ${MAX_PEOPLE}).`);
   }
+  const venueIds = new Set(venues.map((venue) => venue.id));
+  const tagIds = new Set(tags.map((tag) => tag.id));
   return raw.map((item, index) => {
     if (!isRecord(item)) {
       throw new Error(`Person entry #${index + 1} is invalid.`);
@@ -70,15 +131,22 @@ function sanitizePeople(raw: unknown): Person[] {
     const updatedAt = isIsoDate(item.updatedAt) ? item.updatedAt : undefined;
 
     const tags = Array.isArray(item.tags)
-      ? item.tags.filter((tag): tag is string => typeof tag === "string" && tag.trim().length > 0)
+      ? item.tags
+          .filter((tag): tag is string => typeof tag === "string" && tag.trim().length > 0)
+          .filter((tag) => tagIds.has(tag))
       : [];
+
+    const venueId =
+      typeof item.venueId === "string" && venueIds.has(item.venueId)
+        ? item.venueId
+        : undefined;
 
     return {
       id,
       name,
       position: typeof item.position === "string" ? truncate(item.position) : undefined,
       description: typeof item.description === "string" ? truncate(item.description) : undefined,
-      venueId: typeof item.venueId === "string" ? item.venueId : undefined,
+      venueId,
       dateMet,
       createdAt,
       updatedAt,
@@ -185,17 +253,145 @@ function parseBackup(text: string): BackupFile {
   }
 
   const venues = sanitizeVenues(parsed.venues);
+  const tags = sanitizeTags(parsed.tags);
   return {
     version,
     exportedAt:
       typeof parsed.exportedAt === "string"
         ? parsed.exportedAt
         : new Date().toISOString(),
-    people: sanitizePeople(parsed.people),
+    people: sanitizePeople(parsed.people, venues, tags),
     venues,
-    tags: sanitizeTags(parsed.tags),
+    tags,
     favoriteVenues: sanitizeFavoriteVenues(parsed.favoriteVenues, venues),
   };
+}
+
+function parseCsvPeople(text: string) {
+  const { headers, rows } = parseCsv(text);
+  const headerIndex = new Map(headers.map((header, index) => [header, index]));
+  const nameIndex = headerIndex.get("name");
+  const dateIndex = headerIndex.get("datemet");
+  if (nameIndex === undefined || dateIndex === undefined) {
+    throw new Error("CSV must include at least 'name' and 'dateMet' columns.");
+  }
+
+  if (rows.length > MAX_PEOPLE) {
+    throw new Error(`CSV has too many people (max ${MAX_PEOPLE}).`);
+  }
+
+  const venues: Venue[] = [];
+  const tags: Tag[] = [];
+  const people: Person[] = [];
+  const venueByName = new Map<string, Venue>();
+  const tagByName = new Map<string, Tag>();
+  const seenIds = new Set<string>();
+  let skipped = 0;
+  const errors: Array<{ line: number; reason: string }> = [];
+
+  const getVenue = (rawVenue: string | undefined) => {
+    const trimmed = rawVenue?.trim();
+    if (!trimmed) return undefined;
+    const normalized = trimmed.toLowerCase();
+    const existing = venueByName.get(normalized);
+    if (existing) return existing;
+    if (venues.length >= MAX_VENUES) {
+      throw new Error(`CSV has too many venues (max ${MAX_VENUES}).`);
+    }
+    const venue: Venue = {
+      id: crypto.randomUUID(),
+      name: truncate(trimmed),
+      locationTag: undefined,
+      coords: undefined,
+      favorite: false,
+      proximityAlertsEnabled: true,
+    };
+    venues.push(venue);
+    venueByName.set(normalized, venue);
+    return venue;
+  };
+
+  const getTags = (rawTags: string | undefined) => {
+    if (!rawTags) return [];
+    const parts = rawTags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+    const tagIds: string[] = [];
+    parts.forEach((tagName) => {
+      const normalized = tagName.toLowerCase();
+      let tag = tagByName.get(normalized);
+      if (!tag) {
+        if (tags.length >= MAX_TAGS) {
+          throw new Error(`CSV has too many tags (max ${MAX_TAGS}).`);
+        }
+        tag = {
+          id: crypto.randomUUID(),
+          name: truncate(normalized),
+          count: 0,
+          lastUsed: Date.now(),
+        };
+        tags.push(tag);
+        tagByName.set(normalized, tag);
+      }
+      tagIds.push(tag.id);
+    });
+    return tagIds;
+  };
+
+  rows.forEach((row) => {
+    const values = row.values;
+    const name = values[nameIndex]?.trim();
+    const dateValue = values[dateIndex]?.trim();
+    if (!name || !dateValue) {
+      errors.push({
+        line: row.lineNumber,
+        reason: !name ? "Missing name." : "Missing dateMet.",
+      });
+      skipped += 1;
+      return;
+    }
+    const parsedDate = new Date(dateValue);
+    if (Number.isNaN(parsedDate.getTime())) {
+      errors.push({ line: row.lineNumber, reason: "Invalid dateMet." });
+      skipped += 1;
+      return;
+    }
+
+    const idValue = values[headerIndex.get("id") ?? -1]?.trim();
+    const position = values[headerIndex.get("position") ?? -1]?.trim();
+    const description = values[headerIndex.get("description") ?? -1]?.trim();
+    const venueName = values[headerIndex.get("venuename") ?? -1]?.trim();
+    const tagsValue = values[headerIndex.get("tags") ?? -1]?.trim();
+    const favoriteValue = values[headerIndex.get("favorite") ?? -1]?.trim().toLowerCase();
+
+    const venue = getVenue(venueName);
+    const tagIds = getTags(tagsValue);
+    const favorite =
+      favoriteValue === "true" || favoriteValue === "yes" || favoriteValue === "1";
+
+    const dateMet = parsedDate.toISOString();
+    const id = idValue && !seenIds.has(idValue) ? idValue : crypto.randomUUID();
+    if (idValue && seenIds.has(idValue)) {
+      errors.push({ line: row.lineNumber, reason: "Duplicate id; generated a new one." });
+    }
+    seenIds.add(id);
+
+    people.push({
+      id,
+      name: truncate(name),
+      position: position ? truncate(position) : undefined,
+      description: description ? truncate(description) : undefined,
+      venueId: venue?.id,
+      dateMet,
+      createdAt: dateMet,
+      updatedAt: undefined,
+      tags: tagIds,
+      favorite,
+    });
+  });
+
+  return { people, venues, tags, skipped, errors };
 }
 
 // Provides export/import helpers that validate payloads before touching state.
@@ -239,6 +435,50 @@ export function useDataBackup(
       showNotification("Unable to export data.", "error");
     }
   }, [favoriteVenues, people, showNotification, tags, venues]);
+
+  const exportCsvBackup = useCallback(() => {
+    try {
+      const tagById = new Map(tags.map((tag) => [tag.id, tag.name]));
+      const venueById = new Map(venues.map((venue) => [venue.id, venue.name]));
+      const rows = people.map((person) => {
+        const tagNames = (person.tags ?? [])
+          .map((tagId) => tagById.get(tagId))
+          .filter(Boolean)
+          .join(", ");
+        const venueName = person.venueId ? venueById.get(person.venueId) ?? "" : "";
+        return [
+          person.id,
+          person.name,
+          person.position ?? "",
+          person.dateMet,
+          venueName ?? "",
+          tagNames,
+          person.favorite ? "true" : "false",
+          person.description ?? "",
+        ].map((value) => escapeCsvValue(String(value)));
+      });
+
+      const csv = [
+        `# MetHere CSV v${CSV_VERSION}`,
+        `# exportedAt=${new Date().toISOString()}`,
+        CSV_HEADERS.join(","),
+        ...rows.map((row) => row.join(",")),
+      ].join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `methere-people-${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(url);
+      showNotification("CSV exported.", "success");
+    } catch (error) {
+      console.error(error);
+      showNotification("Unable to export CSV.", "error");
+    }
+  }, [people, showNotification, tags, venues]);
 
   const importBackupFromFile = useCallback(
     async (file: File) => {
@@ -286,5 +526,59 @@ export function useDataBackup(
     [favoriteVenues, people, replacePeople, replaceTags, replaceVenues, setFavoriteVenues, showNotification, tags, venues]
   );
 
-  return { exportBackup, importBackupFromFile };
+  const importCsvFromFile = useCallback(
+    async (file: File) => {
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        const limitMb = (MAX_FILE_SIZE_BYTES / (1024 * 1024)).toFixed(1);
+        const error = new Error(`CSV file is too large (max ${limitMb} MB).`);
+        showNotification(error.message, "error");
+        throw error;
+      }
+      const text = await file.text();
+      try {
+        const payload = parseCsvPeople(text);
+
+        const previousState = {
+          people: [...people],
+          venues: [...venues],
+          tags: [...tags],
+          favorites: [...favoriteVenues],
+        };
+
+        try {
+          replacePeople(payload.people);
+          replaceVenues(payload.venues);
+          replaceTags(payload.tags);
+          setFavoriteVenues([]);
+        } catch (applyError) {
+          replacePeople(previousState.people);
+          replaceVenues(previousState.venues);
+          replaceTags(previousState.tags);
+          setFavoriteVenues(previousState.favorites);
+          throw applyError;
+        }
+
+        if (payload.errors.length > 0) {
+          console.warn("CSV import row issues:", payload.errors);
+        }
+        let message = "CSV imported";
+        if (payload.skipped) {
+          message += ` (skipped ${payload.skipped} rows)`;
+        }
+        if (payload.errors.length > 0) {
+          message += ". Check console for details";
+        }
+        message += ".";
+        showNotification(message, "success");
+        return payload;
+      } catch (error) {
+        console.error(error);
+        showNotification(error instanceof Error ? error.message : "CSV import failed.", "error");
+        throw error;
+      }
+    },
+    [favoriteVenues, people, replacePeople, replaceTags, replaceVenues, setFavoriteVenues, showNotification, tags, venues]
+  );
+
+  return { exportBackup, importBackupFromFile, exportCsvBackup, importCsvFromFile };
 }
