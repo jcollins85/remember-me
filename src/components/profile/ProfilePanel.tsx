@@ -127,7 +127,7 @@ export default function ProfilePanel({
                   { label: "People tracked", value: stats.peopleCount, icon: <UserRound size={16} className="text-[var(--color-accent)]" /> },
                   { label: "Venues logged", value: stats.venuesWithPeople, icon: <MapPin size={16} className="text-[var(--color-accent)]" /> },
                   { label: "Tags applied", value: stats.uniqueTagCount, icon: <TagIcon size={16} className="text-[var(--color-accent)]" /> },
-                  { label: "Pins saved", value: insights.pinsSaved, icon: <MapPin size={16} className="text-[var(--color-accent)]" /> },
+                  { label: "Venues pinned", value: insights.pinsSaved, icon: <MapPin size={16} className="text-[var(--color-accent)]" /> },
                 ].map((item) => (
                   <div
                     key={item.label}
