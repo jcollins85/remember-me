@@ -376,7 +376,7 @@ export default function PersonForm({
       {/* Venue */}
       <div>
         <label htmlFor="venue" className={labelClass}>
-          Venue (optional)
+          Venue Name
         </label>
         <p className="text-xs text-[var(--color-text-secondary)] mb-2">
           Name or select the venue to enable location tools.
@@ -463,7 +463,7 @@ export default function PersonForm({
       {/* Description */}
       <div>
         <label htmlFor="description" className={labelClass}>
-          Description (optional)
+          Description
         </label>
         <textarea
           id="description"

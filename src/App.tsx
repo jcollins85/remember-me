@@ -317,6 +317,8 @@ function App() {
     replaceTags([]);
     setFavoriteVenues([]);
     resetAchievements();
+    localStorage.removeItem("onboarding_seen");
+    setShowOnboarding(true);
     showNotification("App reset to a blank state.", "info");
   };
 

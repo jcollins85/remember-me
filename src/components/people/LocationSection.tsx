@@ -438,7 +438,7 @@ type PendingAction = (() => Promise<void>) | null;
             className="mt-1.5 space-y-4 will-change-transform"
           >
             <div>
-              <p className={labelClass.replace("mb-2", "")}>Location (optional)</p>
+              <p className={labelClass.replace("mb-2", "")}>Location</p>
               <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
                 Add a map pin for this venue.
               </p>
