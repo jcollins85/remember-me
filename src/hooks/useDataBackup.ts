@@ -1,5 +1,8 @@
 import { useCallback } from "react";
 import type { Dispatch, SetStateAction } from "react";
+import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
 import { usePeople } from "../context/PeopleContext";
 import { useTags } from "../context/TagContext";
 import { useVenues } from "../context/VenueContext";
@@ -406,16 +409,18 @@ export function useDataBackup(
   const { showNotification } = useNotification();
 
   // Client-side export just serializes the sanitized contexts into a downloadable JSON blob.
+  const buildBackupPayload = () => ({
+    version: BACKUP_VERSION,
+    exportedAt: new Date().toISOString(),
+    people,
+    venues,
+    tags,
+    favoriteVenues,
+  });
+
   const exportBackup = useCallback(() => {
     try {
-      const payload: BackupFile = {
-        version: BACKUP_VERSION,
-        exportedAt: new Date().toISOString(),
-        people,
-        venues,
-        tags,
-        favoriteVenues,
-      };
+      const payload: BackupFile = buildBackupPayload();
 
       const json = JSON.stringify(payload, null, 2);
       const blob = new Blob([json], { type: "application/json" });
@@ -435,6 +440,40 @@ export function useDataBackup(
       showNotification("Unable to export data.", "error");
     }
   }, [favoriteVenues, people, showNotification, tags, venues]);
+
+  const exportIcloudBackup = useCallback(async () => {
+    if (!Capacitor.isNativePlatform()) {
+      exportBackup();
+      return;
+    }
+    try {
+      const payload: BackupFile = buildBackupPayload();
+      const json = JSON.stringify(payload, null, 2);
+      const fileName = `methere-backup-${new Date().toISOString().split("T")[0]}.json`;
+
+      await Filesystem.writeFile({
+        path: fileName,
+        data: json,
+        directory: Directory.Documents,
+        encoding: Encoding.UTF8,
+      });
+
+      const { uri } = await Filesystem.getUri({
+        path: fileName,
+        directory: Directory.Documents,
+      });
+
+      await Share.share({
+        title: "MetHere backup",
+        url: uri,
+        dialogTitle: "Backup to iCloud Drive",
+      });
+      showNotification("Backup ready to save.", "success");
+    } catch (error) {
+      console.error(error);
+      showNotification("Unable to prepare iCloud backup.", "error");
+    }
+  }, [exportBackup, favoriteVenues, people, showNotification, tags, venues]);
 
   const exportCsvBackup = useCallback(() => {
     try {
@@ -464,16 +503,44 @@ export function useDataBackup(
         CSV_HEADERS.join(","),
         ...rows.map((row) => row.join(",")),
       ].join("\n");
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = `methere-people-${new Date().toISOString().split("T")[0]}.csv`;
-      document.body.appendChild(anchor);
-      anchor.click();
-      document.body.removeChild(anchor);
-      URL.revokeObjectURL(url);
-      showNotification("CSV exported.", "success");
+      const fileName = `methere-people-${new Date().toISOString().split("T")[0]}.csv`;
+      if (Capacitor.isNativePlatform()) {
+        Filesystem.writeFile({
+          path: fileName,
+          data: csv,
+          directory: Directory.Documents,
+          encoding: Encoding.UTF8,
+        })
+          .then(() =>
+            Filesystem.getUri({
+              path: fileName,
+              directory: Directory.Documents,
+            })
+          )
+          .then(({ uri }) =>
+            Share.share({
+              title: "MetHere CSV export",
+              url: uri,
+              dialogTitle: "Export CSV",
+            })
+          )
+          .then(() => showNotification("CSV ready to save.", "success"))
+          .catch((error) => {
+            console.error(error);
+            showNotification("Unable to export CSV.", "error");
+          });
+      } else {
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = fileName;
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(url);
+        showNotification("CSV exported.", "success");
+      }
     } catch (error) {
       console.error(error);
       showNotification("Unable to export CSV.", "error");
@@ -580,5 +647,5 @@ export function useDataBackup(
     [favoriteVenues, people, replacePeople, replaceTags, replaceVenues, setFavoriteVenues, showNotification, tags, venues]
   );
 
-  return { exportBackup, importBackupFromFile, exportCsvBackup, importCsvFromFile };
+  return { exportBackup, exportIcloudBackup, importBackupFromFile, exportCsvBackup, importCsvFromFile };
 }

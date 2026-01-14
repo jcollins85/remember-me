@@ -1,5 +1,6 @@
 import React, { useContext, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Capacitor } from "@capacitor/core";
 import { ThemeContext, ThemeKey } from "../../theme/ThemeContext";
 import { SunMedium, Palette, Moon, Heart, Download, Upload, Lock, X, Palette as PaletteIcon, CloudUpload, Wrench, Settings, Leaf, Waves, MapPin } from "lucide-react";
 import { useDataBackup } from "../../hooks/useDataBackup";
@@ -74,7 +75,7 @@ export default function SettingsPanel({
   proximitySupported,
 }: SettingsPanelProps) {
   const { theme, setTheme } = useContext(ThemeContext);
-  const { exportBackup, importBackupFromFile, exportCsvBackup, importCsvFromFile } =
+  const { exportBackup, exportIcloudBackup, importBackupFromFile, exportCsvBackup, importCsvFromFile } =
     useDataBackup(favoriteVenues, setFavoriteVenues);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -83,11 +84,18 @@ export default function SettingsPanel({
   const [hapticsEnabled, setHapticsEnabled] = useState(isHapticsEnabled());
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const csvFileInputRef = useRef<HTMLInputElement | null>(null);
+  const isNative = Capacitor.isNativePlatform();
+  const jsonExportLabel = isNative ? "Backup to iCloud" : "Export JSON";
+  const jsonImportLabel = isNative ? "Restore from iCloud" : "Import JSON";
 
-  const handleExport = () => {
+  const handleExport = async () => {
     setIsExporting(true);
     try {
-      exportBackup();
+      if (isNative) {
+        await exportIcloudBackup();
+      } else {
+        exportBackup();
+      }
     } finally {
       setIsExporting(false);
     }
@@ -349,7 +357,7 @@ export default function SettingsPanel({
                     <Lock size={16} className="text-[var(--color-accent)]" />
                   </div>
 
-                  <div className="flex gap-3">
+                  <div className="flex flex-col gap-3">
                     <button
                       onClick={async () => {
                         await triggerImpact(ImpactStyle.Light);
@@ -359,7 +367,7 @@ export default function SettingsPanel({
                       className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-[color:var(--color-card-border)] bg-[var(--color-card)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/90 disabled:opacity-60"
                     >
                       <Download size={16} />
-                      {isExporting ? "Exporting…" : "Export JSON"}
+                      {isExporting ? "Exporting…" : jsonExportLabel}
                     </button>
                     <button
                       onClick={async () => {
@@ -370,11 +378,16 @@ export default function SettingsPanel({
                       className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] px-4 py-3 text-sm font-semibold hover:bg-[var(--color-accent-muted)] disabled:opacity-60"
                     >
                       <Upload size={16} />
-                      {isImporting ? "Importing…" : "Import JSON"}
+                      {isImporting ? "Importing…" : jsonImportLabel}
                     </button>
                   </div>
+                  {isNative && (
+                    <p className="text-[11px] text-[var(--color-text-secondary)]">
+                      Tap "Save to Files", then choose iCloud Drive.
+                    </p>
+                  )}
 
-                  <div className="flex gap-3">
+                  <div className="flex flex-col gap-3">
                     <button
                       onClick={async () => {
                         await triggerImpact(ImpactStyle.Light);
@@ -493,7 +506,7 @@ export default function SettingsPanel({
               <section className="space-y-2 border-t border-white/40 pt-4 text-[var(--color-text-secondary)]">
                 <p className="text-xs font-semibold uppercase tracking-wide">About</p>
                 <div className="rounded-2xl bg-[var(--color-card)]/95 text-xs space-y-1 shadow-level1/40 mt-1.5">
-                  <p>Version v{APP_VERSION} · Made by Era One</p>
+                  <p>Version v{APP_VERSION} · Made by Julian Collins</p>
                   <div className="flex gap-4 text-[var(--color-text-secondary)]">
                     <button className="underline-offset-2 hover:underline" type="button">
                       Privacy
