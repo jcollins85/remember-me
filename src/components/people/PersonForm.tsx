@@ -400,7 +400,7 @@ export default function PersonForm({
           <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Suggested venues</p>
           <div
             ref={venueRail.ref}
-            className="relative overflow-x-auto whitespace-nowrap gap-2 px-1 pb-1.5 pr-10 tag-suggestion-rail"
+            className="relative overflow-x-auto whitespace-nowrap gap-2 px-1 pb-3 pr-10 tag-suggestion-rail"
             style={{ scrollbarGutter: "stable", WebkitOverflowScrolling: "touch" }}
           >
             {venueSuggestions.map((name) => {
@@ -501,7 +501,7 @@ export default function PersonForm({
                 aria-label={`Remove tag ${tagName}`}
               >
                 {tagName}
-                <span className="ml-2 text-red-500 text-base">×</span>
+                <span className="ml-1 h-3.5 w-3.5 text-red-500 text-sm leading-none inline-flex items-center justify-center">×</span>
               </button>
             ))
           ) : (

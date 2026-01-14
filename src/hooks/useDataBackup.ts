@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
+import { useAnalytics } from "../context/AnalyticsContext";
 import { usePeople } from "../context/PeopleContext";
 import { useTags } from "../context/TagContext";
 import { useVenues } from "../context/VenueContext";
@@ -407,6 +408,7 @@ export function useDataBackup(
   const { tags, replaceTags } = useTags();
   const { venues, replaceVenues } = useVenues();
   const { showNotification } = useNotification();
+  const { trackEvent } = useAnalytics();
 
   // Client-side export just serializes the sanitized contexts into a downloadable JSON blob.
   const buildBackupPayload = () => ({
@@ -435,6 +437,7 @@ export function useDataBackup(
       document.body.removeChild(anchor);
       URL.revokeObjectURL(url);
       showNotification("Backup downloaded.", "success");
+      trackEvent("backup_exported", { type: "json" });
     } catch (error) {
       console.error(error);
       showNotification("Unable to export data.", "error");
@@ -469,6 +472,7 @@ export function useDataBackup(
         dialogTitle: "Backup to iCloud Drive",
       });
       showNotification("Backup ready to save.", "success");
+      trackEvent("backup_exported", { type: "icloud" });
     } catch (error) {
       console.error(error);
       showNotification("Unable to prepare iCloud backup.", "error");
@@ -524,7 +528,10 @@ export function useDataBackup(
               dialogTitle: "Export CSV",
             })
           )
-          .then(() => showNotification("CSV ready to save.", "success"))
+          .then(() => {
+            showNotification("CSV ready to save.", "success");
+            trackEvent("backup_exported", { type: "csv" });
+          })
           .catch((error) => {
             console.error(error);
             showNotification("Unable to export CSV.", "error");
@@ -540,6 +547,7 @@ export function useDataBackup(
         document.body.removeChild(anchor);
         URL.revokeObjectURL(url);
         showNotification("CSV exported.", "success");
+        trackEvent("backup_exported", { type: "csv" });
       }
     } catch (error) {
       console.error(error);
@@ -580,6 +588,7 @@ export function useDataBackup(
         }
 
         showNotification("Backup imported successfully.", "success");
+        trackEvent("backup_imported", { type: "json" });
         return payload;
       } catch (error) {
         console.error(error);
@@ -637,6 +646,7 @@ export function useDataBackup(
         }
         message += ".";
         showNotification(message, "success");
+        trackEvent("backup_imported", { type: "csv" });
         return payload;
       } catch (error) {
         console.error(error);

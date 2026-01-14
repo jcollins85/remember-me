@@ -82,19 +82,11 @@ export const startProximityAlerts = async (venues: MonitoredVenue[]) => {
 
   try {
     const permResult = await GeofenceBridge.requestPermissions();
-    trackEvent("proximity_permission_checked", {
-      scope: "location",
-      status: permResult.location,
-    });
     if (permResult.location !== "granted") {
       return { ok: false, error: "Location access is required to enable nearby venue alerts." };
     }
 
     const notifPerm = await LocalNotifications.requestPermissions();
-    trackEvent("proximity_permission_checked", {
-      scope: "notifications",
-      status: notifPerm.display,
-    });
     if (notifPerm.display !== "granted") {
       return { ok: false, error: "Notifications are disabled. Enable them in Settings." };
     }
@@ -110,10 +102,6 @@ export const startProximityAlerts = async (venues: MonitoredVenue[]) => {
       }));
     await GeofenceBridge.startMonitoring({
       venues: venuesToMonitor,
-    });
-    trackEvent("proximity_monitoring_update", {
-      action: "start",
-      venue_count: venuesToMonitor.length,
     });
     return { ok: true };
   } catch (error: any) {
@@ -152,10 +140,6 @@ export const refreshMonitoredVenues = async (venues: MonitoredVenue[]) => {
       }));
     await GeofenceBridge.startMonitoring({
       venues: venuesToMonitor,
-    });
-    trackEvent("proximity_monitoring_update", {
-      action: "refresh",
-      venue_count: venuesToMonitor.length,
     });
   } catch (error: any) {
     console.warn("Unable to refresh geofence monitoring", error);

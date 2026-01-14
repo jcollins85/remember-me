@@ -584,8 +584,14 @@ function App() {
         setVenueSortDir={setVenueSortDir}
         personSort={personSort}
         setPersonSort={setPersonSort}
-        onOpenSettings={() => setShowSettings(true)}
-        onOpenProfile={() => setShowProfile(true)}
+        onOpenSettings={() => {
+          trackEvent("settings_opened");
+          setShowSettings(true);
+        }}
+        onOpenProfile={() => {
+          trackEvent("profile_opened");
+          setShowProfile(true);
+        }}
         getTagNameById={getTagNameById}
         venueView={venueView}
         setVenueView={setVenueView}
@@ -673,8 +679,13 @@ function App() {
             onEdit={setEditingPerson}
             onDelete={handleDelete}
             onToggleFavorite={(id) => {
-              const p = people.find(p => p.id === id);
-              if (p) updatePerson({ ...p, favorite: !p.favorite });
+              const p = people.find((person) => person.id === id);
+              if (!p) return;
+              const nextFavorite = !p.favorite;
+              updatePerson({ ...p, favorite: nextFavorite });
+              trackEvent(nextFavorite ? "person_favorited" : "person_unfavorited", {
+                person_id: p.id,
+              });
             }}
             searchQuery={searchQuery}
             distanceLabels={venueDistanceLabels}

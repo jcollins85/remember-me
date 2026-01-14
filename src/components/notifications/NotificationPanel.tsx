@@ -1,7 +1,8 @@
-import React, { ReactNode } from "react";
+import React, { ReactNode, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, CheckCircle2, Info, AlertTriangle, Star } from "lucide-react";
 import { NotificationEntry, NotificationType } from "../../context/NotificationContext";
+import { useAnalytics } from "../../context/AnalyticsContext";
 
 interface NotificationPanelProps {
   open: boolean;
@@ -37,7 +38,14 @@ export default function NotificationPanel({
   onMarkAllRead,
   onMarkRead,
 }: NotificationPanelProps) {
+  const { trackEvent } = useAnalytics();
   const hasNotifications = notifications.length > 0;
+
+  useEffect(() => {
+    if (open) {
+      trackEvent("notifications_opened", { count: notifications.length });
+    }
+  }, [open, notifications.length, trackEvent]);
 
   return (
     <AnimatePresence>
@@ -70,7 +78,10 @@ export default function NotificationPanel({
             {hasNotifications && (
               <button
                 className="text-xs font-semibold text-[var(--color-accent)] hover:underline"
-                onClick={onMarkAllRead}
+                onClick={() => {
+                  trackEvent("notifications_mark_all_read");
+                  onMarkAllRead();
+                }}
               >
                 Mark all read
               </button>
@@ -101,7 +112,10 @@ export default function NotificationPanel({
                       ? "border-white/60 bg-white/60 opacity-70"
                       : "border-[var(--color-accent)]/40 bg-white shadow-level1"
                   }`}
-                  onClick={() => onMarkRead(entry.id)}
+                  onClick={() => {
+                    trackEvent("notification_mark_read", { id: entry.id });
+                    onMarkRead(entry.id);
+                  }}
                 >
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center bg-white/80 ${meta.className}`}

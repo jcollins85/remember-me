@@ -5,6 +5,7 @@ import { ThemeContext, ThemeKey } from "../../theme/ThemeContext";
 import { SunMedium, Palette, Moon, Heart, Download, Upload, Lock, X, Palette as PaletteIcon, CloudUpload, Wrench, Settings, Leaf, Waves, MapPin } from "lucide-react";
 import { useDataBackup } from "../../hooks/useDataBackup";
 import { triggerImpact, ImpactStyle, isHapticsEnabled, setHapticsEnabled as persistHapticsPreference } from "../../utils/haptics";
+import { useAnalytics } from "../../context/AnalyticsContext";
 
 const APP_VERSION = import.meta.env.VITE_APP_VERSION || '0.0.0';
 interface SettingsPanelProps {
@@ -75,6 +76,7 @@ export default function SettingsPanel({
   proximitySupported,
 }: SettingsPanelProps) {
   const { theme, setTheme } = useContext(ThemeContext);
+  const { trackEvent } = useAnalytics();
   const { exportBackup, exportIcloudBackup, importBackupFromFile, exportCsvBackup, importCsvFromFile } =
     useDataBackup(favoriteVenues, setFavoriteVenues);
   const [isExporting, setIsExporting] = useState(false);
@@ -456,6 +458,7 @@ export default function SettingsPanel({
                           onClick={async () => {
                             await triggerImpact(ImpactStyle.Light);
                             onResetData();
+                            trackEvent("reset_sample_data");
                           }}
                           className="px-4 py-3 rounded-2xl border border-[color:var(--color-card-border)] bg-[var(--color-card)] text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/90 transition"
                         >
@@ -465,6 +468,7 @@ export default function SettingsPanel({
                           onClick={async () => {
                             await triggerImpact(ImpactStyle.Light);
                             onClearAchievements();
+                            trackEvent("achievements_cleared");
                           }}
                           className="px-4 py-3 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] text-sm font-semibold hover:bg-[var(--color-accent-muted)] transition"
                         >
@@ -476,6 +480,7 @@ export default function SettingsPanel({
                           onClick={async () => {
                             await triggerImpact(ImpactStyle.Heavy);
                             onResetApp();
+                            trackEvent("reset_app");
                           }}
                           className="w-full px-4 py-3 rounded-2xl border border-red-200/60 bg-red-500/10 text-sm font-semibold text-red-500 hover:bg-red-500/15 transition"
                         >
@@ -494,6 +499,7 @@ export default function SettingsPanel({
                       onClick={async () => {
                         await triggerImpact(ImpactStyle.Heavy);
                         onResetApp();
+                        trackEvent("reset_app");
                       }}
                       className="w-full px-4 py-3 rounded-2xl border border-red-200/60 bg-red-500/10 text-sm font-semibold text-red-500 hover:bg-red-500/15 transition"
                     >

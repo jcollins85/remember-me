@@ -5,6 +5,7 @@ import type { SortKey, VenueSortKey } from "../../utils/sortHelpers";
 import SegmentedControl, { Segment } from "../ui/SegmentedControl";
 import SortControls from "./SortControls";
 import { triggerImpact, ImpactStyle } from "../../utils/haptics";
+import { useAnalytics } from "../../context/AnalyticsContext";
 
 interface HeaderProps {
   searchQuery: string;
@@ -50,6 +51,7 @@ const Header: React.FC<HeaderProps> = ({
   showSortModal,
   setShowSortModal,
 }) => {
+  const { trackEvent } = useAnalytics();
   const segments: Segment<"all" | "favs">[] = useMemo(
     () => [
       { key: "all", label: `All Venues (${totalVenueCount})` },
@@ -106,7 +108,10 @@ const Header: React.FC<HeaderProps> = ({
               className={`absolute top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition ${
                 searchQuery ? "right-9" : "right-3.5"
               }`}
-              onClick={() => setShowSortModal(true)}
+              onClick={() => {
+                trackEvent("sort_modal_opened");
+                setShowSortModal(true);
+              }}
             >
               <ListFilter size={18} />
             </button>

@@ -80,8 +80,7 @@ export default function VenueGroupList({
     >
       <div className="flex items-center justify-between gap-3 py-1">
         <button
-          onClick={async () => {
-            await trackEvent("venue_toggle", { venue, open: !isOpen });
+          onClick={() => {
             toggleGroup(venue);
           }}
           className="text-left text-lg font-semibold text-[var(--color-text-primary)] flex items-center gap-2"

@@ -1,11 +1,14 @@
 import { motion } from "framer-motion";
 import InlineLogo from "../../assets/brand/MetHere-inline-clean-transparent-tight.svg";
+import { useAnalytics } from "../../context/AnalyticsContext";
 
 interface OnboardingScreenProps {
   onComplete: () => void;
 }
 
 export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
+  const { trackEvent } = useAnalytics();
+
   return (
     <div
       className="min-h-screen w-full flex items-center justify-center px-4 py-10"
@@ -37,7 +40,10 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
         </p>
         <button
           type="button"
-          onClick={onComplete}
+          onClick={() => {
+            trackEvent("onboarding_completed");
+            onComplete();
+          }}
           className="mt-8 w-full rounded-full bg-[var(--color-accent)] px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_30px_rgba(37,99,235,0.3)] transition hover:brightness-110"
         >
           Get Started

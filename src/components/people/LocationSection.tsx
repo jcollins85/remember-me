@@ -385,6 +385,7 @@ type PendingAction = (() => Promise<void>) | null;
       setLocationTag(place.address);
       showNotification(`Location set to ${place.name}`, "info");
       trackEvent("venue_pin_captured", { source: "search", venueName: venueName });
+      trackEvent("place_selected", { venueName, placeName: place.name });
       return Promise.resolve();
     };
     if (maybeConfirmReplace(coordsPayload, action)) {
@@ -522,6 +523,10 @@ type PendingAction = (() => Promise<void>) | null;
                         ?.writeText(text)
                         .then(() => showNotification("Coordinates copied", "info"))
                         .catch(() => showNotification("Unable to copy coordinates.", "error"));
+                      trackEvent("copy_address_clicked", {
+                        venueName,
+                        hasAddress: Boolean(locationTag),
+                      });
                     }}
                     className="rounded-full border border-[var(--color-card-border)] px-3 py-1 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
                   >
@@ -537,6 +542,7 @@ type PendingAction = (() => Promise<void>) | null;
                         } else {
                           window.open(`https://maps.google.com/?q=${coords.lat},${coords.lon}`, "_blank");
                         }
+                        trackEvent("open_in_maps_clicked", { venueName });
                       }
                     }}
                     className="rounded-full border border-[var(--color-card-border)] px-3 py-1 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
