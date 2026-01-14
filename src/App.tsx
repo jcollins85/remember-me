@@ -23,6 +23,7 @@ import { useSearchSort } from './components/header/useSearchSort';
 import Notification from './components/common/Notification';
 import SettingsPanel from "./components/settings/SettingsPanel";
 import ProfilePanel from "./components/profile/ProfilePanel";
+import PermissionPromptModal from "./components/common/PermissionPromptModal";
 
 import { SortKey, VenueSortKey } from "./utils/sortHelpers";
 import { triggerImpact, ImpactStyle } from "./utils/haptics";
@@ -86,6 +87,8 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
+  const [showProximityPrePrompt, setShowProximityPrePrompt] = useState(false);
+  const [pendingProximitySource, setPendingProximitySource] = useState<"settings" | "venue_toggle" | null>(null);
   const [proximityEnabled, setProximityEnabled] = useState(() =>
     proximitySupported && isProximityAlertsEnabled()
   );
@@ -96,10 +99,16 @@ function App() {
   const [venueView, setVenueView] = useState<VenueView>("all");
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
 
+  const {
+    toasts,
+    showNotification,
+    dismissToast,
+  } = useNotification();
+
   // Capture a lightweight location snapshot so we can show venue distances and feed smart
   // monitoring without aggressively polling the GPS (500m distance filter keeps battery happy).
   useEffect(() => {
-    if (showOnboarding || !hasPinnedVenue) {
+    if (showOnboarding || !hasPinnedVenue || !proximityEnabled || !proximitySupported) {
       setUserLocation(null);
       return;
     }
@@ -127,6 +136,10 @@ function App() {
         );
       } catch (err) {
         console.warn("Unable to fetch current location", err);
+        showNotification(
+          "Location access is disabled. Enable it to power nearby alerts.",
+          "info"
+        );
       }
     };
     fetchLocation();
@@ -136,14 +149,7 @@ function App() {
         CapacitorGeolocation.clearWatch({ id: watchId });
       }
     };
-  }, [showOnboarding, hasPinnedVenue]);
-
-
-  const {
-    toasts,
-    showNotification,
-    dismissToast,
-  } = useNotification();
+  }, [showOnboarding, hasPinnedVenue, proximityEnabled, proximitySupported, showNotification]);
   
   const {
     searchQuery, setSearchQuery,
@@ -322,12 +328,44 @@ function App() {
     showNotification("App reset to a blank state.", "info");
   };
 
+  const shouldShowProximityPrePrompt = () => {
+    if (!proximitySupported) return false;
+    try {
+      return localStorage.getItem("proximity_preprompt_seen") !== "true";
+    } catch {
+      return false;
+    }
+  };
+
+  const enableProximity = (source?: "settings" | "venue_toggle") => {
+    if (!proximitySupported) {
+      showNotification("Nearby venue alerts are only available in the iOS app.", "info");
+      return;
+    }
+    if (proximityEnabled) return;
+    setProximityAlertsEnabled(true);
+    setProximityEnabled(true);
+    trackEvent("proximity_toggle", {
+      enabled: true,
+      ...(source ? { source } : {}),
+    });
+  };
+
   const handleProximityToggle = async () => {
     if (!proximitySupported) {
       showNotification("Nearby venue alerts are only available in the iOS app.", "info");
       return;
     }
     const next = !proximityEnabled;
+    if (next && shouldShowProximityPrePrompt()) {
+      setPendingProximitySource("settings");
+      setShowProximityPrePrompt(true);
+      return;
+    }
+    if (next) {
+      enableProximity("settings");
+      return;
+    }
     setProximityAlertsEnabled(next);
     setProximityEnabled(next);
     trackEvent("proximity_toggle", { enabled: next });
@@ -339,9 +377,31 @@ function App() {
       return;
     }
     if (proximityEnabled) return;
-    setProximityAlertsEnabled(true);
-    setProximityEnabled(true);
-    trackEvent("proximity_toggle", { enabled: true, source: "venue_toggle" });
+    if (shouldShowProximityPrePrompt()) {
+      setPendingProximitySource("venue_toggle");
+      setShowProximityPrePrompt(true);
+      return;
+    }
+    enableProximity("venue_toggle");
+  };
+
+  const handlePrePromptConfirm = () => {
+    try {
+      localStorage.setItem("proximity_preprompt_seen", "true");
+    } catch {
+      // ignore
+    }
+    const source = pendingProximitySource;
+    setPendingProximitySource(null);
+    setShowProximityPrePrompt(false);
+    if (source) {
+      enableProximity(source);
+    }
+  };
+
+  const handlePrePromptCancel = () => {
+    setPendingProximitySource(null);
+    setShowProximityPrePrompt(false);
   };
 
   const handleClearAchievements = () => {
@@ -685,9 +745,7 @@ function App() {
               if (!p) return;
               const nextFavorite = !p.favorite;
               updatePerson({ ...p, favorite: nextFavorite });
-              trackEvent(nextFavorite ? "person_favorited" : "person_unfavorited", {
-                person_id: p.id,
-              });
+              trackEvent(nextFavorite ? "person_favorited" : "person_unfavorited");
             }}
             searchQuery={searchQuery}
             distanceLabels={venueDistanceLabels}
@@ -719,6 +777,15 @@ function App() {
         onToggleProximity={handleProximityToggle}
         proximitySupported={proximitySupported}
       />
+
+      <AnimatePresence>
+        {showProximityPrePrompt && (
+          <PermissionPromptModal
+            onConfirm={handlePrePromptConfirm}
+            onCancel={handlePrePromptCancel}
+          />
+        )}
+      </AnimatePresence>
 
       <ProfilePanel
         open={showProfile}

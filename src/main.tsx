@@ -12,8 +12,8 @@ import { AnalyticsProvider } from './context/AnalyticsContext';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ThemeProvider>
-      <AnalyticsProvider>
+    <AnalyticsProvider>
+      <ThemeProvider>
         <NotificationProvider>
           <TagProvider>
             <PeopleProvider>
@@ -23,7 +23,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             </PeopleProvider>
           </TagProvider>
         </NotificationProvider>
-      </AnalyticsProvider>
-    </ThemeProvider>
+      </ThemeProvider>
+    </AnalyticsProvider>
   </React.StrictMode>
 );

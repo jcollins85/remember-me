@@ -142,6 +142,11 @@ export default function PersonForm({
     return () => window.clearTimeout(id);
   }, [tagPulse]);
 
+  const applyTag = (tagName: string, source: "input" | "suggestion" | "create" | "submit") => {
+    commitTag(tagName);
+    trackEvent("tag_applied", { source });
+  };
+
   const handleTagBlur = () => {
     if (ignoreBlurRef.current) {
       ignoreBlurRef.current = false;
@@ -149,7 +154,7 @@ export default function PersonForm({
     }
     // only commit if there’s something left uncommitted
     if (currentInput.trim()) {
-      commitTag(currentInput);
+      applyTag(currentInput, "input");
     }
     // and clear the input & suggestions
     onInputChange({ target: { value: '' } } as any);
@@ -237,7 +242,7 @@ export default function PersonForm({
 
     // Commit any leftover tag
     const leftover = currentInput.trim();
-    if (leftover) commitTag(leftover);
+    if (leftover) applyTag(leftover, "submit");
 
     // Resolve tags to IDs
     const tagIds = currentTags.map((tagName) => {
@@ -545,7 +550,7 @@ export default function PersonForm({
                   }}
                   onClick={async () => {
                     await triggerImpact(ImpactStyle.Light);
-                    commitTag(tag.name);
+                    applyTag(tag.name, "suggestion");
                     clearInput();
                     setTagPulse(tag.id);
                   }}
@@ -595,9 +600,9 @@ export default function PersonForm({
                     }}
                     onClick={async () => {
                       await triggerImpact(ImpactStyle.Light);
-                      commitTag(pendingTag);
+                      applyTag(pendingTag, "create");
                       clearInput();
-                      trackEvent("custom_tag_created", { tag: pendingTag });
+                      trackEvent("custom_tag_created");
                     }}
                     className="inline-block mr-3 px-3 py-1 rounded-full text-sm border border-dashed border-[var(--color-accent)] text-[var(--color-accent)] bg-white/70 hover:bg-white"
                   >
