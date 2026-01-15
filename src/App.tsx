@@ -37,6 +37,7 @@ import { Geolocation as CapacitorGeolocation } from "@capacitor/geolocation";
 import { Geolocation } from "@capacitor/geolocation";
 
 import { isProximityAlertsEnabled, setProximityAlertsEnabled } from "./utils/proximityAlerts";
+import { togglePersonFavorite } from "./utils/favorites";
 import {
   refreshMonitoredVenues,
   startProximityAlerts,
@@ -776,8 +777,9 @@ function App() {
             onToggleFavorite={(id) => {
               const p = people.find((person) => person.id === id);
               if (!p) return;
-              const nextFavorite = !p.favorite;
-              updatePerson({ ...p, favorite: nextFavorite });
+              const updatedPerson = togglePersonFavorite(p);
+              const nextFavorite = !!updatedPerson.favorite;
+              updatePerson(updatedPerson);
               trackEvent(nextFavorite ? "person_favorited" : "person_unfavorited");
             }}
             searchQuery={searchQuery}
