@@ -5,6 +5,7 @@ import { getFirebaseAnalytics } from "../firebase";
 
 export type AnalyticsParams = Record<string, string | number | boolean | undefined>;
 
+// Routes events to native Firebase on iOS, falling back to web analytics in the browser.
 export const trackEvent = async (eventName: string, params?: AnalyticsParams) => {
   try {
     if (Capacitor.getPlatform() === "ios") {

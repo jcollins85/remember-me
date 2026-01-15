@@ -38,6 +38,7 @@ export default function NotificationPanel({
   onMarkAllRead,
   onMarkRead,
 }: NotificationPanelProps) {
+  // Lightweight in-app history panel for toast-style notifications.
   const { trackEvent } = useAnalytics();
   const hasNotifications = notifications.length > 0;
 

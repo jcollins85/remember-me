@@ -6,6 +6,7 @@ interface OnboardingScreenProps {
   onComplete: () => void;
 }
 
+// Single-screen onboarding shown only on first launch or after a full reset.
 export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const { trackEvent } = useAnalytics();
 

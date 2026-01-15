@@ -7,6 +7,7 @@ interface PermissionPromptModalProps {
   onCancel: () => void;
 }
 
+// Pre-permission explainer shown before iOS location/notification prompts.
 export default function PermissionPromptModal({
   onConfirm,
   onCancel,

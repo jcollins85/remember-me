@@ -5,6 +5,7 @@ interface AnalyticsContextValue {
   trackEvent: (eventName: string, params?: AnalyticsParams) => Promise<void>;
 }
 
+// Default no-op keeps analytics optional without guarding every call site.
 const AnalyticsContext = createContext<AnalyticsContextValue>({
   trackEvent: async () => {},
 });

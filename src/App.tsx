@@ -329,6 +329,7 @@ function App() {
     showNotification("App reset to a blank state.", "info");
   };
 
+  // One-time pre-prompt to explain why iOS will ask for permissions.
   const shouldShowProximityPrePrompt = () => {
     if (!proximitySupported) return false;
     try {

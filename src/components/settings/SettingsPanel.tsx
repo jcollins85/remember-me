@@ -97,6 +97,7 @@ export default function SettingsPanel({
   const jsonExportLabel = isNative ? "Backup to iCloud" : "Export JSON";
   const jsonImportLabel = isNative ? "Restore from iCloud" : "Import JSON";
 
+  // Prefer the in-app browser on iOS for a clean feedback/support experience.
   const openSupportLink = async (url: string) => {
     if (isNative) {
       try {

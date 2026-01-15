@@ -12,6 +12,7 @@ import { AnalyticsProvider } from './context/AnalyticsContext';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
+    {/* Analytics wraps theme so theme changes can log events immediately. */}
     <AnalyticsProvider>
       <ThemeProvider>
         <NotificationProvider>
