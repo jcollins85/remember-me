@@ -1,14 +1,19 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Capacitor } from "@capacitor/core";
+import { Browser } from "@capacitor/browser";
 import { App as CapacitorApp } from "@capacitor/app";
 import { ThemeContext, ThemeKey } from "../../theme/ThemeContext";
-import { SunMedium, Palette, Moon, Heart, Download, Upload, Lock, X, Palette as PaletteIcon, CloudUpload, Wrench, Settings, Leaf, Waves, MapPin } from "lucide-react";
+import { SunMedium, Palette, Moon, Heart, Download, Upload, Lock, X, Palette as PaletteIcon, CloudUpload, Wrench, Settings, Leaf, Waves, MapPin, MessageSquare } from "lucide-react";
 import { useDataBackup } from "../../hooks/useDataBackup";
 import { triggerImpact, ImpactStyle, isHapticsEnabled, setHapticsEnabled as persistHapticsPreference } from "../../utils/haptics";
 import { useAnalytics } from "../../context/AnalyticsContext";
 
 const APP_VERSION = import.meta.env.VITE_APP_VERSION || '0.0.0';
+const FEEDBACK_FORM_URL =
+  "https://docs.google.com/forms/d/e/1FAIpQLSeh-ofljUy5wZLdXWoXHRC_SDXfB8a_wPUmbYbNW74kEBCHyg/viewform";
+const BUG_REPORT_URL =
+  "https://docs.google.com/forms/d/e/1FAIpQLSeh-ofljUy5wZLdXWoXHRC_SDXfB8a_wPUmbYbNW74kEBCHyg/viewform?usp=pp_url&entry.821011906=Bug+report";
 interface SettingsPanelProps {
   open: boolean;
   onClose: () => void;
@@ -91,6 +96,18 @@ export default function SettingsPanel({
   const isNative = Capacitor.isNativePlatform();
   const jsonExportLabel = isNative ? "Backup to iCloud" : "Export JSON";
   const jsonImportLabel = isNative ? "Restore from iCloud" : "Import JSON";
+
+  const openSupportLink = async (url: string) => {
+    if (isNative) {
+      try {
+        await Browser.open({ url });
+        return;
+      } catch {
+        // fall back to window.open
+      }
+    }
+    window.open(url, "_blank");
+  };
 
   useEffect(() => {
     if (!isNative) return;
@@ -448,6 +465,43 @@ export default function SettingsPanel({
                     className="hidden"
                     onChange={handleCsvFileChange}
                   />
+                </div>
+              </section>
+
+              <section
+                className="space-y-2 border-t border-transparent pt-3"
+                style={{ borderColor: "color-mix(in srgb, var(--color-accent) 60%, transparent)" }}
+              >
+                <div className="flex items-center gap-2">
+                  <MessageSquare size={16} className="text-[var(--color-accent)]" />
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                      Feedback
+                    </p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">
+                      Share thoughts or report issues while testing.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-3 mt-1.5">
+                  <button
+                    onClick={async () => {
+                      await triggerImpact(ImpactStyle.Light);
+                      openSupportLink(FEEDBACK_FORM_URL);
+                    }}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-[color:var(--color-card-border)] bg-[var(--color-card)] px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/90 disabled:opacity-60"
+                  >
+                    Send feedback
+                  </button>
+                  <button
+                    onClick={async () => {
+                      await triggerImpact(ImpactStyle.Light);
+                      openSupportLink(BUG_REPORT_URL);
+                    }}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] px-4 py-3 text-sm font-semibold hover:bg-[var(--color-accent-muted)] disabled:opacity-60"
+                  >
+                    Report a bug
+                  </button>
                 </div>
               </section>
 
