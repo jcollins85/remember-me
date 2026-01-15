@@ -31,7 +31,10 @@ export const PeopleProvider = ({ children }: PeopleProviderProps) => {
   );
   // Persist people array in localStorage, seeded from sample data
   const seedPeople =
-    import.meta.env.VITE_SHOW_DEV_TOOLS === 'true' ? samplePeople : [];
+    import.meta.env.VITE_SHOW_DEV_TOOLS === 'true' ||
+    import.meta.env.VITE_SEED_SAMPLE_DATA === 'true'
+      ? samplePeople
+      : [];
   const [people, setPeople] = useLocalStorage<Person[]>(
     'people',
     seedPeople,

@@ -513,12 +513,27 @@ export default function SettingsPanel({
                 <p className="text-xs font-semibold uppercase tracking-wide">About</p>
                 <div className="rounded-2xl bg-[var(--color-card)]/95 text-xs space-y-1 shadow-level1/40 mt-1.5">
                   <p>Version v{APP_VERSION} · Made by Julian Collins</p>
-                  <div className="flex gap-4 text-[var(--color-text-secondary)]">
-                    <button className="underline-offset-2 hover:underline" type="button">
+                  <div className="flex flex-wrap gap-4 text-[var(--color-text-secondary)]">
+                    <button
+                      className="underline-offset-2 hover:underline"
+                      type="button"
+                      onClick={() => window.open("https://jcollins85.github.io/methere-site/privacy.html", "_blank")}
+                    >
                       Privacy
                     </button>
-                    <button className="underline-offset-2 hover:underline" type="button">
-                      Terms
+                    <button
+                      className="underline-offset-2 hover:underline"
+                      type="button"
+                      onClick={() => window.open("https://jcollins85.github.io/methere-site/support.html", "_blank")}
+                    >
+                      Support
+                    </button>
+                    <button
+                      className="underline-offset-2 hover:underline"
+                      type="button"
+                      onClick={() => window.open("mailto:metherecontact@gmail.com")}
+                    >
+                      Email
                     </button>
                   </div>
                 </div>

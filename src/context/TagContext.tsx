@@ -31,7 +31,10 @@ export const TagProvider = ({ children }: TagProviderProps) => {
   );
   // Persist tags in localStorage
   const seedTags =
-    import.meta.env.VITE_SHOW_DEV_TOOLS === 'true' ? sampleTags : [];
+    import.meta.env.VITE_SHOW_DEV_TOOLS === 'true' ||
+    import.meta.env.VITE_SEED_SAMPLE_DATA === 'true'
+      ? sampleTags
+      : [];
   const [tags, setTags] = useLocalStorage<Tag[]>('tags', seedTags, {
     onError: handleStorageError,
   });

@@ -25,7 +25,10 @@ export const VenueProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const seedVenues =
-    import.meta.env.VITE_SHOW_DEV_TOOLS === 'true' ? sampleVenues : [];
+    import.meta.env.VITE_SHOW_DEV_TOOLS === 'true' ||
+    import.meta.env.VITE_SEED_SAMPLE_DATA === 'true'
+      ? sampleVenues
+      : [];
   const [venues, setVenues] = useLocalStorage<Venue[]>('venues', seedVenues, {
     onError: handleStorageError,
   });
