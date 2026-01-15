@@ -1,6 +1,7 @@
-import React, { useContext, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Capacitor } from "@capacitor/core";
+import { App as CapacitorApp } from "@capacitor/app";
 import { ThemeContext, ThemeKey } from "../../theme/ThemeContext";
 import { SunMedium, Palette, Moon, Heart, Download, Upload, Lock, X, Palette as PaletteIcon, CloudUpload, Wrench, Settings, Leaf, Waves, MapPin } from "lucide-react";
 import { useDataBackup } from "../../hooks/useDataBackup";
@@ -84,11 +85,27 @@ export default function SettingsPanel({
   const [isExportingCsv, setIsExportingCsv] = useState(false);
   const [isImportingCsv, setIsImportingCsv] = useState(false);
   const [hapticsEnabled, setHapticsEnabled] = useState(isHapticsEnabled());
+  const [appVersion, setAppVersion] = useState(APP_VERSION);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const csvFileInputRef = useRef<HTMLInputElement | null>(null);
   const isNative = Capacitor.isNativePlatform();
   const jsonExportLabel = isNative ? "Backup to iCloud" : "Export JSON";
   const jsonImportLabel = isNative ? "Restore from iCloud" : "Import JSON";
+
+  useEffect(() => {
+    if (!isNative) return;
+    let cancelled = false;
+    CapacitorApp.getInfo()
+      .then((info) => {
+        if (!cancelled && info?.version) {
+          setAppVersion(info.version);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [isNative]);
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -512,7 +529,7 @@ export default function SettingsPanel({
               <section className="space-y-2 border-t border-white/40 pt-3 text-[var(--color-text-secondary)]">
                 <p className="text-xs font-semibold uppercase tracking-wide">About</p>
                 <div className="rounded-2xl bg-[var(--color-card)]/95 text-xs space-y-1 shadow-level1/40 mt-1.5">
-                  <p>Version v{APP_VERSION} · Made by Julian Collins</p>
+                  <p>Version v{appVersion} · Made by Julian Collins</p>
                   <div className="flex flex-wrap gap-4 text-[var(--color-text-secondary)]">
                     <button
                       className="underline-offset-2 hover:underline"
