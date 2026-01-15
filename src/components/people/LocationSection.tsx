@@ -457,7 +457,7 @@ type PendingAction = (() => Promise<void>) | null;
                 });
                 setShowPlaceSearch(true);
               }}
-              className="rounded-full bg-[var(--color-accent)] px-4 py-1.5 text-xs font-semibold text-white shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition hover:brightness-110 disabled:opacity-60"
+              className="rounded-full bg-[var(--color-accent)] px-4 py-1.5 text-xs font-semibold text-white shadow-[0_6px_16px_rgba(0,0,0,0.14)] transition hover:brightness-110 disabled:opacity-60"
             >
               Choose a place
             </button>
@@ -468,7 +468,7 @@ type PendingAction = (() => Promise<void>) | null;
                 captureCurrentLocation();
               }}
               disabled={isCapturingLocation}
-              className="rounded-full border border-white/40 bg-[var(--color-card)] px-4 py-1.5 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_6px_18px_rgba(0,0,0,0.08)]"
+              className="rounded-full border border-white/40 bg-[var(--color-card)] px-4 py-1.5 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
             >
               {isCapturingLocation ? "Capturing…" : "Use current location"}
             </button>

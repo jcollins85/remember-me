@@ -122,7 +122,7 @@ export default function ProfilePanel({
                   <p className="text-xs text-[var(--color-text-secondary)]">Lifetime overview of your connections</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2.5 text-center">
+              <div className="grid grid-cols-2 gap-2 text-center">
                 {[
                   { label: "People tracked", value: stats.peopleCount, icon: <UserRound size={16} className="text-[var(--color-accent)]" /> },
                   { label: "Venues logged", value: stats.venuesWithPeople, icon: <MapPin size={16} className="text-[var(--color-accent)]" /> },
@@ -131,7 +131,7 @@ export default function ProfilePanel({
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className="rounded-2xl bg-[var(--color-card)] px-3 py-3 shadow-level1 flex flex-col items-center gap-1.5"
+                    className="rounded-2xl bg-[var(--color-card)] px-3 py-2.5 shadow-level1 flex flex-col items-center gap-1.5"
                   >
                     <div className="h-7 w-7 rounded-2xl bg-[var(--color-accent-muted)] text-[var(--color-accent)] flex items-center justify-center shadow-level1/40">
                       {item.icon}

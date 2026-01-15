@@ -86,7 +86,7 @@ const Header: React.FC<HeaderProps> = ({
             <Settings size={20} />
           </button>
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-accent)] drop-shadow-[0_2px_4px_rgba(15,23,42,0.3)] z-10" size={20} strokeWidth={2.4} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-accent)] drop-shadow-[0_1px_2px_rgba(15,23,42,0.2)] z-10" size={20} strokeWidth={2.4} />
             <input
               type="text"
               value={searchQuery}

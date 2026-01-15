@@ -190,7 +190,7 @@ export default function SettingsPanel({
               <X size={16} />
             </button>
 
-            <div className="overflow-y-auto px-6 pb-6 pt-6 space-y-5" style={{ scrollbarGutter: "stable" }}>
+            <div className="overflow-y-auto px-6 pb-6 pt-6 space-y-4" style={{ scrollbarGutter: "stable" }}>
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-2xl bg-[var(--color-accent-muted)] text-[var(--color-accent)] flex items-center justify-center shadow-level1">
                   <Settings size={18} />
@@ -201,7 +201,7 @@ export default function SettingsPanel({
                   <p className="text-xs text-[var(--color-text-secondary)]">Tune the theme, data tools, and notifications.</p>
                 </div>
               </div>
-              <section className="space-y-3">
+              <section className="space-y-2">
                 <div className="flex items-center gap-2">
                   <PaletteIcon size={16} className="text-[var(--color-accent)]" />
                   <div>
@@ -245,7 +245,7 @@ export default function SettingsPanel({
               </section>
 
               <section
-                className="space-y-3 border-t border-transparent pt-4"
+                className="space-y-2 border-t border-transparent pt-3"
                 style={{ borderColor: "color-mix(in srgb, var(--color-accent) 50%, transparent)" }}
               >
                 <div className="flex items-center gap-2 text-[var(--color-accent)]">
@@ -298,7 +298,7 @@ export default function SettingsPanel({
               </section>
 
               <section
-                className="space-y-3 border-t border-transparent pt-4"
+                className="space-y-2 border-t border-transparent pt-3"
                 style={{ borderColor: "color-mix(in srgb, var(--color-accent) 50%, transparent)" }}
               >
                 <div className="flex items-center gap-2">
@@ -336,7 +336,7 @@ export default function SettingsPanel({
               </section>
 
               <section
-                className="space-y-2 border-t border-transparent pt-4"
+                className="space-y-2 border-t border-transparent pt-3"
                 style={{ borderColor: "color-mix(in srgb, var(--color-accent) 60%, transparent)" }}
               >
                 {/* Backup/restore lives here so QA/devs can quickly snapshot or recover data while testing. */}
@@ -435,7 +435,7 @@ export default function SettingsPanel({
               </section>
 
               <section
-                className="space-y-2 border-t border-transparent pt-4"
+                className="space-y-2 border-t border-transparent pt-3"
                 style={{ borderColor: "color-mix(in srgb, var(--color-accent) 60%, transparent)" }}
               >
                 <div className="flex items-center gap-2">
@@ -509,7 +509,7 @@ export default function SettingsPanel({
                 )}
               </section>
 
-              <section className="space-y-2 border-t border-white/40 pt-4 text-[var(--color-text-secondary)]">
+              <section className="space-y-2 border-t border-white/40 pt-3 text-[var(--color-text-secondary)]">
                 <p className="text-xs font-semibold uppercase tracking-wide">About</p>
                 <div className="rounded-2xl bg-[var(--color-card)]/95 text-xs space-y-1 shadow-level1/40 mt-1.5">
                   <p>Version v{APP_VERSION} · Made by Julian Collins</p>

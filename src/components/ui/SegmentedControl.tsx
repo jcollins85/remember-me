@@ -22,7 +22,7 @@ function SegmentedControlComponent<T extends string>({
   return (
     <LayoutGroup>
       <div
-        className={`relative inline-flex rounded-full bg-[var(--color-card)]/90 backdrop-blur-lg overflow-hidden shadow-[0_8px_18px_rgba(15,23,42,0.07)] border border-[var(--color-card-border)]/70 p-0.5 ${className}`}
+        className={`relative inline-flex rounded-full bg-[var(--color-card)]/90 backdrop-blur-lg overflow-hidden shadow-[0_8px_18px_rgba(15,23,42,0.07)] border border-[var(--color-card-border)] p-0.5 ${className}`}
         // Mask prevents iOS from showing a square glow when the highlight has a shadow.
         style={{ WebkitMaskImage: 'radial-gradient(circle, white 99%, transparent 100%)' }}
       >

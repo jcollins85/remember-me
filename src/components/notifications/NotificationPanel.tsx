@@ -58,7 +58,7 @@ export default function NotificationPanel({
           onClick={onClose}
         >
           <motion.div
-            className="glass-panel w-full max-w-sm mt-20 mr-4 p-4 space-y-4 max-h-[70vh] overflow-y-auto"
+            className="glass-panel w-full max-w-sm mt-20 mr-4 p-4 space-y-3 max-h-[65vh] overflow-y-auto"
             initial={{ opacity: 0, scale: 0.95, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 16 }}
@@ -70,7 +70,7 @@ export default function NotificationPanel({
             <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
               Activity
             </p>
-            <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+            <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
               Notifications
             </h3>
           </div>
@@ -101,7 +101,7 @@ export default function NotificationPanel({
             You're all caught up. Come back when there's more activity.
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {notifications.map((entry) => {
               const meta = typeMeta[entry.type];
               return (
@@ -118,13 +118,13 @@ export default function NotificationPanel({
                   }}
                 >
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center bg-white/80 ${meta.className}`}
+                    className={`w-7 h-7 rounded-full flex items-center justify-center bg-white/80 ${meta.className}`}
                   >
                     {meta.icon}
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-[var(--color-text-primary)]">{entry.message}</p>
-                    <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)] mt-1">
+                    <p className="text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)] mt-0.5">
                       {new Date(entry.timestamp).toLocaleString()}
                     </p>
                   </div>

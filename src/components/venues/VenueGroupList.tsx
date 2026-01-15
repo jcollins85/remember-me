@@ -140,7 +140,7 @@ export default function VenueGroupList({
         )}
       </div>
       {distanceLabel && (
-        <p className="flex items-center gap-1 text-xs text-[var(--color-text-secondary)] ml-7 -mt-1">
+        <p className="flex items-center gap-1 text-[11px] text-[var(--color-text-secondary)]/85 ml-7 -mt-1.5">
           <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--color-accent-muted)]" />
           {distanceLabel}
         </p>
