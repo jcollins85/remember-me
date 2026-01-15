@@ -329,6 +329,20 @@ function App() {
     showNotification("App reset to a blank state.", "info");
   };
 
+  // Remove venues that no longer have people attached, and drop orphaned favourites.
+  const pruneVenuesForPeople = (nextPeople: Person[]) => {
+    const activeVenueIds = new Set(
+      nextPeople.map((person) => person.venueId).filter(Boolean) as string[]
+    );
+    const prunedVenues = venues.filter((venue) => activeVenueIds.has(venue.id));
+    if (prunedVenues.length === venues.length) {
+      return;
+    }
+    replaceVenues(prunedVenues);
+    const activeVenueNames = new Set(prunedVenues.map((venue) => venue.name));
+    setFavoriteVenues((prev) => prev.filter((name) => activeVenueNames.has(name)));
+  };
+
   // One-time pre-prompt to explain why iOS will ask for permissions.
   const shouldShowProximityPrePrompt = () => {
     if (!proximitySupported) return false;
@@ -684,7 +698,9 @@ function App() {
             onAddCancel={() => setShowAddModal(false)}
             onAdd={async (newPerson) => {
               await triggerImpact(ImpactStyle.Heavy);
+              const nextPeople = [newPerson, ...people];
               addPerson(newPerson);
+              pruneVenuesForPeople(nextPeople);
               setShowAddModal(false);
               showNotification(`${newPerson.name} added`, "success");
               const venueMeta = getVenueAnalyticsMeta(newPerson.venueId);
@@ -704,7 +720,11 @@ function App() {
             onEditCancel={() => setEditingPerson(null)}
             onEdit={async (updated) => {
               await triggerImpact(ImpactStyle.Heavy);
+              const nextPeople = people.map((person) =>
+                person.id === updated.id ? updated : person
+              );
               updatePerson(updated);
+              pruneVenuesForPeople(nextPeople);
               setEditingPerson(null);
               showNotification(`${updated.name} updated`, "success");
               const venueMeta = getVenueAnalyticsMeta(updated.venueId);
@@ -728,7 +748,9 @@ function App() {
                 tags: deletedPerson?.tags?.length ?? 0,
                 favorite: deletedPerson?.favorite ?? false,
               });
+              const nextPeople = people.filter((person) => person.id !== id);
               deletePerson(id);
+              pruneVenuesForPeople(nextPeople);
               setPersonToDelete(null);
               showNotification(`${deletedName} deleted`, "info");
             }}
