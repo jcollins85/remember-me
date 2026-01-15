@@ -27,7 +27,7 @@ interface LocationSectionProps {
   onValidationCoordsChange?: (coords: { lat: string; lon: string } | null) => void;
   onPendingChange?: (data: PendingLocationPayload | null) => void;
   globalProximityEnabled: boolean;
-  onEnableGlobalProximity: () => void;
+  onEnableGlobalProximity: (options?: { source?: "settings" | "venue_toggle"; onEnabled?: () => void }) => void;
 }
 
 const defaultSearchPlaceholder = "Search by name or address";
@@ -72,7 +72,6 @@ type PendingAction = (() => Promise<void>) | null;
   const [placeLoading, setPlaceLoading] = useState(false);
   const [placeError, setPlaceError] = useState<string | null>(null);
   const [searchPlaceholder, setSearchPlaceholder] = useState(defaultSearchPlaceholder);
-  const [showGlobalProximityModal, setShowGlobalProximityModal] = useState(false);
 
   useEffect(() => {
     if (!onValidationCoordsChange) return;
@@ -401,7 +400,10 @@ type PendingAction = (() => Promise<void>) | null;
       return;
     }
     if (!globalProximityEnabled) {
-      setShowGlobalProximityModal(true);
+      onEnableGlobalProximity({
+        source: "venue_toggle",
+        onEnabled: () => setVenueProximityEnabled(true),
+      });
       return;
     }
     setVenueProximityEnabled(true);
@@ -623,44 +625,6 @@ type PendingAction = (() => Promise<void>) | null;
         </div>
       )}
 
-      {showGlobalProximityModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="w-full max-w-sm rounded-[32px] bg-[var(--color-card)] p-6 shadow-[0_20px_50px_rgba(15,23,42,0.4)] text-center space-y-4"
-          >
-            <div>
-              <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                Enable nearby venue alerts?
-              </p>
-              <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-                Turn on global alerts so this venue can notify you when you’re nearby.
-              </p>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-              <button
-                type="button"
-                onClick={() => setShowGlobalProximityModal(false)}
-                className="rounded-full border border-[var(--color-card-border)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/80"
-              >
-                Not now
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowGlobalProximityModal(false);
-                  onEnableGlobalProximity();
-                  setVenueProximityEnabled(true);
-                }}
-                className="rounded-full bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(0,0,0,0.25)] hover:brightness-110"
-              >
-                Enable alerts
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showPlaceSearch && (
         <div className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none bg-[var(--color-card)]/50 backdrop-blur-md">

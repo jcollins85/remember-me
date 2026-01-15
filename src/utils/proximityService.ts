@@ -86,9 +86,11 @@ export const startProximityAlerts = async (venues: MonitoredVenue[]) => {
       return { ok: false, error: "Location access is required to enable nearby venue alerts." };
     }
 
-    const notifPerm = await LocalNotifications.requestPermissions();
-    if (notifPerm.display !== "granted") {
-      return { ok: false, error: "Notifications are disabled. Enable them in Settings." };
+    if (permResult.notifications !== "granted") {
+      const notifPerm = await LocalNotifications.requestPermissions();
+      if (notifPerm.display !== "granted") {
+        return { ok: false, error: "Notifications are disabled. Enable them in Settings." };
+      }
     }
 
     await attachRegionListener();

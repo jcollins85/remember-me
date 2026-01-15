@@ -89,6 +89,7 @@ function App() {
   const [showSortModal, setShowSortModal] = useState(false);
   const [showProximityPrePrompt, setShowProximityPrePrompt] = useState(false);
   const [pendingProximitySource, setPendingProximitySource] = useState<"settings" | "venue_toggle" | null>(null);
+  const [pendingProximityCallback, setPendingProximityCallback] = useState<(() => void) | null>(null);
   const [proximityEnabled, setProximityEnabled] = useState(() =>
     proximitySupported && isProximityAlertsEnabled()
   );
@@ -371,18 +372,23 @@ function App() {
     trackEvent("proximity_toggle", { enabled: next });
   };
 
-  const enableGlobalProximity = () => {
+  const enableGlobalProximity = (options?: { source?: "settings" | "venue_toggle"; onEnabled?: () => void }) => {
     if (!proximitySupported) {
       showNotification("Nearby venue alerts are only available in the iOS app.", "info");
       return;
     }
-    if (proximityEnabled) return;
+    if (proximityEnabled) {
+      options?.onEnabled?.();
+      return;
+    }
     if (shouldShowProximityPrePrompt()) {
-      setPendingProximitySource("venue_toggle");
+      setPendingProximitySource(options?.source ?? "settings");
+      setPendingProximityCallback(() => options?.onEnabled ?? null);
       setShowProximityPrePrompt(true);
       return;
     }
-    enableProximity("venue_toggle");
+    enableProximity(options?.source ?? "settings");
+    options?.onEnabled?.();
   };
 
   const handlePrePromptConfirm = () => {
@@ -392,15 +398,19 @@ function App() {
       // ignore
     }
     const source = pendingProximitySource;
+    const callback = pendingProximityCallback;
     setPendingProximitySource(null);
+    setPendingProximityCallback(null);
     setShowProximityPrePrompt(false);
     if (source) {
       enableProximity(source);
+      callback?.();
     }
   };
 
   const handlePrePromptCancel = () => {
     setPendingProximitySource(null);
+    setPendingProximityCallback(null);
     setShowProximityPrePrompt(false);
   };
 
