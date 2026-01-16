@@ -35,6 +35,8 @@ ios/App/CapApp-SPM/
 *.xcworkspace/xcuserdata/
 *.xcscmblueprint
 *.xccheckout
+*.xcsettings
+*.xcscheme
 
 # Fastlane
 fastlane/report.xml

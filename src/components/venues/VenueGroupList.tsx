@@ -7,6 +7,7 @@ import { UNCLASSIFIED } from "../../constants";
 import { ChevronDown, ChevronRight, Star } from "lucide-react";
 import { triggerImpact, ImpactStyle } from "../../utils/haptics";
 import { useAnalytics } from "../../context/AnalyticsContext";
+import { toggleVenueFavoriteName } from "../../utils/favorites";
 
 interface VenueGroupListProps {
   venue: string;
@@ -97,11 +98,7 @@ export default function VenueGroupList({
             onClick={async (e) => {
               e.stopPropagation();
               await triggerImpact(isFavorite ? ImpactStyle.Light : ImpactStyle.Medium);
-              setFavoriteVenues((prev) =>
-                prev.includes(venue)
-                  ? prev.filter((v) => v !== venue)
-                  : [...prev, venue]
-              );
+              setFavoriteVenues((prev) => toggleVenueFavoriteName(prev, venue));
               trackEvent(isFavorite ? "venue_unfavorited" : "venue_favorited", { venue });
             }}
             className={`w-9 h-9 flex items-center justify-center rounded-full border relative overflow-hidden ${
