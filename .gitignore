@@ -46,3 +46,7 @@ fastlane/test_output/
 
 # Misc
 .vercel/
+
+# Xcode SwiftPM
+**/*.xcodeproj/project.xcworkspace/**/swiftpm/Package.resolved
+**/*.xcworkspace/**/swiftpm/Package.resolved
