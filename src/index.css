@@ -4,10 +4,10 @@
 :root {
   /* Base colors */
   --color-background: #F5F7FB;
-  --color-surface: rgba(255,255,255,0.85);
-  --color-surface-alt: rgba(248,249,253,0.9);
-  --color-card: rgba(255,255,255,0.9);
-  --color-card-border: rgba(215,219,235,0.8);
+  --color-surface: rgba(255,255,255,0.92);
+  --color-surface-alt: rgba(248,249,253,0.95);
+  --color-card: rgba(255,255,255,0.92);
+  --color-card-border: rgba(215,219,235,0.7);
   --color-text-primary: #101828;
   --color-text-secondary: #4B5563;
 
@@ -16,8 +16,8 @@
   --color-accent-secondary: #14B8A6;
   --color-accent-muted: #E0EAFF;
   --color-pill-press: color-mix(in srgb, var(--color-accent) 55%, var(--color-accent-muted));
-  --color-pill-bg: rgba(255,255,255,0.4);
-  --color-pill-border: rgba(255,255,255,0.6);
+  --color-pill-bg: rgba(255,255,255,0.5);
+  --color-pill-border: rgba(255,255,255,0.7);
 
   /* Semantic colors */
   --color-success: #22C55E;
@@ -51,26 +51,30 @@
   --radius-pill: 999px;
 
   /* Background gradient + blobs */
-  --background-gradient: linear-gradient(180deg, #f6f8fe 0%, #eef2ff 40%, #dbe5ff 100%);
-  --bg-blob-a: rgba(37,99,235,0.18);
-  --bg-blob-b: rgba(20,184,166,0.2);
-  --bg-blob-c: rgba(79,70,229,0.15);
+  --background-gradient: linear-gradient(180deg, #f6f8fe 0%, #edf2ff 45%, #dbe5ff 100%);
+  --bg-blob-a: rgba(37,99,235,0.22);
+  --bg-blob-b: rgba(20,184,166,0.18);
+  --bg-blob-c: rgba(79,70,229,0.22);
 }
 
 [data-theme="coral"] {
   --color-background: #FFF7F3;
-  --color-surface: rgba(255,255,255,0.85);
-  --color-surface-alt: rgba(255,248,243,0.9);
+  --color-surface: rgba(255,255,255,0.92);
+  --color-surface-alt: rgba(255,248,243,0.95);
+  --color-card: rgba(255,255,255,0.92);
+  --color-card-border: rgba(240,201,186,0.65);
   --color-text-primary: #311411;
   --color-text-secondary: #7A4D42;
   --color-accent: #F97316;
   --color-accent-secondary: #DB2777;
   --color-accent-muted: #FFE1D2;
   --color-pill-press: color-mix(in srgb, var(--color-accent) 55%, var(--color-accent-muted));
+  --color-pill-bg: rgba(255,255,255,0.5);
+  --color-pill-border: rgba(255,255,255,0.7);
   --background-gradient: linear-gradient(180deg, #fff1e8 0%, #ffe2d2 50%, #ffd3f0 100%);
-  --bg-blob-a: rgba(249,115,22,0.2);
+  --bg-blob-a: rgba(249,115,22,0.22);
   --bg-blob-b: rgba(219,39,119,0.18);
-  --bg-blob-c: rgba(244,114,182,0.18);
+  --bg-blob-c: rgba(244,114,182,0.22);
 }
 
 [data-theme="midnight"] {
@@ -95,18 +99,22 @@
 
 [data-theme="pink"] {
   --color-background: #FFF2FB;
-  --color-surface: rgba(255,255,255,0.9);
+  --color-surface: rgba(255,255,255,0.92);
   --color-surface-alt: rgba(255,240,248,0.95);
+  --color-card: rgba(255,255,255,0.92);
+  --color-card-border: rgba(214,180,199,0.65);
   --color-text-primary: #2B132B;
   --color-text-secondary: #6B4068;
   --color-accent: #EC4899;
   --color-accent-secondary: #C026D3;
   --color-accent-muted: #FFD1EB;
   --color-pill-press: color-mix(in srgb, var(--color-accent) 55%, var(--color-accent-muted));
+  --color-pill-bg: rgba(255,255,255,0.5);
+  --color-pill-border: rgba(255,255,255,0.7);
   --background-gradient: linear-gradient(180deg, #fff4fb 0%, #ffe3f3 45%, #ffd8f5 100%);
-  --bg-blob-a: rgba(236,72,153,0.25);
-  --bg-blob-b: rgba(192,38,211,0.22);
-  --bg-blob-c: rgba(248,113,113,0.18);
+  --bg-blob-a: rgba(236,72,153,0.22);
+  --bg-blob-b: rgba(192,38,211,0.18);
+  --bg-blob-c: rgba(248,113,113,0.22);
 }
 
 [data-theme="emerald"] {

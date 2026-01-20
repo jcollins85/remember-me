@@ -494,7 +494,7 @@ export default function PersonForm({
         <div
           role="list"
           ref={appliedTagsRail.ref}
-          className="relative overflow-x-auto whitespace-nowrap mb-2 px-1 pb-4 pr-10"
+          className="relative overflow-x-auto whitespace-nowrap mb-1 px-1 pb-3 pr-10"
           style={{ scrollbarGutter: "stable", WebkitOverflowScrolling: "touch" }}
         >
           {currentTags.length > 0 ? (
