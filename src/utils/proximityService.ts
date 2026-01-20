@@ -22,6 +22,14 @@ let regionListener: PluginListenerHandle | null = null;
 const lastAlertTimestamps: Record<string, number> = {};
 let venuesSnapshot: MonitoredVenue[] = [];
 
+const getProximityNotificationId = (venueId: string) => {
+  let hash = 0;
+  for (let i = 0; i < venueId.length; i += 1) {
+    hash = (hash * 31 + venueId.charCodeAt(i)) | 0;
+  }
+  return Math.max(1, Math.abs(hash));
+};
+
 // Builds the native/local notification payload for a venue and rate-limits per venue ID.
 const scheduleNotification = async (venueId: string) => {
   const venue = venuesSnapshot.find((v) => v.id === venueId);
@@ -51,7 +59,8 @@ const scheduleNotification = async (venueId: string) => {
       {
         title: "Nearby venue",
         body: `${venueLine} ${totalText}${favoriteText}`.trim(),
-        id: Number.parseInt(venueId.replace(/\D/g, "").slice(-6), 10) || Date.now(),
+        id: getProximityNotificationId(venueId),
+        extra: { venueId },
       },
     ],
   });
@@ -61,6 +70,19 @@ const scheduleNotification = async (venueId: string) => {
     total_people: total,
     favorite_count: favoriteNames.length,
   });
+};
+
+export const cancelProximityNotifications = async (venueIds: string[]) => {
+  if (!isNative || venueIds.length === 0) return;
+  try {
+    await LocalNotifications.cancel({
+      notifications: venueIds.map((venueId) => ({
+        id: getProximityNotificationId(venueId),
+      })),
+    });
+  } catch (error) {
+    console.warn("Unable to cancel proximity notifications", error);
+  }
 };
 
 // Only one listener can be active at a time – re-register whenever we restart monitoring.

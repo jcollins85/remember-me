@@ -11,6 +11,7 @@ import { toggleVenueFavoriteName } from "../../utils/favorites";
 
 interface VenueGroupListProps {
   venue: string;
+  venueId?: string;
   group: Person[];
   isOpen: boolean;
   toggleGroup: (venue: string) => void;
@@ -30,6 +31,7 @@ interface VenueGroupListProps {
 // Each venue card collapses/expands and houses the PersonCard list plus favourite toggle.
 export default function VenueGroupList({
   venue,
+  venueId,
   group,
   isOpen,
   toggleGroup,
@@ -75,6 +77,7 @@ export default function VenueGroupList({
 
   return (
     <div
+      id={venueId ? `venue-card-${venueId}` : undefined}
       className={`mb-2.5 glass-panel border border-[var(--color-card-border)]/70 px-4 py-3 rounded-3xl shadow-level1 ${
         isUnclassified ? "border-dashed" : ""
       }`}

@@ -9,6 +9,7 @@ import { useVenueInput } from "../../hooks/useVenueInput";
 import { validatePersonForm, ValidationErrors } from "../../utils/validation";
 import { triggerImpact, ImpactStyle } from "../../utils/haptics";
 import { useAnalytics } from "../../context/AnalyticsContext";
+import { cancelProximityNotifications } from "../../utils/proximityService";
 import LocationSection from "./LocationSection";
 
 interface Props {
@@ -199,6 +200,9 @@ export default function PersonForm({
     const needsTag = pendingTag && pendingTag !== currentTag;
     const needsProximity = proximityEnabled !== currentProximity;
     if (!needsCoords && !needsTag && !needsProximity) return;
+    if (currentProximity && !proximityEnabled && venueRecord.id) {
+      cancelProximityNotifications([venueRecord.id]);
+    }
     updateVenue({
       ...venueRecord,
       coords: coords ?? venueRecord.coords,
