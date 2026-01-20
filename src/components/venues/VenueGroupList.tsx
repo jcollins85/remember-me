@@ -74,6 +74,7 @@ export default function VenueGroupList({
 
   const isUnclassified = venue === UNCLASSIFIED;
   const isFavorite = isUnclassified ? false : favoriteVenues.includes(venue);
+  const displayName = isUnclassified ? "No venue yet" : venue;
 
   return (
     <div
@@ -88,12 +89,12 @@ export default function VenueGroupList({
             toggleGroup(venue);
           }}
           className="text-left text-lg font-semibold text-[var(--color-text-primary)] flex items-center gap-2"
-          aria-label={`Toggle ${venue}`}
+          aria-label={`Toggle ${displayName}`}
         >
           <span className="text-sm text-[var(--color-text-secondary)]">
             {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </span>
-          {venue}
+          {displayName}
           <span className="text-sm text-[var(--color-text-secondary)]">({groupList.length})</span>
         </button>
         {!isUnclassified && (
@@ -148,7 +149,7 @@ export default function VenueGroupList({
 
       {isUnclassified && (
         <p className="text-xs text-[var(--color-text-secondary)] mb-2">
-          Assign a venue to move people out of Unclassified.
+          Assign a venue to move people out of "No venue yet."
         </p>
       )}
 
