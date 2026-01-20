@@ -704,6 +704,9 @@ function App() {
               pruneVenuesForPeople(nextPeople);
               setShowAddModal(false);
               showNotification(`${newPerson.name} added`, "success");
+              if (people.length === 0) {
+                trackEvent("first_person_added");
+              }
               const venueMeta = getVenueAnalyticsMeta(newPerson.venueId);
               trackEvent("person_added", {
                 ...venueMeta,
