@@ -36,6 +36,26 @@ type SearchResult = { name: string; address: string; lat: number; lng: number };
 
 type PendingAction = (() => Promise<void>) | null;
 
+const formatDistanceLabel = (meters: number) => {
+  if (meters < 1000) {
+    return `${Math.round(meters)} m away`;
+  }
+  return `${(meters / 1000).toFixed(1)} km away`;
+};
+
+const toRad = (value: number) => (value * Math.PI) / 180;
+
+const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number; lon: number }) => {
+  const R = 6371000;
+  const dLat = toRad(to.lat - from.lat);
+  const dLon = toRad(to.lon - from.lon);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(from.lat)) * Math.cos(toRad(to.lat)) * Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
   const LocationSection: React.FC<LocationSectionProps> = ({
     venueName,
     canUseLocation,
@@ -72,6 +92,7 @@ type PendingAction = (() => Promise<void>) | null;
   const [placeLoading, setPlaceLoading] = useState(false);
   const [placeError, setPlaceError] = useState<string | null>(null);
   const [searchPlaceholder, setSearchPlaceholder] = useState(defaultSearchPlaceholder);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
 
   useEffect(() => {
     if (!onValidationCoordsChange) return;
@@ -266,6 +287,49 @@ type PendingAction = (() => Promise<void>) | null;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
+    };
+  }, [showPlaceSearch]);
+
+  useEffect(() => {
+    if (!showPlaceSearch) return;
+    let cancelled = false;
+    const fetchCoords = async () => {
+      try {
+        if (Capacitor.isNativePlatform()) {
+          const geoAny = Geolocation as unknown as {
+            checkPermissions?: () => Promise<{ location?: "granted" | "denied" | "grantedWhenInUse" }>;
+          };
+          if (typeof geoAny.checkPermissions !== "function") {
+            return;
+          }
+          const perm = await geoAny.checkPermissions();
+          if (perm.location !== "granted" && perm.location !== "grantedWhenInUse") {
+            return;
+          }
+          const coordsPayload = await getCurrentCoordinates();
+          if (!cancelled) {
+            setUserCoords(coordsPayload);
+          }
+          return;
+        }
+        const permissions = (navigator as any)?.permissions;
+        if (permissions?.query) {
+          const status = await permissions.query({ name: "geolocation" as PermissionName });
+          if (status.state !== "granted") return;
+        } else {
+          return;
+        }
+        const coordsPayload = await getCurrentCoordinates();
+        if (!cancelled) {
+          setUserCoords(coordsPayload);
+        }
+      } catch {
+        // Ignore distance if we can't access location.
+      }
+    };
+    fetchCoords();
+    return () => {
+      cancelled = true;
     };
   }, [showPlaceSearch]);
 
@@ -633,10 +697,15 @@ type PendingAction = (() => Promise<void>) | null;
             aria-modal="true"
             className="pointer-events-auto w-[min(80vw,380px)] rounded-[30px] bg-white p-5 shadow-[0_25px_60px_rgba(15,23,42,0.45)] space-y-4 max-h-[80vh] flex flex-col border border-black/5"
           >
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
-                Search by name or address
-              </p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
+                  Find a place
+                </p>
+                <p className="text-xs text-[var(--color-text-secondary)]/90">
+                  Search for a business, venue, or address.
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => setShowPlaceSearch(false)}
@@ -677,6 +746,14 @@ type PendingAction = (() => Promise<void>) | null;
                   >
                     <p className="text-sm font-semibold text-[var(--color-text-primary)]">{place.name}</p>
                     <p className="text-xs text-[var(--color-text-secondary)]">{place.address}</p>
+                    {userCoords && (
+                      <p className="mt-1 flex items-center gap-1 text-[11px] text-[var(--color-text-secondary)]/80">
+                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-accent-muted)]" />
+                        {formatDistanceLabel(
+                          getDistanceMeters(userCoords, { lat: place.lat, lon: place.lng })
+                        )}
+                      </p>
+                    )}
                   </button>
                 ))}
             </div>
