@@ -32,13 +32,15 @@ import { useAnalytics } from "./context/AnalyticsContext";
 import { UNCLASSIFIED } from "./constants";
 import { samplePeople, sampleTags, sampleVenues } from "./data";
 
-import { Capacitor, registerPlugin } from "@capacitor/core";
+import { Capacitor, registerPlugin, type PluginListenerHandle } from "@capacitor/core";
 import { Geolocation as CapacitorGeolocation } from "@capacitor/geolocation";
 import { Geolocation } from "@capacitor/geolocation";
+import { LocalNotifications } from "@capacitor/local-notifications";
 
 import { isProximityAlertsEnabled, setProximityAlertsEnabled } from "./utils/proximityAlerts";
 import { togglePersonFavorite } from "./utils/favorites";
 import {
+  cancelProximityNotifications,
   refreshMonitoredVenues,
   startProximityAlerts,
   stopProximityAlerts,
@@ -91,6 +93,7 @@ function App() {
   const [showProximityPrePrompt, setShowProximityPrePrompt] = useState(false);
   const [pendingProximitySource, setPendingProximitySource] = useState<"settings" | "venue_toggle" | null>(null);
   const [pendingProximityCallback, setPendingProximityCallback] = useState<(() => void) | null>(null);
+  const [pendingVenueFocusId, setPendingVenueFocusId] = useState<string | null>(null);
   const [proximityEnabled, setProximityEnabled] = useState(() =>
     proximitySupported && isProximityAlertsEnabled()
   );
@@ -163,6 +166,10 @@ function App() {
 
   const venuesById = useMemo(
     () => Object.fromEntries(venues.map((v) => [v.id, v])) as Record<string, Venue>,
+    [venues]
+  );
+  const venueIdByName = useMemo(
+    () => Object.fromEntries(venues.map((v) => [v.name, v.id])) as Record<string, string>,
     [venues]
   );
 
@@ -304,6 +311,11 @@ function App() {
     }));
     const clonedTags = sampleTags.map((tag) => ({ ...tag }));
 
+    const removedIds = venues
+      .filter((venue) => !clonedVenues.some((next) => next.id === venue.id))
+      .map((venue) => venue.id)
+      .filter(Boolean);
+    cancelProximityNotifications(removedIds);
     replacePeople(clonedPeople);
     replaceVenues(clonedVenues);
     replaceTags(clonedTags);
@@ -320,6 +332,7 @@ function App() {
     ) {
       return;
     }
+    cancelProximityNotifications(venues.map((venue) => venue.id).filter(Boolean));
     replacePeople([]);
     replaceVenues([]);
     replaceTags([]);
@@ -335,10 +348,15 @@ function App() {
     const activeVenueIds = new Set(
       nextPeople.map((person) => person.venueId).filter(Boolean) as string[]
     );
+    const removedIds = venues
+      .filter((venue) => !activeVenueIds.has(venue.id))
+      .map((venue) => venue.id)
+      .filter(Boolean);
     const prunedVenues = venues.filter((venue) => activeVenueIds.has(venue.id));
     if (prunedVenues.length === venues.length) {
       return;
     }
+    cancelProximityNotifications(removedIds);
     replaceVenues(prunedVenues);
     const activeVenueNames = new Set(prunedVenues.map((venue) => venue.name));
     setFavoriteVenues((prev) => prev.filter((name) => activeVenueNames.has(name)));
@@ -383,6 +401,7 @@ function App() {
       enableProximity("settings");
       return;
     }
+    cancelProximityNotifications(venues.map((venue) => venue.id).filter(Boolean));
     setProximityAlertsEnabled(next);
     setProximityEnabled(next);
     trackEvent("proximity_toggle", { enabled: next });
@@ -466,6 +485,50 @@ function App() {
       return updated;
     });
   }, [people, venuesById]);
+
+  useEffect(() => {
+    if (!proximitySupported) return;
+    let handle: PluginListenerHandle | null = null;
+    (async () => {
+      handle = await LocalNotifications.addListener(
+        "localNotificationActionPerformed",
+        (event) => {
+          const venueId = event.notification?.extra?.venueId;
+          if (typeof venueId === "string" && venueId.length > 0) {
+            setPendingVenueFocusId(venueId);
+          }
+        }
+      );
+    })();
+    return () => {
+      handle?.remove();
+    };
+  }, [proximitySupported]);
+
+  useEffect(() => {
+    if (!pendingVenueFocusId) return;
+    const venue = venuesById[pendingVenueFocusId];
+    if (!venue) {
+      showNotification("That venue is no longer available.", "info");
+      setPendingVenueFocusId(null);
+      return;
+    }
+    setVenueView("all");
+    setSearchQuery("");
+    setActiveTags([]);
+    setOpenGroups((prev) => ({ ...prev, [venue.name]: true }));
+    const targetId = `venue-card-${venue.id}`;
+    const timer = window.setTimeout(() => {
+      const target = document.getElementById(targetId);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        showNotification("Unable to locate that venue in the list.", "info");
+      }
+    }, 200);
+    setPendingVenueFocusId(null);
+    return () => window.clearTimeout(timer);
+  }, [pendingVenueFocusId, venuesById, setSearchQuery, setActiveTags, showNotification]);
 
   // ── Prevent scrolling ──
   useEffect(() => {
@@ -704,6 +767,9 @@ function App() {
               pruneVenuesForPeople(nextPeople);
               setShowAddModal(false);
               showNotification(`${newPerson.name} added`, "success");
+              if (people.length === 0) {
+                trackEvent("first_person_added");
+              }
               const venueMeta = getVenueAnalyticsMeta(newPerson.venueId);
               trackEvent("person_added", {
                 ...venueMeta,
@@ -765,6 +831,7 @@ function App() {
             visibleVenueNames={visibleVenueNames}
             totalVenueCount={venues.length}
             viewMode={venueView}
+            venueIdByName={venueIdByName}
             personSort={personSort}
             activeTags={activeTags}
             setActiveTags={setActiveTags}

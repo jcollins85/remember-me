@@ -13,6 +13,7 @@ const config: ExtendedCapConfig = {
   appName: 'MetHere',
   webDir: 'dist',
   ios: {
+    scheme: 'MetHere',
     swiftPackageManager: {
       packageClassList: [
         'HapticsPlugin',

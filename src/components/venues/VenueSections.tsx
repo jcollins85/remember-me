@@ -9,6 +9,7 @@ interface Props {
   visibleVenueNames: string[];
   totalVenueCount: number;
   viewMode: "all" | "favs";
+  venueIdByName: Record<string, string>;
   personSort: string;
   activeTags: string[];
   setActiveTags: React.Dispatch<React.SetStateAction<string[]>>;
@@ -30,6 +31,7 @@ export default function VenueSections({
   visibleVenueNames,
   totalVenueCount,
   viewMode,
+  venueIdByName,
   personSort,
   activeTags,
   setActiveTags,
@@ -72,6 +74,7 @@ export default function VenueSections({
         <VenueGroupList
           key={venueName}
           venue={venueName}
+          venueId={venueIdByName[venueName]}
           group={groupedPeople[venueName] ?? []}
           personSort={personSort}
           activeTags={activeTags}

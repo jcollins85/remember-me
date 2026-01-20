@@ -11,6 +11,7 @@ import { toggleVenueFavoriteName } from "../../utils/favorites";
 
 interface VenueGroupListProps {
   venue: string;
+  venueId?: string;
   group: Person[];
   isOpen: boolean;
   toggleGroup: (venue: string) => void;
@@ -30,6 +31,7 @@ interface VenueGroupListProps {
 // Each venue card collapses/expands and houses the PersonCard list plus favourite toggle.
 export default function VenueGroupList({
   venue,
+  venueId,
   group,
   isOpen,
   toggleGroup,
@@ -72,9 +74,11 @@ export default function VenueGroupList({
 
   const isUnclassified = venue === UNCLASSIFIED;
   const isFavorite = isUnclassified ? false : favoriteVenues.includes(venue);
+  const displayName = isUnclassified ? "No venue yet" : venue;
 
   return (
     <div
+      id={venueId ? `venue-card-${venueId}` : undefined}
       className={`mb-2.5 glass-panel border border-[var(--color-card-border)]/70 px-4 py-3 rounded-3xl shadow-level1 ${
         isUnclassified ? "border-dashed" : ""
       }`}
@@ -85,12 +89,12 @@ export default function VenueGroupList({
             toggleGroup(venue);
           }}
           className="text-left text-lg font-semibold text-[var(--color-text-primary)] flex items-center gap-2"
-          aria-label={`Toggle ${venue}`}
+          aria-label={`Toggle ${displayName}`}
         >
           <span className="text-sm text-[var(--color-text-secondary)]">
             {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </span>
-          {venue}
+          {displayName}
           <span className="text-sm text-[var(--color-text-secondary)]">({groupList.length})</span>
         </button>
         {!isUnclassified && (
@@ -145,7 +149,7 @@ export default function VenueGroupList({
 
       {isUnclassified && (
         <p className="text-xs text-[var(--color-text-secondary)] mb-2">
-          Assign a venue to move people out of Unclassified.
+          Assign a venue to move people out of "No venue yet."
         </p>
       )}
 
