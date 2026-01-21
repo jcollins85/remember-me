@@ -152,6 +152,10 @@ export default function PersonModal({
           />
         </div>
 
+        {isLocationSearchOpen && (
+          <div className="absolute inset-0 z-20 rounded-3xl bg-black/45 pointer-events-none" />
+        )}
+
         <div className="flex-none sticky bottom-0 z-10 bg-[var(--color-surface)]/95 backdrop-blur-lg border-t border-white/40 px-6 py-4 flex justify-end gap-2 shadow-[0_-6px_18px_rgba(15,23,42,0.08)]">
           <button
             type="button"

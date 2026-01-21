@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Capacitor } from "@capacitor/core";
 import { Geolocation } from "@capacitor/geolocation";
@@ -691,19 +692,22 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
       )}
 
 
-      {showPlaceSearch && (
-        <div
-          className="fixed inset-0 z-60 flex items-center justify-center bg-transparent"
-          onClick={() => setShowPlaceSearch(false)}
-          onWheel={(event) => event.preventDefault()}
-          style={{ overscrollBehavior: "contain" }}
-        >
+      {showPlaceSearch &&
+        typeof document !== "undefined" &&
+        createPortal(
           <div
-            role="dialog"
-            aria-modal="true"
-            className="w-[min(86vw,420px)] rounded-[24px] bg-white p-5 shadow-[0_12px_28px_rgba(15,23,42,0.18)] space-y-4 max-h-[80vh] flex flex-col border border-black/5"
-            onClick={(event) => event.stopPropagation()}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-transparent"
+            onClick={() => setShowPlaceSearch(false)}
+            onWheel={(event) => event.preventDefault()}
+            style={{ overscrollBehavior: "contain" }}
           >
+            {/* Portal to body with a higher z-index to ensure it stays above the modal dim layer. */}
+            <div
+              role="dialog"
+              aria-modal="true"
+              className="w-[min(86vw,420px)] rounded-[24px] bg-white p-5 shadow-[0_12px_28px_rgba(15,23,42,0.18)] space-y-4 max-h-[80vh] flex flex-col border border-black/5"
+              onClick={(event) => event.stopPropagation()}
+            >
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-1">
                 <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
@@ -790,9 +794,10 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
                   </div>
                 ))}
             </div>
-          </div>
-        </div>
-      )}
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   );
 };
