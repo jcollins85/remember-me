@@ -727,7 +727,7 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
                 autoFocus
               />
             </div>
-            <div className="max-h-[55vh] overflow-y-auto pr-1 flex-1 bg-white rounded-[20px] px-2 py-2 space-y-1">
+            <div className="max-h-[55vh] overflow-y-auto pr-1 flex-1 bg-white rounded-[20px] px-1 py-1">
               {placeLoading && (
                 <p className="text-xs text-[var(--color-text-secondary)] px-1">Searching…</p>
               )}
@@ -741,24 +741,28 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
               )}
               {!placeLoading &&
                 !placeError &&
-                placeResults.slice(0, 5).map((place) => (
-                  <button
-                    key={`${place.lat}-${place.lng}-${place.address}`}
-                    type="button"
-                    onClick={() => handlePlaceSelect(place)}
-                    className="w-full text-left rounded-[18px] border border-black/5 bg-white px-3 py-2 shadow-[0_4px_12px_rgba(15,23,42,0.05)] hover:bg-[var(--color-card)]/30 transition"
-                  >
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">{place.name}</p>
-                    <p className="text-xs text-[var(--color-text-secondary)]">{place.address}</p>
-                    {userCoords && (
-                      <p className="mt-1 flex items-center gap-1 text-[11px] text-[var(--color-text-secondary)]/80">
-                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-accent-muted)]" />
-                        {formatDistanceLabel(
-                          getDistanceMeters(userCoords, { lat: place.lat, lon: place.lng })
-                        )}
-                      </p>
+                placeResults.slice(0, 5).map((place, idx) => (
+                  <div key={`${place.lat}-${place.lng}-${place.address}`}>
+                    <button
+                      type="button"
+                      onClick={() => handlePlaceSelect(place)}
+                      className="w-full text-left rounded-[14px] px-3 py-2.5 hover:bg-[var(--color-card)]/40 transition"
+                    >
+                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">{place.name}</p>
+                      <p className="text-xs text-[var(--color-text-secondary)]">{place.address}</p>
+                      {userCoords && (
+                        <p className="mt-1 flex items-center gap-1 text-[11px] text-[var(--color-text-secondary)]/80">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-accent-muted)]" />
+                          {formatDistanceLabel(
+                            getDistanceMeters(userCoords, { lat: place.lat, lon: place.lng })
+                          )}
+                        </p>
+                      )}
+                    </button>
+                    {idx < placeResults.slice(0, 5).length - 1 && (
+                      <div className="mx-3 border-t border-[var(--color-accent-muted)]" />
                     )}
-                  </button>
+                  </div>
                 ))}
             </div>
           </div>
