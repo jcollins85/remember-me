@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Capacitor } from "@capacitor/core";
 import { Geolocation } from "@capacitor/geolocation";
 import { MapKitBridge } from "../../plugins/mapkitBridge";
+import { ChevronLeft } from "lucide-react";
 import type { Venue } from "../../types";
 import { useNotification } from "../../context/NotificationContext";
 import { useAnalytics } from "../../context/AnalyticsContext";
@@ -709,9 +710,10 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
               <button
                 type="button"
                 onClick={() => setShowPlaceSearch(false)}
-                className="text-lg font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-accent)]"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-card-border)]/60 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)]"
+                aria-label="Back to location"
               >
-                ×
+                <ChevronLeft size={16} />
               </button>
             </div>
             <div className="rounded-[26px] border border-black/10 bg-white px-4 py-2 flex items-center gap-3 shadow-[inset_0_1px_2px_rgba(15,23,42,0.08)]">
@@ -733,7 +735,9 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
                 <p className="text-xs text-red-500 px-1">{placeError}</p>
               )}
               {!placeLoading && !placeError && placeResults.length === 0 && placeQuery.trim().length >= 2 && (
-                <p className="text-xs text-[var(--color-text-secondary)] px-1">No matches found.</p>
+                <p className="text-xs text-[var(--color-text-secondary)] px-1">
+                  No matches found. Try adding a city or street name.
+                </p>
               )}
               {!placeLoading &&
                 !placeError &&
