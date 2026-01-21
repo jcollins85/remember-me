@@ -751,7 +751,22 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
               )}
               {!placeLoading &&
                 !placeError &&
-                placeResults.slice(0, 5).map((place, idx) => (
+                (userCoords
+                  ? [...placeResults].sort((a, b) => {
+                      const distanceA = getDistanceMeters(userCoords, {
+                        lat: a.lat,
+                        lon: a.lng,
+                      });
+                      const distanceB = getDistanceMeters(userCoords, {
+                        lat: b.lat,
+                        lon: b.lng,
+                      });
+                      return distanceA - distanceB;
+                    })
+                  : placeResults
+                )
+                  .slice(0, 5)
+                  .map((place, idx) => (
                   <div key={`${place.lat}-${place.lng}-${place.address}`}>
                     <button
                       type="button"
