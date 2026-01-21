@@ -506,7 +506,7 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
             <div>
               <p className={labelClass.replace("mb-2", "")}>Location</p>
               <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
-                Add a map pin for this venue.
+                Pin a location so you can get nearby venue alerts.
               </p>
           </div>
 
