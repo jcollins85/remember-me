@@ -24,6 +24,7 @@ interface Props {
   createTag: (name: string) => Tag;
   hideActions?: boolean;
   onSubmittingChange?: (submitting: boolean) => void;
+  onLocationSearchOpenChange?: (open: boolean) => void;
   globalProximityEnabled: boolean;
   onEnableGlobalProximity: () => void;
 }
@@ -42,6 +43,7 @@ export default function PersonForm({
   createTag,
   hideActions = false,
   onSubmittingChange,
+  onLocationSearchOpenChange,
   globalProximityEnabled,
   onEnableGlobalProximity,
 }: Props) {
@@ -465,6 +467,7 @@ export default function PersonForm({
         getSelectedVenue={getSelectedVenue}
         onValidationCoordsChange={setLocationValidationCoords}
         onPendingChange={setPendingLocation}
+        onSearchOpenChange={onLocationSearchOpenChange}
         globalProximityEnabled={globalProximityEnabled}
         onEnableGlobalProximity={onEnableGlobalProximity}
       />

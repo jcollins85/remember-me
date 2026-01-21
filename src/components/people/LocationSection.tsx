@@ -1,8 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Capacitor } from "@capacitor/core";
 import { Geolocation } from "@capacitor/geolocation";
 import { MapKitBridge } from "../../plugins/mapkitBridge";
+import { ChevronLeft } from "lucide-react";
 import type { Venue } from "../../types";
 import { useNotification } from "../../context/NotificationContext";
 import { useAnalytics } from "../../context/AnalyticsContext";
@@ -26,6 +28,7 @@ interface LocationSectionProps {
   getSelectedVenue: () => Venue | null;
   onValidationCoordsChange?: (coords: { lat: string; lon: string } | null) => void;
   onPendingChange?: (data: PendingLocationPayload | null) => void;
+  onSearchOpenChange?: (open: boolean) => void;
   globalProximityEnabled: boolean;
   onEnableGlobalProximity: (options?: { source?: "settings" | "venue_toggle"; onEnabled?: () => void }) => void;
 }
@@ -36,6 +39,26 @@ type SearchResult = { name: string; address: string; lat: number; lng: number };
 
 type PendingAction = (() => Promise<void>) | null;
 
+const formatDistanceLabel = (meters: number) => {
+  if (meters < 1000) {
+    return `${Math.round(meters)} m away`;
+  }
+  return `${(meters / 1000).toFixed(1)} km away`;
+};
+
+const toRad = (value: number) => (value * Math.PI) / 180;
+
+const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number; lon: number }) => {
+  const R = 6371000;
+  const dLat = toRad(to.lat - from.lat);
+  const dLon = toRad(to.lon - from.lon);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(from.lat)) * Math.cos(toRad(to.lat)) * Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
   const LocationSection: React.FC<LocationSectionProps> = ({
     venueName,
     canUseLocation,
@@ -45,6 +68,7 @@ type PendingAction = (() => Promise<void>) | null;
     getSelectedVenue,
     onValidationCoordsChange,
     onPendingChange,
+    onSearchOpenChange,
     globalProximityEnabled,
     onEnableGlobalProximity,
   }) => {
@@ -72,6 +96,8 @@ type PendingAction = (() => Promise<void>) | null;
   const [placeLoading, setPlaceLoading] = useState(false);
   const [placeError, setPlaceError] = useState<string | null>(null);
   const [searchPlaceholder, setSearchPlaceholder] = useState(defaultSearchPlaceholder);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const resultsRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!onValidationCoordsChange) return;
@@ -261,11 +287,51 @@ type PendingAction = (() => Promise<void>) | null;
   }, [placeQuery, showPlaceSearch, coords, venueName, trackEvent]);
 
   useEffect(() => {
+    onSearchOpenChange?.(showPlaceSearch);
+  }, [showPlaceSearch, onSearchOpenChange]);
+
+
+
+  useEffect(() => {
     if (!showPlaceSearch) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    let cancelled = false;
+    const fetchCoords = async () => {
+      try {
+        if (Capacitor.isNativePlatform()) {
+          const geoAny = Geolocation as unknown as {
+            checkPermissions?: () => Promise<{ location?: "granted" | "denied" | "grantedWhenInUse" }>;
+          };
+          if (typeof geoAny.checkPermissions !== "function") {
+            return;
+          }
+          const perm = await geoAny.checkPermissions();
+          if (perm.location !== "granted" && perm.location !== "grantedWhenInUse") {
+            return;
+          }
+          const coordsPayload = await getCurrentCoordinates();
+          if (!cancelled) {
+            setUserCoords(coordsPayload);
+          }
+          return;
+        }
+        const permissions = (navigator as any)?.permissions;
+        if (permissions?.query) {
+          const status = await permissions.query({ name: "geolocation" as PermissionName });
+          if (status.state !== "granted") return;
+        } else {
+          return;
+        }
+        const coordsPayload = await getCurrentCoordinates();
+        if (!cancelled) {
+          setUserCoords(coordsPayload);
+        }
+      } catch {
+        // Ignore distance if we can't access location.
+      }
+    };
+    fetchCoords();
     return () => {
-      document.body.style.overflow = prev;
+      cancelled = true;
     };
   }, [showPlaceSearch]);
 
@@ -442,7 +508,7 @@ type PendingAction = (() => Promise<void>) | null;
             <div>
               <p className={labelClass.replace("mb-2", "")}>Location</p>
               <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
-                Add a map pin for this venue.
+                Pin a location so you can get nearby venue alerts.
               </p>
           </div>
 
@@ -626,23 +692,38 @@ type PendingAction = (() => Promise<void>) | null;
       )}
 
 
-      {showPlaceSearch && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none bg-[var(--color-card)]/50 backdrop-blur-md">
+      {showPlaceSearch &&
+        typeof document !== "undefined" &&
+        createPortal(
           <div
-            role="dialog"
-            aria-modal="true"
-            className="pointer-events-auto w-[min(80vw,380px)] rounded-[30px] bg-white p-5 shadow-[0_25px_60px_rgba(15,23,42,0.45)] space-y-4 max-h-[80vh] flex flex-col border border-black/5"
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-transparent"
+            onClick={() => setShowPlaceSearch(false)}
+            onWheel={(event) => event.preventDefault()}
+            style={{ overscrollBehavior: "contain" }}
           >
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
-                Search by name or address
-              </p>
+            {/* Portal to body with a higher z-index to ensure it stays above the modal dim layer. */}
+            <div
+              role="dialog"
+              aria-modal="true"
+              className="w-[min(86vw,420px)] rounded-[24px] bg-white p-5 shadow-[0_12px_28px_rgba(15,23,42,0.18)] space-y-4 max-h-[80vh] flex flex-col border border-black/5"
+              onClick={(event) => event.stopPropagation()}
+            >
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
+                  Find a place
+                </p>
+                <p className="text-xs text-[var(--color-text-secondary)]/90">
+                  Search for a business, venue, or address.
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => setShowPlaceSearch(false)}
-                className="text-lg font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-accent)]"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-card-border)]/60 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)]"
+                aria-label="Back to location"
               >
-                ×
+                <ChevronLeft size={16} />
               </button>
             </div>
             <div className="rounded-[26px] border border-black/10 bg-white px-4 py-2 flex items-center gap-3 shadow-[inset_0_1px_2px_rgba(15,23,42,0.08)]">
@@ -656,7 +737,11 @@ type PendingAction = (() => Promise<void>) | null;
                 autoFocus
               />
             </div>
-            <div className="max-h-[55vh] overflow-y-auto pr-1 flex-1 bg-white rounded-[20px] px-2 py-2 space-y-1">
+            <div
+              className="max-h-[55vh] overflow-y-auto pr-1 flex-1 bg-white rounded-[20px] px-1 py-1"
+              onWheel={(event) => event.stopPropagation()}
+              style={{ overscrollBehavior: "contain" }}
+            >
               {placeLoading && (
                 <p className="text-xs text-[var(--color-text-secondary)] px-1">Searching…</p>
               )}
@@ -664,25 +749,55 @@ type PendingAction = (() => Promise<void>) | null;
                 <p className="text-xs text-red-500 px-1">{placeError}</p>
               )}
               {!placeLoading && !placeError && placeResults.length === 0 && placeQuery.trim().length >= 2 && (
-                <p className="text-xs text-[var(--color-text-secondary)] px-1">No matches found.</p>
+                <p className="text-xs text-[var(--color-text-secondary)] px-1">
+                  No matches found. Try adding a city or street name.
+                </p>
               )}
               {!placeLoading &&
                 !placeError &&
-                placeResults.slice(0, 5).map((place) => (
-                  <button
-                    key={`${place.lat}-${place.lng}-${place.address}`}
-                    type="button"
-                    onClick={() => handlePlaceSelect(place)}
-                    className="w-full text-left rounded-[18px] border border-black/5 bg-white px-3 py-2 shadow-[0_4px_12px_rgba(15,23,42,0.05)] hover:bg-[var(--color-card)]/30 transition"
-                  >
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">{place.name}</p>
-                    <p className="text-xs text-[var(--color-text-secondary)]">{place.address}</p>
-                  </button>
+                (userCoords
+                  ? [...placeResults].sort((a, b) => {
+                      const distanceA = getDistanceMeters(userCoords, {
+                        lat: a.lat,
+                        lon: a.lng,
+                      });
+                      const distanceB = getDistanceMeters(userCoords, {
+                        lat: b.lat,
+                        lon: b.lng,
+                      });
+                      return distanceA - distanceB;
+                    })
+                  : placeResults
+                )
+                  .slice(0, 5)
+                  .map((place, idx) => (
+                  <div key={`${place.lat}-${place.lng}-${place.address}`}>
+                    <button
+                      type="button"
+                      onClick={() => handlePlaceSelect(place)}
+                      className="w-full text-left rounded-[14px] px-3 py-2.5 hover:bg-[var(--color-card)]/40 transition"
+                    >
+                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">{place.name}</p>
+                      <p className="text-xs text-[var(--color-text-secondary)]">{place.address}</p>
+                      {userCoords && (
+                        <p className="mt-1 flex items-center gap-1 text-[11px] text-[var(--color-text-secondary)]/80">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-accent-muted)]" />
+                          {formatDistanceLabel(
+                            getDistanceMeters(userCoords, { lat: place.lat, lon: place.lng })
+                          )}
+                        </p>
+                      )}
+                    </button>
+                    {idx < placeResults.slice(0, 5).length - 1 && (
+                      <div className="mx-3 border-t border-[var(--color-accent-muted)]" />
+                    )}
+                  </div>
                 ))}
             </div>
-          </div>
-        </div>
-      )}
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   );
 };
