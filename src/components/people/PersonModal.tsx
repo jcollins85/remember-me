@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { UserPlus2, UserPen, X } from "lucide-react";
@@ -39,13 +39,35 @@ export default function PersonModal({
 }: Props) {
   const title = mode === "add" ? "Add Person" : "Edit Person";
   const [isSaving, setIsSaving] = useState(false);
+  const [isLocationSearchOpen, setIsLocationSearchOpen] = useState(false);
   const initialData = mode === "edit" ? person : undefined;
+  const contentRef = useRef<HTMLDivElement | null>(null);
   const modalRoot =
     typeof document !== "undefined"
       ? document.getElementById("modal-root") ?? document.body
       : null;
 
   if (!modalRoot) return null;
+
+  useEffect(() => {
+    const container = contentRef.current;
+    if (!container) return;
+    if (isLocationSearchOpen) {
+      container.dataset.prevOverflow = container.style.overflow;
+      container.dataset.prevTouchAction = container.style.touchAction;
+      container.style.overflow = "hidden";
+      container.style.touchAction = "none";
+    } else {
+      if (container.dataset.prevOverflow !== undefined) {
+        container.style.overflow = container.dataset.prevOverflow;
+      }
+      if (container.dataset.prevTouchAction !== undefined) {
+        container.style.touchAction = container.dataset.prevTouchAction;
+      }
+      delete container.dataset.prevOverflow;
+      delete container.dataset.prevTouchAction;
+    }
+  }, [isLocationSearchOpen]);
 
   return createPortal(
     <motion.div
@@ -103,6 +125,7 @@ export default function PersonModal({
         </div>
 
         <div
+          ref={contentRef}
           className="relative flex-1 overflow-y-auto px-6 py-4 bg-[var(--color-card)]"
           style={{
             scrollbarGutter: "stable",
@@ -123,6 +146,7 @@ export default function PersonModal({
             createTag={createTag}
             hideActions
             onSubmittingChange={setIsSaving}
+            onLocationSearchOpenChange={setIsLocationSearchOpen}
             globalProximityEnabled={globalProximityEnabled}
             onEnableGlobalProximity={onEnableGlobalProximity}
           />
@@ -145,6 +169,7 @@ export default function PersonModal({
             {isSaving ? "Saving…" : "Save"}
           </button>
         </div>
+
       </motion.div>
     </motion.div>,
     modalRoot

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Capacitor } from "@capacitor/core";
 import { Geolocation } from "@capacitor/geolocation";
@@ -27,6 +27,7 @@ interface LocationSectionProps {
   getSelectedVenue: () => Venue | null;
   onValidationCoordsChange?: (coords: { lat: string; lon: string } | null) => void;
   onPendingChange?: (data: PendingLocationPayload | null) => void;
+  onSearchOpenChange?: (open: boolean) => void;
   globalProximityEnabled: boolean;
   onEnableGlobalProximity: (options?: { source?: "settings" | "venue_toggle"; onEnabled?: () => void }) => void;
 }
@@ -66,6 +67,7 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
     getSelectedVenue,
     onValidationCoordsChange,
     onPendingChange,
+    onSearchOpenChange,
     globalProximityEnabled,
     onEnableGlobalProximity,
   }) => {
@@ -94,6 +96,7 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
   const [placeError, setPlaceError] = useState<string | null>(null);
   const [searchPlaceholder, setSearchPlaceholder] = useState(defaultSearchPlaceholder);
   const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const resultsRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!onValidationCoordsChange) return;
@@ -283,13 +286,10 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
   }, [placeQuery, showPlaceSearch, coords, venueName, trackEvent]);
 
   useEffect(() => {
-    if (!showPlaceSearch) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [showPlaceSearch]);
+    onSearchOpenChange?.(showPlaceSearch);
+  }, [showPlaceSearch, onSearchOpenChange]);
+
+
 
   useEffect(() => {
     if (!showPlaceSearch) return;
@@ -692,11 +692,17 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
 
 
       {showPlaceSearch && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none bg-[var(--color-card)]/50 backdrop-blur-md">
+        <div
+          className="fixed inset-0 z-60 flex items-center justify-center bg-transparent"
+          onClick={() => setShowPlaceSearch(false)}
+          onWheel={(event) => event.preventDefault()}
+          style={{ overscrollBehavior: "contain" }}
+        >
           <div
             role="dialog"
             aria-modal="true"
-            className="pointer-events-auto w-[min(80vw,380px)] rounded-[30px] bg-white p-5 shadow-[0_25px_60px_rgba(15,23,42,0.45)] space-y-4 max-h-[80vh] flex flex-col border border-black/5"
+            className="w-[min(86vw,420px)] rounded-[24px] bg-white p-5 shadow-[0_12px_28px_rgba(15,23,42,0.18)] space-y-4 max-h-[80vh] flex flex-col border border-black/5"
+            onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-1">
@@ -727,7 +733,11 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
                 autoFocus
               />
             </div>
-            <div className="max-h-[55vh] overflow-y-auto pr-1 flex-1 bg-white rounded-[20px] px-1 py-1">
+            <div
+              className="max-h-[55vh] overflow-y-auto pr-1 flex-1 bg-white rounded-[20px] px-1 py-1"
+              onWheel={(event) => event.stopPropagation()}
+              style={{ overscrollBehavior: "contain" }}
+            >
               {placeLoading && (
                 <p className="text-xs text-[var(--color-text-secondary)] px-1">Searching…</p>
               )}
