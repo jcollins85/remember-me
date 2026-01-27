@@ -41,7 +41,7 @@ export default function DeleteConfirmModal({ name, onConfirm, onCancel, isDeleti
               triggerImpact(ImpactStyle.Light);
               onCancel();
             }}
-            className="px-4 py-2 rounded-full border border-[var(--color-card-border)] bg-[var(--color-card)]/70 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/90 transition"
+            className="px-4 py-2 rounded-full border border-[var(--color-card-border)] !bg-[var(--color-card)] text-sm text-[var(--color-text-primary)] shadow-[0_3px_10px_rgba(15,23,42,0.08)] hover:!bg-[var(--color-card)]/95 transition"
           >
             Cancel
           </button>

@@ -672,7 +672,7 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
               <button
                 type="button"
                 onClick={handleReplaceCancel}
-                className="rounded-full border border-[var(--color-card-border)] bg-[var(--color-card)]/70 px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/90"
+                className="rounded-full border border-[var(--color-card-border)] !bg-[var(--color-card)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] shadow-[0_3px_10px_rgba(15,23,42,0.08)] hover:!bg-[var(--color-card)]/95"
               >
                 Keep existing
               </button>
