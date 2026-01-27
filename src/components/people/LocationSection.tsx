@@ -654,11 +654,11 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
       </AnimatePresence>
 
       {showReplaceModal && replaceVenue && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
           <div
             role="dialog"
             aria-modal="true"
-            className="w-full max-w-sm rounded-[32px] bg-[var(--color-card)] p-6 shadow-[0_20px_50px_rgba(15,23,42,0.4)] text-center space-y-4"
+            className="w-full max-w-sm rounded-[32px] bg-[var(--color-surface)] p-6 shadow-[0_20px_50px_rgba(15,23,42,0.4)] text-center space-y-4"
           >
             <div>
               <p className="text-sm font-semibold text-[var(--color-text-primary)]">
@@ -672,7 +672,7 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
               <button
                 type="button"
                 onClick={handleReplaceCancel}
-                className="rounded-full border border-[var(--color-card-border)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/80"
+                className="rounded-full border border-[var(--color-card-border)] bg-[var(--color-card)]/70 px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/90"
               >
                 Keep existing
               </button>
