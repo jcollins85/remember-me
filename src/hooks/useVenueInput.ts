@@ -80,6 +80,8 @@ export function useVenueInput({
       coords: undefined,
       favorite: false,
       proximityAlertsEnabled: true,
+      proximityEnterCount: 0,
+      proximityLastEnterAt: undefined,
     };
     addVenue(newVenue);
     return newVenue;

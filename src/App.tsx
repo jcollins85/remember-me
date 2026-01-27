@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { useState, useEffect, useMemo, useDeferredValue } from "react";
+import React, { useState, useEffect, useMemo, useDeferredValue, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
 import { Person, Venue } from "./types";
 
@@ -66,7 +66,7 @@ function App() {
   const { tags, createTag, getTagIdByName, getTagNameById, replaceTags } = useTags();
 
   // ── Venue context & lookup ──
-  const { venues, replaceVenues } = useVenues();
+  const { venues, replaceVenues, updateVenue } = useVenues();
   const hasPinnedVenue = useMemo(
     () => venues.some((venue) => Boolean(venue.coords)),
     [venues]
@@ -171,6 +171,16 @@ function App() {
   const venueIdByName = useMemo(
     () => Object.fromEntries(venues.map((v) => [v.name, v.id])) as Record<string, string>,
     [venues]
+  );
+
+  const handleVenueRegionEnter = useCallback(
+    (venueId: string) => {
+      const venue = venuesById[venueId];
+      if (!venue) return;
+      const nextCount = (venue.proximityEnterCount ?? 0) + 1;
+      updateVenue({ ...venue, proximityEnterCount: nextCount, proximityLastEnterAt: Date.now() });
+    },
+    [venuesById, updateVenue]
   );
 
   const monitoredVenues = useMemo<MonitoredVenue[]>(() => {
@@ -568,7 +578,9 @@ function App() {
       return;
     }
     (async () => {
-      const result = await startProximityAlerts(monitoredSubset);
+      const result = await startProximityAlerts(monitoredSubset, {
+        onRegionEnter: handleVenueRegionEnter,
+      });
       if (!cancelled && !result.ok) {
         setProximityAlertsEnabled(false);
         setProximityEnabled(false);
@@ -584,7 +596,7 @@ function App() {
       cancelled = true;
       stopProximityAlerts();
     };
-  }, [proximityEnabled, showNotification, monitoredSubset, proximitySupported, showOnboarding]);
+  }, [proximityEnabled, showNotification, monitoredSubset, proximitySupported, showOnboarding, handleVenueRegionEnter]);
 
   // Keep the watcher in sync with current venue coordinates/toggles.
   useEffect(() => {

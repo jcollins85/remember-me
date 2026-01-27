@@ -19,6 +19,7 @@ export type MonitoredVenue = Venue & {
 const isNative = Capacitor.isNativePlatform();
 const ALERT_COOLDOWN_MS = 30 * 60 * 1000;
 let regionListener: PluginListenerHandle | null = null;
+let regionEnterHandler: ((venueId: string) => void) | null = null;
 const lastAlertTimestamps: Record<string, number> = {};
 let venuesSnapshot: MonitoredVenue[] = [];
 
@@ -90,14 +91,19 @@ const attachRegionListener = async () => {
   regionListener?.remove();
   regionListener = await GeofenceBridge.addListener("regionEnter", async (event) => {
     if (!isProximityAlertsEnabled()) return;
+    regionEnterHandler?.(event.id);
     trackEvent("proximity_region_enter", { venue_id: event.id });
     await scheduleNotification(event.id);
   });
 };
 
 // Requests the required permissions, subscribes to region events, and seeds the native geofences.
-export const startProximityAlerts = async (venues: MonitoredVenue[]) => {
+export const startProximityAlerts = async (
+  venues: MonitoredVenue[],
+  options?: { onRegionEnter?: (venueId: string) => void }
+) => {
   venuesSnapshot = venues;
+  regionEnterHandler = options?.onRegionEnter ?? null;
   if (!isNative) {
     return { ok: false, error: "Nearby venue alerts are only available on device." };
   }
@@ -141,6 +147,7 @@ export const startProximityAlerts = async (venues: MonitoredVenue[]) => {
 export const stopProximityAlerts = async () => {
   regionListener?.remove();
   regionListener = null;
+  regionEnterHandler = null;
   if (!isNative) return;
   try {
     await GeofenceBridge.stopMonitoring();

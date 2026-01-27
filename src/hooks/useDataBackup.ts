@@ -182,16 +182,24 @@ function sanitizeVenues(raw: unknown): Venue[] {
       typeof item.id === "string" && item.id.trim()
         ? item.id
         : crypto.randomUUID();
-    return {
-      id,
-      name,
-      locationTag: typeof item.locationTag === "string" ? truncate(item.locationTag) : undefined,
-      coords: sanitizeCoords(item.coords),
-      favorite: Boolean(item.favorite),
-      proximityAlertsEnabled: item.proximityAlertsEnabled !== false,
-    };
-  });
-}
+      return {
+        id,
+        name,
+        locationTag: typeof item.locationTag === "string" ? truncate(item.locationTag) : undefined,
+        coords: sanitizeCoords(item.coords),
+        favorite: Boolean(item.favorite),
+        proximityAlertsEnabled: item.proximityAlertsEnabled !== false,
+        proximityEnterCount:
+          typeof item.proximityEnterCount === "number" && item.proximityEnterCount >= 0
+            ? Math.floor(item.proximityEnterCount)
+            : 0,
+        proximityLastEnterAt:
+          typeof item.proximityLastEnterAt === "number" && item.proximityLastEnterAt > 0
+            ? Math.floor(item.proximityLastEnterAt)
+            : undefined,
+      };
+    });
+  }
 
 // Tags store usage counts for achievements/filter chips, so keep them sane too.
 function sanitizeTags(raw: unknown): Tag[] {
@@ -309,6 +317,8 @@ function parseCsvPeople(text: string) {
       coords: undefined,
       favorite: false,
       proximityAlertsEnabled: true,
+      proximityEnterCount: 0,
+      proximityLastEnterAt: undefined,
     };
     venues.push(venue);
     venueByName.set(normalized, venue);
