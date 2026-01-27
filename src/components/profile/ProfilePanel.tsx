@@ -160,7 +160,13 @@ export default function ProfilePanel({
                       <div>
                         <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Top venue</p>
                         <p className="font-semibold text-[var(--color-text-primary)]">{insights.topVenue.name}</p>
-                        <p className="text-xs text-[var(--color-text-secondary)]">{insights.topVenue.count} people logged</p>
+                        <p className="text-xs text-[var(--color-text-secondary)]">
+                          {insights.topVenue.count === 0
+                            ? "No people logged"
+                            : `${insights.topVenue.count} ${
+                                insights.topVenue.count === 1 ? "person" : "people"
+                              } logged`}
+                        </p>
                       </div>
                     </div>
                   ) : (
