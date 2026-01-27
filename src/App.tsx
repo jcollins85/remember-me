@@ -162,7 +162,7 @@ function App() {
     personSort,  setPersonSort
   } = useSearchSort();
   const deferredSearchQuery = useDeferredValue(searchQuery);
-  const { trackEvent } = useAnalytics();
+  const { trackEvent, trackFirstEvent } = useAnalytics();
 
   const venuesById = useMemo(
     () => Object.fromEntries(venues.map((v) => [v.id, v])) as Record<string, Venue>,
@@ -261,7 +261,7 @@ function App() {
     const handler = window.setTimeout(() => {
       trackEvent("search_used", {
         query_length: trimmed.length,
-        results: filteredPeople.length,
+        results_count: filteredPeople.length,
       });
     }, 500);
     return () => window.clearTimeout(handler);
@@ -380,6 +380,9 @@ function App() {
     if (proximityEnabled) return;
     setProximityAlertsEnabled(true);
     setProximityEnabled(true);
+    trackFirstEvent("proximity_enabled", "first_proximity_enabled", {
+      ...(source ? { source } : {}),
+    });
     trackEvent("proximity_toggle", {
       enabled: true,
       ...(source ? { source } : {}),
@@ -569,11 +572,12 @@ function App() {
       if (!cancelled && !result.ok) {
         setProximityAlertsEnabled(false);
         setProximityEnabled(false);
-        showNotification(result.error ?? "Unable to enable proximity alerts.", "error");
-        trackEvent("proximity_error", { message: result.error ?? "unknown" });
+        const errorCode = result.error ?? "unknown";
+        showNotification(errorCode ?? "Unable to enable proximity alerts.", "error");
+        trackEvent("proximity_error", { error_code: errorCode, error_stage: "start" });
       }
       if (!cancelled && result.ok) {
-        trackEvent("proximity_started", { monitoredVenues: monitoredSubset.length });
+        trackEvent("proximity_started", { monitored_venues_count: monitoredSubset.length });
       }
     })();
     return () => {
@@ -773,7 +777,7 @@ function App() {
               const venueMeta = getVenueAnalyticsMeta(newPerson.venueId);
               trackEvent("person_added", {
                 ...venueMeta,
-                tags: newPerson.tags?.length ?? 0,
+                tags_count: newPerson.tags?.length ?? 0,
                 favorite: !!newPerson.favorite,
               });
             }}
@@ -798,7 +802,7 @@ function App() {
               trackEvent("person_updated", {
                 id: updated.id,
                 ...venueMeta,
-                tags: updated.tags?.length ?? 0,
+                tags_count: updated.tags?.length ?? 0,
                 favorite: !!updated.favorite,
               });
             }}
@@ -812,7 +816,7 @@ function App() {
               trackEvent("person_deleted", {
                 id,
                 ...venueMeta,
-                tags: deletedPerson?.tags?.length ?? 0,
+                tags_count: deletedPerson?.tags?.length ?? 0,
                 favorite: deletedPerson?.favorite ?? false,
               });
               const nextPeople = people.filter((person) => person.id !== id);
@@ -847,7 +851,14 @@ function App() {
               const updatedPerson = togglePersonFavorite(p);
               const nextFavorite = !!updatedPerson.favorite;
               updatePerson(updatedPerson);
-              trackEvent(nextFavorite ? "person_favorited" : "person_unfavorited");
+              if (nextFavorite) {
+                trackFirstEvent("favorite_added", "first_favorite_added", {
+                  type: "person",
+                });
+              }
+              if (nextFavorite) {
+                trackEvent("person_favorited");
+              }
             }}
             searchQuery={searchQuery}
             distanceLabels={venueDistanceLabels}

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Capacitor } from "@capacitor/core";
@@ -73,7 +73,7 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
     onEnableGlobalProximity,
   }) => {
   const { showNotification } = useNotification();
-  const { trackEvent } = useAnalytics();
+  const { trackEvent, trackFirstEvent } = useAnalytics();
   const initialVenue = useMemo(() => getSelectedVenue(), [getSelectedVenue]);
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(
     initialVenue?.coords ?? null
@@ -97,7 +97,6 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
   const [placeError, setPlaceError] = useState<string | null>(null);
   const [searchPlaceholder, setSearchPlaceholder] = useState(defaultSearchPlaceholder);
   const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
-  const resultsRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!onValidationCoordsChange) return;
@@ -198,8 +197,8 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
           setMapSnapshot(`data:image/png;base64,${result.imageData}`);
           setSnapshotError(null);
           trackEvent("map_snapshot_success", {
-            venueName: venueLabel,
-            hasAddress: Boolean(result.address),
+            venue_name: venueLabel,
+            has_address: Boolean(result.address),
           });
           if (newLabel !== locationTag) {
             setLocationTag(newLabel);
@@ -212,8 +211,8 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
           setSnapshotError("Preview unavailable");
         }
         trackEvent("map_snapshot_error", {
-          venueName: venueName.trim() || "unspecified",
-          message: typeof error?.message === "string" ? error.message : "unknown",
+          venue_name: venueName.trim() || "unspecified",
+          error_code: typeof error?.message === "string" ? error.message : "unknown",
         });
       } finally {
         if (!cancelled) {
@@ -261,10 +260,6 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
         });
         if (!cancelled) {
           setPlaceResults(results);
-          trackEvent("place_search_results", {
-            query_length: trimmed.length,
-            result_count: results.length,
-          });
         }
       } catch (error: any) {
         console.warn("Place search error", error);
@@ -272,7 +267,7 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
           setPlaceError("Couldn't search right now");
         }
         trackEvent("place_search_error", {
-          message: typeof error?.message === "string" ? error.message : "unknown",
+          error_code: typeof error?.message === "string" ? error.message : "unknown",
         });
       } finally {
         if (!cancelled) {
@@ -428,7 +423,8 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
         return;
       }
       await action();
-      trackEvent("venue_pin_captured", { source: "current_location", venueName: venueName });
+      trackEvent("venue_pin_captured", { source: "current_location", venue_name: venueName });
+      trackFirstEvent("venue_pinned", "first_venue_pinned", { source: "current_location" });
     } catch (error: any) {
       console.warn("Location capture error", error);
       const message =
@@ -449,8 +445,9 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
       setCoords(coordsPayload);
       setLocationTag(place.address);
       showNotification(`Location set to ${place.name}`, "info");
-      trackEvent("venue_pin_captured", { source: "search", venueName: venueName });
-      trackEvent("place_selected", { venueName, placeName: place.name });
+      trackEvent("venue_pin_captured", { source: "search", venue_name: venueName });
+      trackFirstEvent("venue_pinned", "first_venue_pinned", { source: "search" });
+      trackEvent("place_selected", { venue_name: venueName, place_name: place.name });
       return Promise.resolve();
     };
     if (maybeConfirmReplace(coordsPayload, action)) {
@@ -521,7 +518,7 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
                   return;
                 }
                 trackEvent("place_search_opened", {
-                  venueName: venueName.trim() || "unspecified",
+                  venue_name: venueName.trim() || "unspecified",
                 });
                 setShowPlaceSearch(true);
               }}
@@ -592,8 +589,8 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
                         .then(() => showNotification("Coordinates copied", "info"))
                         .catch(() => showNotification("Unable to copy coordinates.", "error"));
                       trackEvent("copy_address_clicked", {
-                        venueName,
-                        hasAddress: Boolean(locationTag),
+                        venue_name: venueName,
+                        has_address: Boolean(locationTag),
                       });
                     }}
                     className="rounded-full border border-[var(--color-card-border)] px-3 py-1 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
@@ -610,7 +607,7 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
                         } else {
                           window.open(`https://maps.google.com/?q=${coords.lat},${coords.lon}`, "_blank");
                         }
-                        trackEvent("open_in_maps_clicked", { venueName });
+                        trackEvent("open_in_maps_clicked", { venue_name: venueName });
                       }
                     }}
                     className="rounded-full border border-[var(--color-card-border)] px-3 py-1 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_3px_10px_rgba(15,23,42,0.08)]"

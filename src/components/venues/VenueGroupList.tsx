@@ -47,7 +47,7 @@ export default function VenueGroupList({
   searchQuery,
   distanceLabel,
 }: VenueGroupListProps) {
-  const { trackEvent } = useAnalytics();
+  const { trackEvent, trackFirstEvent } = useAnalytics();
   const groupList = Array.isArray(group) ? group : [];
   // Keep favourite folks near the top and then respect the chosen person sort key.
   const sortedGroup = [...groupList].sort((a, b) => {
@@ -103,7 +103,14 @@ export default function VenueGroupList({
               e.stopPropagation();
               await triggerImpact(isFavorite ? ImpactStyle.Light : ImpactStyle.Medium);
               setFavoriteVenues((prev) => toggleVenueFavoriteName(prev, venue));
-              trackEvent(isFavorite ? "venue_unfavorited" : "venue_favorited", { venue });
+              if (!isFavorite) {
+                trackFirstEvent("favorite_added", "first_favorite_added", {
+                  type: "venue",
+                });
+              }
+              if (!isFavorite) {
+                trackEvent("venue_favorited", { venue_name: venue });
+              }
             }}
             className={`w-9 h-9 flex items-center justify-center rounded-full border relative overflow-hidden ${
               isFavorite

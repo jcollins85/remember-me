@@ -2,7 +2,6 @@ import React from "react";
 import { MapPin, Users, Check } from "lucide-react";
 import { triggerImpact, ImpactStyle } from "../../utils/haptics";
 import type { SortKey, VenueSortKey } from "../../utils/sortHelpers";
-import { useAnalytics } from "../../context/AnalyticsContext";
 
 type Direction = "asc" | "desc";
 type PersonSortString = `${SortKey}-${Direction}`;
@@ -44,7 +43,6 @@ export default function SortControls({
   personSort,
   setPersonSort,
 }: Props) {
-  const { trackEvent } = useAnalytics();
   const venueActiveToken = `${venueSortKey}-${venueSortDir}`;
   const isVenue = variant === "venue";
 
@@ -61,9 +59,7 @@ export default function SortControls({
             await triggerImpact(active ? ImpactStyle.Light : ImpactStyle.Medium);
             setVenueSortKey(key);
             setVenueSortDir(dir);
-            if (!active) {
-              trackEvent("venue_sort_changed", { key, direction: dir });
-            }
+            return undefined;
           },
         };
       })
@@ -77,9 +73,7 @@ export default function SortControls({
           onSelect: async () => {
             await triggerImpact(active ? ImpactStyle.Light : ImpactStyle.Medium);
             setPersonSort(value);
-            if (!active) {
-              trackEvent("people_sort_changed", { value });
-            }
+            return undefined;
           },
         };
       });

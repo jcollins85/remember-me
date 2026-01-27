@@ -530,7 +530,6 @@ export default function SettingsPanel({
                           onClick={async () => {
                             await triggerImpact(ImpactStyle.Light);
                             onResetData();
-                            trackEvent("reset_sample_data");
                           }}
                           className="px-4 py-3 rounded-2xl border border-[color:var(--color-card-border)] bg-[var(--color-card)] text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/90 transition"
                         >
@@ -540,7 +539,6 @@ export default function SettingsPanel({
                           onClick={async () => {
                             await triggerImpact(ImpactStyle.Light);
                             onClearAchievements();
-                            trackEvent("achievements_cleared");
                           }}
                           className="px-4 py-3 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] text-sm font-semibold hover:bg-[var(--color-accent-muted)] transition"
                         >
@@ -552,7 +550,6 @@ export default function SettingsPanel({
                           onClick={async () => {
                             await triggerImpact(ImpactStyle.Heavy);
                             onResetApp();
-                            trackEvent("reset_app");
                           }}
                           className="w-full px-4 py-3 rounded-2xl border border-red-200/60 bg-red-500/10 text-sm font-semibold text-red-500 hover:bg-red-500/15 transition"
                         >
@@ -571,7 +568,6 @@ export default function SettingsPanel({
                       onClick={async () => {
                         await triggerImpact(ImpactStyle.Heavy);
                         onResetApp();
-                        trackEvent("reset_app");
                       }}
                       className="w-full px-4 py-3 rounded-2xl border border-red-200/60 bg-red-500/10 text-sm font-semibold text-red-500 hover:bg-red-500/15 transition"
                     >

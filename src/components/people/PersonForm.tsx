@@ -47,7 +47,7 @@ export default function PersonForm({
   globalProximityEnabled,
   onEnableGlobalProximity,
 }: Props) {
-  const { trackEvent } = useAnalytics();
+  const { trackEvent, trackFirstEvent } = useAnalytics();
   // ── Basic fields ──
   const [name, setName] = useState(initialData.name || "");
   const [position, setPosition] = useState(initialData.position || "");
@@ -148,6 +148,7 @@ export default function PersonForm({
   const applyTag = (tagName: string, source: "input" | "suggestion" | "create" | "submit") => {
     commitTag(tagName);
     trackEvent("tag_applied", { source });
+    trackFirstEvent("tag_applied", "first_tag_applied", { source });
   };
 
   const handleTagBlur = () => {

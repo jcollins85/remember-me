@@ -131,8 +131,8 @@ export const startProximityAlerts = async (venues: MonitoredVenue[]) => {
   } catch (error: any) {
     console.warn("Unable to start proximity alerts", error);
     trackEvent("proximity_monitoring_error", {
-      stage: "start",
-      message: typeof error?.message === "string" ? error.message : "unknown",
+      error_stage: "start",
+      error_code: typeof error?.message === "string" ? error.message : "unknown",
     });
       return { ok: false, error: "Unable to start nearby venue alerts right now." };
   }
@@ -168,8 +168,8 @@ export const refreshMonitoredVenues = async (venues: MonitoredVenue[]) => {
   } catch (error: any) {
     console.warn("Unable to refresh geofence monitoring", error);
     trackEvent("proximity_monitoring_error", {
-      stage: "refresh",
-      message: typeof error?.message === "string" ? error.message : "unknown",
+      error_stage: "refresh",
+      error_code: typeof error?.message === "string" ? error.message : "unknown",
     });
   }
 };
