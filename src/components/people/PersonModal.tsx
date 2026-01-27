@@ -90,13 +90,20 @@ export default function PersonModal({
       <motion.div
         role="dialog"
         aria-modal="true"
-        className="glass-panel w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col relative"
+        className={`glass-panel w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col relative${
+          isLocationSearchOpen ? " border-transparent shadow-none" : ""
+        }`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 20 }}
         transition={{ duration: 0.25, ease: "easeInOut" }}
         onClick={(e) => e.stopPropagation()}
-        style={{ willChange: "transform, opacity" }}
+        style={{
+          willChange: "transform, opacity",
+          ...(isLocationSearchOpen
+            ? { border: "none", borderColor: "transparent", boxShadow: "none" }
+            : {}),
+        }}
       >
         <div className="flex-none sticky top-0 z-10 bg-[var(--color-surface)]/95 backdrop-blur-lg border-b border-white/40 px-6 py-4 shadow-[0_6px_18px_rgba(15,23,42,0.08)] pr-14">
           <div className="flex items-center gap-3">
