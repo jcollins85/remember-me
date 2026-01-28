@@ -96,7 +96,7 @@ export default function VenueGroupList({
           <span className="text-sm text-[var(--color-text-secondary)]">
             {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </span>
-          {displayName}
+          <span className="line-clamp-1">{displayName}</span>
           <span className="text-sm text-[var(--color-text-secondary)]">({groupList.length})</span>
         </button>
         {!isUnclassified && (
