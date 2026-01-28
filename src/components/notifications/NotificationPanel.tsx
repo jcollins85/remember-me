@@ -4,6 +4,7 @@ import { X, CheckCircle2, Info, AlertTriangle, Star } from "lucide-react";
 import { NotificationEntry, NotificationType } from "../../context/NotificationContext";
 import { useAnalytics } from "../../context/AnalyticsContext";
 
+// NotificationPanel shows the historical toast log and read/unread state.
 interface NotificationPanelProps {
   open: boolean;
   onClose: () => void;

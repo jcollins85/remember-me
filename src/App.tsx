@@ -3,6 +3,8 @@ import React, { useState, useEffect, useMemo, useDeferredValue, useCallback } fr
 import { AnimatePresence } from "framer-motion";
 import { Person, Venue } from "./types";
 
+// App orchestrates global state, high-level flows, and cross-cutting concerns
+// (search/sort, proximity, insights, analytics, and top-level modals).
 import { useTags } from "./context/TagContext";
 import { usePeople } from './context/PeopleContext';
 import { useVenues } from "./context/VenueContext";
@@ -173,6 +175,7 @@ function App() {
     [venues]
   );
 
+  // Keep a lightweight, local count for "venue enters" to power insights.
   const handleVenueRegionEnter = useCallback(
     (venueId: string) => {
       const venue = venuesById[venueId];
@@ -183,6 +186,7 @@ function App() {
     [venuesById, updateVenue]
   );
 
+  // Enrich venues with person/favorite counts for proximity notifications.
   const monitoredVenues = useMemo<MonitoredVenue[]>(() => {
     return venues.map((venue) => {
       if (!venue.id) {
@@ -202,6 +206,7 @@ function App() {
     });
   }, [venues, people]);
 
+  // Use a nearest subset to keep geofencing lightweight on battery.
   const monitoredSubset = useMemo<MonitoredVenue[]>(() => {
     if (!userLocation) return monitoredVenues;
     const toRad = (value: number) => (value * Math.PI) / 180;
@@ -690,6 +695,7 @@ function App() {
       (count, venue) => (venue.coords ? count + 1 : count),
       0
     );
+    // "Nearby alerts" now reflects delivered alert count, not enabled venues.
     const nearbyAlerts = venues.reduce(
       (count, venue) => count + (venue.proximityEnterCount ?? 0),
       0
@@ -702,10 +708,12 @@ function App() {
       ? { name: lastMet.name, date: lastMet.dateMet }
       : undefined;
     const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    // Rolling 30-day count for the "Lately" insight.
     const recentPeopleCount = people.filter((person) => {
       const createdAt = new Date(person.createdAt).getTime();
       return !Number.isNaN(createdAt) && createdAt >= thirtyDaysAgo;
     }).length;
+    // "Most visited" picks the venue with >1 enters and highest count.
     const repeatVenue = venues
       .filter((venue) => (venue.proximityEnterCount ?? 0) > 1)
       .sort((a, b) => (b.proximityEnterCount ?? 0) - (a.proximityEnterCount ?? 0))[0];

@@ -3,6 +3,7 @@ import { MapPin, Users, Check } from "lucide-react";
 import { triggerImpact, ImpactStyle } from "../../utils/haptics";
 import type { SortKey, VenueSortKey } from "../../utils/sortHelpers";
 
+// SortControls renders preset sort options for either venues or people.
 type Direction = "asc" | "desc";
 type PersonSortString = `${SortKey}-${Direction}`;
 
@@ -31,7 +32,6 @@ const personPresetOptions: Array<{ value: PersonSortString; label: string; descr
   { value: "dateMet-desc", label: "Newest meetings", description: "People you met most recently" },
   { value: "dateMet-asc", label: "Oldest meetings", description: "Older connections first" },
   { value: "updatedAt-desc", label: "Recently updated", description: "Latest edits to profiles" },
-  { value: "updatedAt-asc", label: "Oldest updates", description: "See older notes again" },
 ];
 
 export default function SortControls({

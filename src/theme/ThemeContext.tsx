@@ -4,6 +4,7 @@ import { useAnalytics } from '../context/AnalyticsContext';
 // Define available theme keys
 export type ThemeKey = 'light' | 'coral' | 'midnight' | 'pink' | 'emerald';
 
+// Public theme API used by settings + theme-aware components.
 interface ThemeContextProps {
   theme: ThemeKey;
   setTheme: (theme: ThemeKey) => void;

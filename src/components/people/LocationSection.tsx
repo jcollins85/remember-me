@@ -10,6 +10,7 @@ import { useNotification } from "../../context/NotificationContext";
 import { useAnalytics } from "../../context/AnalyticsContext";
 import { triggerImpact, ImpactStyle } from "../../utils/haptics";
 
+// LocationSection handles map pin capture, search modal, and per-venue proximity toggles.
 const mapPreviewPlaceholder =
   "data:image/svg+xml,%3Csvg width='640' height='360' viewBox='0 0 640 360' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='640' height='360' fill='%23f8f4ef'/%3E%3Cpath d='M0 40h640M0 120h640M0 200h640M0 280h640' stroke='%23e5dbcf' stroke-width='2'/%3E%3Cpath d='M80 0v360M200 0v360M320 0v360M440 0v360M560 0v360' stroke='%23e5dbcf' stroke-width='2'/%3E%3Cpath d='M0 260l80-40 60 30 100-50 90 60 90-80 120 40 100-70 0 210H0z' fill='%23d5e5f0'/%3E%3Cpath d='M0 300l90-60 120 70 120-70 120 50 190-140V360H0z' fill='%23c7e0da'/%3E%3C/svg%3E";
 

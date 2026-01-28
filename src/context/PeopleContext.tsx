@@ -5,6 +5,7 @@ import { Person } from '../types';
 import { samplePeople } from '../data';
 import { useNotification } from './NotificationContext';
 
+// Public people store API shared by forms, lists, and analytics.
 interface PeopleContextType {
   people: Person[];
   addPerson: (person: Person) => void;

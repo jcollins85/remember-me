@@ -19,6 +19,7 @@ export type MonitoredVenue = Venue & {
 const isNative = Capacitor.isNativePlatform();
 const ALERT_COOLDOWN_MS = 30 * 60 * 1000;
 let regionListener: PluginListenerHandle | null = null;
+// Optional callback so the app can update local insights without analytics.
 let regionEnterHandler: ((venueId: string) => void) | null = null;
 const lastAlertTimestamps: Record<string, number> = {};
 let venuesSnapshot: MonitoredVenue[] = [];

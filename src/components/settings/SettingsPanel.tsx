@@ -9,6 +9,7 @@ import { useDataBackup } from "../../hooks/useDataBackup";
 import { triggerImpact, ImpactStyle, isHapticsEnabled, setHapticsEnabled as persistHapticsPreference } from "../../utils/haptics";
 import { useAnalytics } from "../../context/AnalyticsContext";
 
+// SettingsPanel manages theme selection, backups, haptics, and proximity toggle UX.
 const APP_VERSION = import.meta.env.VITE_APP_VERSION || '0.0.0';
 const FEEDBACK_FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSeh-ofljUy5wZLdXWoXHRC_SDXfB8a_wPUmbYbNW74kEBCHyg/viewform";

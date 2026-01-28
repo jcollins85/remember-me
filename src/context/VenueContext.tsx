@@ -4,6 +4,7 @@ import { sampleVenues } from '../data';
 import { Venue } from '../types';
 import { useNotification } from './NotificationContext';
 
+// Public venue store API (coords, proximity toggles, and metadata).
 interface VenueContextType {
   venues: Venue[];
   addVenue: (v: Venue) => void;

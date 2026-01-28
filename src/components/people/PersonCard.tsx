@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Pencil, Star, Trash2 } from "lucide-react";
 import { triggerImpact, ImpactStyle } from "../../utils/haptics";
 
+// PersonCard renders a single person within a venue group, including actions and highlights.
 interface Props {
   person: Person;
   onEdit: (person: Person) => void;
