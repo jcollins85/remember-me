@@ -690,12 +690,28 @@ function App() {
       (count, venue) => (venue.coords ? count + 1 : count),
       0
     );
+    const alertEnabledCount = venues.reduce(
+      (count, venue) => (venue.proximityAlertsEnabled !== false ? count + 1 : count),
+      0
+    );
+    const nearbyAlerts = `${alertEnabledCount} of ${venues.length || 0}`;
 
     const lastMet = [...people]
       .filter((person) => person.dateMet)
       .sort((a, b) => new Date(b.dateMet).getTime() - new Date(a.dateMet).getTime())[0];
     const lastInteraction = lastMet
       ? { name: lastMet.name, date: lastMet.dateMet }
+      : undefined;
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const recentPeopleCount = people.filter((person) => {
+      const createdAt = new Date(person.createdAt).getTime();
+      return !Number.isNaN(createdAt) && createdAt >= thirtyDaysAgo;
+    }).length;
+    const repeatVenue = venues
+      .filter((venue) => (venue.proximityEnterCount ?? 0) > 1)
+      .sort((a, b) => (b.proximityEnterCount ?? 0) - (a.proximityEnterCount ?? 0))[0];
+    const placeYouReturnTo = repeatVenue
+      ? { name: repeatVenue.name, count: repeatVenue.proximityEnterCount ?? 0 }
       : undefined;
 
     return {
@@ -704,6 +720,9 @@ function App() {
       favoritesCount,
       lastInteraction,
       pinsSaved,
+      nearbyAlerts,
+      recentPeopleCount,
+      placeYouReturnTo,
     };
   }, [people, venuesById, getTagNameById]);
 

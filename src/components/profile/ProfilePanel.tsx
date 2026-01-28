@@ -5,6 +5,7 @@ import {
   UserRound,
   Award,
   MapPin,
+  Globe,  
   Tag as TagIcon,
   Star,
   ChevronDown,
@@ -23,6 +24,9 @@ interface UsageInsights {
   favoritesCount: number;
   lastInteraction?: { name: string; date: string };
   pinsSaved: number;
+  nearbyAlerts: string;
+  recentPeopleCount: number;
+  placeYouReturnTo?: { name: string; count: number };
 }
 
 interface ProfilePanelProps {
@@ -46,6 +50,15 @@ const sectionMeta = {
   tags: { label: "Tags", icon: <TagIcon size={14} /> },
   favorites: { label: "Favourites", icon: <Star size={14} /> },
 } as const;
+
+const formatDaysAgo = (dateValue: string) => {
+  const timestamp = new Date(dateValue).getTime();
+  if (Number.isNaN(timestamp)) return "Recently";
+  const days = Math.max(0, Math.floor((Date.now() - timestamp) / 86_400_000));
+  if (days === 0) return "Today";
+  if (days === 1) return "You met 1 day ago";
+  return `You met ${days} days ago`;
+};
 
 // ProfilePanel summarizes usage insights and lifetime achievements. It’s intentionally rich so the
 // user can review progress without leaving the app; keeping it in a glass panel mirrors Settings UI.
@@ -124,10 +137,10 @@ export default function ProfilePanel({
               </div>
               <div className="grid grid-cols-2 gap-2 text-center">
                 {[
-                  { label: "People tracked", value: stats.peopleCount, icon: <UserRound size={16} className="text-[var(--color-accent)]" /> },
-                  { label: "Venues logged", value: stats.venuesWithPeople, icon: <MapPin size={16} className="text-[var(--color-accent)]" /> },
+                  { label: "People", value: stats.peopleCount, icon: <UserRound size={16} className="text-[var(--color-accent)]" /> },
+                  { label: "Venues", value: stats.venuesWithPeople, icon: <MapPin size={16} className="text-[var(--color-accent)]" /> },
                   { label: "Tags applied", value: stats.uniqueTagCount, icon: <TagIcon size={16} className="text-[var(--color-accent)]" /> },
-                  { label: "Venues pinned", value: insights.pinsSaved, icon: <MapPin size={16} className="text-[var(--color-accent)]" /> },
+                  { label: "Nearby alerts", value: insights.nearbyAlerts, icon: <Globe size={16} className="text-[var(--color-accent)]" /> },
                 ].map((item) => (
                   <div
                     key={item.label}
@@ -163,9 +176,9 @@ export default function ProfilePanel({
                         <p className="text-xs text-[var(--color-text-secondary)]">
                           {insights.topVenue.count === 0
                             ? "No people logged"
-                            : `${insights.topVenue.count} ${
+                            : `You've met ${insights.topVenue.count} ${
                                 insights.topVenue.count === 1 ? "person" : "people"
-                              } logged`}
+                              } here`}
                         </p>
                       </div>
                     </div>
@@ -184,7 +197,9 @@ export default function ProfilePanel({
                       <div>
                         <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Top tag</p>
                         <p className="font-semibold text-[var(--color-text-primary)] capitalize">{insights.topTag.name}</p>
-                        <p className="text-xs text-[var(--color-text-secondary)]">{insights.topTag.count} mentions</p>
+                        <p className="text-xs text-[var(--color-text-secondary)]">
+                          Used {insights.topTag.count} {insights.topTag.count === 1 ? "time" : "times"}
+                        </p>
                       </div>
                     </div>
                   ) : (
@@ -206,16 +221,45 @@ export default function ProfilePanel({
                   <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left flex items-center gap-3 shadow-level1">
                     <Clock size={18} className="text-[var(--color-accent)]" />
                     <div>
-                      <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Last interaction</p>
+                      <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Last person you met</p>
                       {insights.lastInteraction ? (
                         <>
                           <p className="font-semibold text-[var(--color-text-primary)]">{insights.lastInteraction.name}</p>
                           <p className="text-xs text-[var(--color-text-secondary)]">
-                            {new Date(insights.lastInteraction.date).toLocaleDateString()}
+                            {formatDaysAgo(insights.lastInteraction.date)}
                           </p>
                         </>
                       ) : (
                         <p className="text-xs text-[var(--color-text-secondary)]">No recent meetings yet.</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left flex items-center gap-3 shadow-level1">
+                    <TrendingUp size={18} className="text-[var(--color-accent)]" />
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Lately</p>
+                      <p className="font-semibold text-[var(--color-text-primary)]">
+                        {insights.recentPeopleCount} {insights.recentPeopleCount === 1 ? "person" : "people"}
+                      </p>
+                      <p className="text-xs text-[var(--color-text-secondary)]">Met this month</p>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl bg-[var(--color-card)] px-3 py-3 text-left flex items-center gap-3 shadow-level1">
+                    <MapPin size={18} className="text-[var(--color-accent)]" />
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Most visited</p>
+                      {insights.placeYouReturnTo ? (
+                        <>
+                          <p className="font-semibold text-[var(--color-text-primary)]">
+                            {insights.placeYouReturnTo.name}
+                          </p>
+                          <p className="text-xs text-[var(--color-text-secondary)]">
+                            You&apos;ve been back {insights.placeYouReturnTo.count}{" "}
+                            {insights.placeYouReturnTo.count === 1 ? "time" : "times"}.
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-xs text-[var(--color-text-secondary)]">No repeat visits yet.</p>
                       )}
                     </div>
                   </div>
