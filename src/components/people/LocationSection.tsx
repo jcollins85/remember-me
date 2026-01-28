@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Capacitor } from "@capacitor/core";
@@ -83,6 +83,8 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
     if (!globalProximityEnabled) return false;
     return initialVenue?.proximityAlertsEnabled !== false;
   });
+  const [hasManualProximityToggle, setHasManualProximityToggle] = useState(false);
+  const lastVenueKeyRef = useRef<string | null>(null);
   const [isCapturingLocation, setIsCapturingLocation] = useState(false);
   const [mapSnapshot, setMapSnapshot] = useState<string | null>(null);
   const [isSnapshotLoading, setIsSnapshotLoading] = useState(false);
@@ -120,21 +122,25 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
   }, [coords, locationTag, venueProximityEnabled, canUseLocation, onPendingChange]);
 
   useEffect(() => {
-    if (!venueName.trim()) {
-      setVenueProximityEnabled(globalProximityEnabled);
+    const existing = getSelectedVenue();
+    const venueKey = existing?.id || venueName.trim() || "";
+    if (lastVenueKeyRef.current !== venueKey) {
+      lastVenueKeyRef.current = venueKey;
+      setHasManualProximityToggle(false);
+    }
+    if (!globalProximityEnabled) {
+      setVenueProximityEnabled(false);
       return;
     }
-    const existing = getSelectedVenue();
-    if (existing) {
-      if (globalProximityEnabled) {
-        setVenueProximityEnabled(existing.proximityAlertsEnabled !== false);
-      } else {
-        setVenueProximityEnabled(false);
-      }
-    } else {
-      setVenueProximityEnabled(globalProximityEnabled);
+    if (hasManualProximityToggle) {
+      return;
     }
-  }, [venueName, getSelectedVenue, globalProximityEnabled]);
+    if (existing) {
+      setVenueProximityEnabled(existing.proximityAlertsEnabled !== false);
+    } else {
+      setVenueProximityEnabled(true);
+    }
+  }, [venueName, getSelectedVenue, globalProximityEnabled, hasManualProximityToggle]);
 
   useEffect(() => {
     const typed = venueName.trim();
@@ -458,6 +464,7 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
 
   const toggleVenueProximityAlerts = () => {
     const next = !venueProximityEnabled;
+    setHasManualProximityToggle(true);
     if (!next) {
       setVenueProximityEnabled(false);
       return;
