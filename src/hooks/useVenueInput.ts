@@ -21,6 +21,13 @@ export function useVenueInput({
   mode,
   venueUsage = {},
 }: UseVenueInputArgs) {
+  const normalizeVenue = (raw: string) => {
+    const trimmed = raw.trim().replace(/\s+/g, " ");
+    return {
+      display: trimmed,
+      normalized: trimmed.toLowerCase(),
+    };
+  };
   const [value, setValue] = useState<string>(initialName);
   const [touched, setTouched] = useState<boolean>(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -40,11 +47,11 @@ export function useVenueInput({
         name: v.name,
         count: venueUsage[v.id] ?? 0,
       }));
-    const q = value.trim().toLowerCase();
+    const q = normalizeVenue(value).normalized;
     setSuggestions(
       q
         ? names
-            .filter((entry) => entry.name.toLowerCase().includes(q))
+            .filter((entry) => normalizeVenue(entry.name).normalized.includes(q))
             .slice(0, 5)
             .map((entry) => entry.name)
         : names
@@ -68,14 +75,16 @@ export function useVenueInput({
    * Look up existing venue by name, or create a new one if not found.
    */
   const resolveVenue = (): Venue => {
-    const typed = value.trim();
-    const existing = venues.find((v) => v.name === typed);
+    const { display, normalized } = normalizeVenue(value);
+    const existing = venues.find(
+      (v) => normalizeVenue(v.name).normalized === normalized
+    );
     if (existing) {
       return existing;
     }
     const newVenue: Venue = {
       id: uuidv4(),
-      name: typed || UNCLASSIFIED,
+      name: display || UNCLASSIFIED,
       locationTag: undefined,
       coords: undefined,
       favorite: false,

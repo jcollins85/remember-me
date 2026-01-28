@@ -15,6 +15,13 @@ describe("validatePersonForm", () => {
     expect(result.errors.name).toBe("Name is required");
   });
 
+  it("rejects overly long names", () => {
+    const name = "a".repeat(61);
+    const result = validatePersonForm({ ...basePayload, name });
+    expect(result.isValid).toBe(false);
+    expect(result.errors.name).toBe("Name must be 60 characters or fewer");
+  });
+
   it("rejects future dateMet", () => {
     const future = new Date(Date.now() + 86400000).toISOString().split("T")[0];
     const result = validatePersonForm({ ...basePayload, dateMet: future });

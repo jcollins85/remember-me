@@ -90,6 +90,7 @@ export default function SettingsPanel({
   const [isImporting, setIsImporting] = useState(false);
   const [isExportingCsv, setIsExportingCsv] = useState(false);
   const [isImportingCsv, setIsImportingCsv] = useState(false);
+  const [csvImportSummary, setCsvImportSummary] = useState<{ skipped: number; errors: number } | null>(null);
   const [hapticsEnabled, setHapticsEnabled] = useState(isHapticsEnabled());
   const [appVersion, setAppVersion] = useState(APP_VERSION);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -182,7 +183,8 @@ export default function SettingsPanel({
     if (!file) return;
     setIsImportingCsv(true);
     try {
-      await importCsvFromFile(file);
+      const payload = await importCsvFromFile(file);
+      setCsvImportSummary({ skipped: payload.skipped, errors: payload.errors.length });
     } finally {
       setIsImportingCsv(false);
       event.target.value = "";
@@ -449,6 +451,12 @@ export default function SettingsPanel({
                       {isImportingCsv ? "Importing…" : "Import CSV"}
                     </button>
                   </div>
+                  {csvImportSummary && (
+                    <div className="rounded-2xl border border-[var(--color-card-border)] bg-[var(--color-card)]/80 px-3 py-2 text-[11px] text-[var(--color-text-secondary)]">
+                      CSV import: {csvImportSummary.skipped} skipped, {csvImportSummary.errors}{" "}
+                      issue{csvImportSummary.errors === 1 ? "" : "s"} detected.
+                    </div>
+                  )}
                   <p className="text-[11px] text-[var(--color-text-secondary)]">
                     CSV columns: id, name, position, dateMet, venueName, tags, favorite, description.
                   </p>

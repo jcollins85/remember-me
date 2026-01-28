@@ -35,6 +35,8 @@ interface LocationSectionProps {
 }
 
 const defaultSearchPlaceholder = "Search by name or address";
+const MAX_PLACE_QUERY_LENGTH = 80;
+const MAX_LOCATION_TAG_DISPLAY = 160;
 
 type SearchResult = { name: string; address: string; lat: number; lng: number };
 
@@ -100,6 +102,11 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
   const [placeError, setPlaceError] = useState<string | null>(null);
   const [searchPlaceholder, setSearchPlaceholder] = useState(defaultSearchPlaceholder);
   const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
+
+  const getDisplayLocationTag = (tag: string) => {
+    if (tag.length <= MAX_LOCATION_TAG_DISPLAY) return tag;
+    return `${tag.slice(0, Math.max(0, MAX_LOCATION_TAG_DISPLAY - 3)).trimEnd()}...`;
+  };
 
   useEffect(() => {
     if (!onValidationCoordsChange) return;
@@ -575,6 +582,11 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
                       Generating preview…
                     </div>
                   )}
+                  {snapshotError && !isSnapshotLoading && (
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[var(--color-card)]/60 text-xs font-semibold text-[var(--color-text-secondary)]">
+                      {snapshotError}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-1">
@@ -582,7 +594,9 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
                     {venueName.trim() || "The Broadview Rooftop"}
                   </p>
                   <p className="text-sm text-[var(--color-text-secondary)]">
-                    {locationTag || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`}
+                    {locationTag
+                      ? getDisplayLocationTag(locationTag)
+                      : `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`}
                   </p>
                 </div>
 
@@ -592,8 +606,12 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
                     onClick={() => {
                       const text =
                         locationTag?.trim() || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
+                      if (!navigator.clipboard?.writeText) {
+                        showNotification("Copy not available on this device.", "error");
+                        return;
+                      }
                       navigator.clipboard
-                        ?.writeText(text)
+                        .writeText(text)
                         .then(() => showNotification("Coordinates copied", "info"))
                         .catch(() => showNotification("Unable to copy coordinates.", "error"));
                       trackEvent("copy_address_clicked", {
@@ -736,12 +754,19 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
               <input
                 type="text"
                 value={placeQuery}
-                onChange={(e) => setPlaceQuery(e.target.value)}
+                onChange={(e) =>
+                  setPlaceQuery(e.target.value.slice(0, MAX_PLACE_QUERY_LENGTH))
+                }
                 placeholder={searchPlaceholder}
                 className="flex-1 bg-transparent text-base text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-secondary)]"
                 autoFocus
               />
             </div>
+            {placeQuery.length >= MAX_PLACE_QUERY_LENGTH && (
+              <p className="text-[11px] text-[var(--color-text-secondary)] px-1">
+                Max {MAX_PLACE_QUERY_LENGTH} characters.
+              </p>
+            )}
             <div
               className="max-h-[55vh] overflow-y-auto pr-1 flex-1 bg-white rounded-[20px] px-1 py-1"
               onWheel={(event) => event.stopPropagation()}

@@ -659,7 +659,11 @@ export function useDataBackup(
           message += ` (skipped ${payload.skipped} rows)`;
         }
         if (payload.errors.length > 0) {
-          message += ". Check console for details";
+          const example = payload.errors[0];
+          message += `. ${payload.errors.length} issue${payload.errors.length === 1 ? "" : "s"} found`;
+          if (example?.reason) {
+            message += ` (e.g. ${example.reason})`;
+          }
         }
         message += ".";
         showNotification(message, "success");

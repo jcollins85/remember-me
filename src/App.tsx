@@ -585,6 +585,7 @@ function App() {
     (async () => {
       const result = await startProximityAlerts(monitoredSubset, {
         onRegionEnter: handleVenueRegionEnter,
+        onNotificationError: (message) => showNotification(message, "error"),
       });
       if (!cancelled && !result.ok) {
         setProximityAlertsEnabled(false);
