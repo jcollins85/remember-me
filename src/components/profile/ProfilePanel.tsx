@@ -24,7 +24,7 @@ interface UsageInsights {
   favoritesCount: number;
   lastInteraction?: { name: string; date: string };
   pinsSaved: number;
-  nearbyAlerts: string;
+  nearbyAlerts: number;
   recentPeopleCount: number;
   placeYouReturnTo?: { name: string; count: number };
 }

@@ -690,11 +690,10 @@ function App() {
       (count, venue) => (venue.coords ? count + 1 : count),
       0
     );
-    const alertEnabledCount = venues.reduce(
-      (count, venue) => (venue.proximityAlertsEnabled !== false ? count + 1 : count),
+    const nearbyAlerts = venues.reduce(
+      (count, venue) => count + (venue.proximityEnterCount ?? 0),
       0
     );
-    const nearbyAlerts = `${alertEnabledCount} of ${venues.length || 0}`;
 
     const lastMet = [...people]
       .filter((person) => person.dateMet)
