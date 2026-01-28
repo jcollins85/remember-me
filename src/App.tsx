@@ -1,15 +1,16 @@
 // src/App.tsx
-import React, { useState, useEffect, useMemo, useDeferredValue } from "react";
+import React, { useState, useEffect, useMemo, useDeferredValue, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
 import { Person, Venue } from "./types";
 
+// App orchestrates global state, high-level flows, and cross-cutting concerns
+// (search/sort, proximity, insights, analytics, and top-level modals).
 import { useTags } from "./context/TagContext";
 import { usePeople } from './context/PeopleContext';
 import { useVenues } from "./context/VenueContext";
 import { useNotification } from './context/NotificationContext';
 
 import { useGroupedPeople } from './hooks/useGroupedPeople';
-import { useFavoriteSections } from './hooks/useFavouriteSections';
 import { useFavorites } from './hooks/useFavourites';
 import { useAchievements } from "./hooks/useAchievements";
 
@@ -66,7 +67,7 @@ function App() {
   const { tags, createTag, getTagIdByName, getTagNameById, replaceTags } = useTags();
 
   // ── Venue context & lookup ──
-  const { venues, replaceVenues } = useVenues();
+  const { venues, replaceVenues, updateVenue } = useVenues();
   const hasPinnedVenue = useMemo(
     () => venues.some((venue) => Boolean(venue.coords)),
     [venues]
@@ -162,17 +163,29 @@ function App() {
     personSort,  setPersonSort
   } = useSearchSort();
   const deferredSearchQuery = useDeferredValue(searchQuery);
-  const { trackEvent } = useAnalytics();
+  const { trackEvent, trackFirstEvent } = useAnalytics();
 
   const venuesById = useMemo(
     () => Object.fromEntries(venues.map((v) => [v.id, v])) as Record<string, Venue>,
     [venues]
   );
-  const venueIdByName = useMemo(
-    () => Object.fromEntries(venues.map((v) => [v.name, v.id])) as Record<string, string>,
+  const venueNameById = useMemo(
+    () => Object.fromEntries(venues.map((v) => [v.id, v.name])) as Record<string, string>,
     [venues]
   );
 
+  // Keep a lightweight, local count for "venue enters" to power insights.
+  const handleVenueRegionEnter = useCallback(
+    (venueId: string) => {
+      const venue = venuesById[venueId];
+      if (!venue) return;
+      const nextCount = (venue.proximityEnterCount ?? 0) + 1;
+      updateVenue({ ...venue, proximityEnterCount: nextCount, proximityLastEnterAt: Date.now() });
+    },
+    [venuesById, updateVenue]
+  );
+
+  // Enrich venues with person/favorite counts for proximity notifications.
   const monitoredVenues = useMemo<MonitoredVenue[]>(() => {
     return venues.map((venue) => {
       if (!venue.id) {
@@ -192,6 +205,7 @@ function App() {
     });
   }, [venues, people]);
 
+  // Use a nearest subset to keep geofencing lightweight on battery.
   const monitoredSubset = useMemo<MonitoredVenue[]>(() => {
     if (!userLocation) return monitoredVenues;
     const toRad = (value: number) => (value * Math.PI) / 180;
@@ -237,7 +251,7 @@ function App() {
         distance < 1000
           ? `${Math.round(distance)} m away`
           : `${(distance / 1000).toFixed(1)} km away`;
-      acc[venue.name] = label;
+      acc[venue.id] = label;
       return acc;
     }, {});
   }, [monitoredVenues, userLocation]);
@@ -261,7 +275,7 @@ function App() {
     const handler = window.setTimeout(() => {
       trackEvent("search_used", {
         query_length: trimmed.length,
-        results: filteredPeople.length,
+        results_count: filteredPeople.length,
       });
     }, 500);
     return () => window.clearTimeout(handler);
@@ -277,13 +291,13 @@ function App() {
   };
 
   // ── Handlers ──
-  const toggleGroup = (venueName: string) => {
+  const toggleGroup = (venueKey: string) => {
     setOpenGroups((prev: Record<string, boolean>) => {
       // default false if undefined
-      const isOpen = prev[venueName] ?? false;
+      const isOpen = prev[venueKey] ?? false;
       return {
         ...prev,
-        [venueName]: !isOpen,
+        [venueKey]: !isOpen,
       };
     });
   };
@@ -380,6 +394,9 @@ function App() {
     if (proximityEnabled) return;
     setProximityAlertsEnabled(true);
     setProximityEnabled(true);
+    trackFirstEvent("proximity_enabled", "first_proximity_enabled", {
+      ...(source ? { source } : {}),
+    });
     trackEvent("proximity_toggle", {
       enabled: true,
       ...(source ? { source } : {}),
@@ -468,11 +485,11 @@ function App() {
   useEffect(() => {
     const groupKeys = Object.keys(
       people.reduce((acc, person) => {
-        // Lookup name by ID, or fall back to UNCLASSIFIED
-        const venueName = person.venueId
-          ? venuesById[person.venueId]?.name ?? UNCLASSIFIED
-          : UNCLASSIFIED;
-        acc[venueName] = true;
+        const venueKey =
+          person.venueId && venuesById[person.venueId]
+            ? person.venueId
+            : UNCLASSIFIED;
+        acc[venueKey] = true;
         return acc;
       }, {} as Record<string, boolean>)
     );
@@ -516,7 +533,7 @@ function App() {
     setVenueView("all");
     setSearchQuery("");
     setActiveTags([]);
-    setOpenGroups((prev) => ({ ...prev, [venue.name]: true }));
+    setOpenGroups((prev) => ({ ...prev, [venue.id]: true }));
     const targetId = `venue-card-${venue.id}`;
     const timer = window.setTimeout(() => {
       const target = document.getElementById(targetId);
@@ -565,22 +582,26 @@ function App() {
       return;
     }
     (async () => {
-      const result = await startProximityAlerts(monitoredSubset);
+      const result = await startProximityAlerts(monitoredSubset, {
+        onRegionEnter: handleVenueRegionEnter,
+        onNotificationError: (message) => showNotification(message, "error"),
+      });
       if (!cancelled && !result.ok) {
         setProximityAlertsEnabled(false);
         setProximityEnabled(false);
-        showNotification(result.error ?? "Unable to enable proximity alerts.", "error");
-        trackEvent("proximity_error", { message: result.error ?? "unknown" });
+        const errorCode = result.error ?? "unknown";
+        showNotification(errorCode ?? "Unable to enable proximity alerts.", "error");
+        trackEvent("proximity_error", { error_code: errorCode, error_stage: "start" });
       }
       if (!cancelled && result.ok) {
-        trackEvent("proximity_started", { monitoredVenues: monitoredSubset.length });
+        trackEvent("proximity_started", { monitored_venues_count: monitoredSubset.length });
       }
     })();
     return () => {
       cancelled = true;
       stopProximityAlerts();
     };
-  }, [proximityEnabled, showNotification, monitoredSubset, proximitySupported, showOnboarding]);
+  }, [proximityEnabled, showNotification, monitoredSubset, proximitySupported, showOnboarding, handleVenueRegionEnter]);
 
   // Keep the watcher in sync with current venue coordinates/toggles.
   useEffect(() => {
@@ -595,14 +616,25 @@ function App() {
     venueSortDir === "asc"
   );
   
-  const sortedVenueNames = sortedVenues
-    .map((v) => v.name)
-    .filter((name) => groupedPeople[name]);
+  const sortedVenueIds = sortedVenues
+    .map((venue) => venue.id)
+    .filter((id) => groupedPeople[id]);
 
-  const favoriteSections = useFavoriteSections(sortedVenueNames, favoriteVenues);
-  const favoriteVenueNames = favoriteSections.favorites;
-  const visibleVenueNames =
-    venueView === "favs" ? favoriteVenueNames : sortedVenueNames;
+  const favoriteVenueIds = sortedVenueIds.filter((id) => {
+    const name = venueNameById[id];
+    return name ? favoriteVenues.includes(name) : false;
+  });
+
+  const baseVenueIds =
+    venueView === "favs" ? favoriteVenueIds : sortedVenueIds;
+
+  const visibleVenueIds = useMemo(() => {
+    if (venueView === "favs") return baseVenueIds;
+    if (groupedPeople[UNCLASSIFIED]) {
+      return [...baseVenueIds, UNCLASSIFIED];
+    }
+    return baseVenueIds;
+  }, [baseVenueIds, groupedPeople, venueView]);
 
   const { achievements, stats, resetAchievements } = useAchievements(
     people,
@@ -674,12 +706,30 @@ function App() {
       (count, venue) => (venue.coords ? count + 1 : count),
       0
     );
+    // "Nearby alerts" now reflects delivered alert count, not enabled venues.
+    const nearbyAlerts = venues.reduce(
+      (count, venue) => count + (venue.proximityEnterCount ?? 0),
+      0
+    );
 
     const lastMet = [...people]
       .filter((person) => person.dateMet)
       .sort((a, b) => new Date(b.dateMet).getTime() - new Date(a.dateMet).getTime())[0];
     const lastInteraction = lastMet
       ? { name: lastMet.name, date: lastMet.dateMet }
+      : undefined;
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    // Rolling 30-day count for the "Lately" insight.
+    const recentPeopleCount = people.filter((person) => {
+      const createdAt = new Date(person.createdAt).getTime();
+      return !Number.isNaN(createdAt) && createdAt >= thirtyDaysAgo;
+    }).length;
+    // "Most visited" picks the venue with >1 enters and highest count.
+    const repeatVenue = venues
+      .filter((venue) => (venue.proximityEnterCount ?? 0) > 1)
+      .sort((a, b) => (b.proximityEnterCount ?? 0) - (a.proximityEnterCount ?? 0))[0];
+    const placeYouReturnTo = repeatVenue
+      ? { name: repeatVenue.name, count: repeatVenue.proximityEnterCount ?? 0 }
       : undefined;
 
     return {
@@ -688,6 +738,9 @@ function App() {
       favoritesCount,
       lastInteraction,
       pinsSaved,
+      nearbyAlerts,
+      recentPeopleCount,
+      placeYouReturnTo,
     };
   }, [people, venuesById, getTagNameById]);
 
@@ -746,8 +799,8 @@ function App() {
         getTagNameById={getTagNameById}
         venueView={venueView}
         setVenueView={setVenueView}
-        favoriteVenueCount={favoriteVenueNames.length}
-        totalVenueCount={sortedVenueNames.length}
+        favoriteVenueCount={favoriteVenueIds.length}
+        totalVenueCount={sortedVenueIds.length}
         showSortModal={showSortModal}
         setShowSortModal={setShowSortModal}
       />
@@ -773,7 +826,7 @@ function App() {
               const venueMeta = getVenueAnalyticsMeta(newPerson.venueId);
               trackEvent("person_added", {
                 ...venueMeta,
-                tags: newPerson.tags?.length ?? 0,
+                tags_count: newPerson.tags?.length ?? 0,
                 favorite: !!newPerson.favorite,
               });
             }}
@@ -798,7 +851,7 @@ function App() {
               trackEvent("person_updated", {
                 id: updated.id,
                 ...venueMeta,
-                tags: updated.tags?.length ?? 0,
+                tags_count: updated.tags?.length ?? 0,
                 favorite: !!updated.favorite,
               });
             }}
@@ -812,7 +865,7 @@ function App() {
               trackEvent("person_deleted", {
                 id,
                 ...venueMeta,
-                tags: deletedPerson?.tags?.length ?? 0,
+                tags_count: deletedPerson?.tags?.length ?? 0,
                 favorite: deletedPerson?.favorite ?? false,
               });
               const nextPeople = people.filter((person) => person.id !== id);
@@ -828,10 +881,10 @@ function App() {
           <VenueSections
             groupedPeople={groupedPeople}
             favoriteVenues={favoriteVenues}
-            visibleVenueNames={visibleVenueNames}
+            visibleVenueIds={visibleVenueIds}
             totalVenueCount={venues.length}
             viewMode={venueView}
-            venueIdByName={venueIdByName}
+            venueNameById={venueNameById}
             personSort={personSort}
             activeTags={activeTags}
             setActiveTags={setActiveTags}
@@ -847,7 +900,14 @@ function App() {
               const updatedPerson = togglePersonFavorite(p);
               const nextFavorite = !!updatedPerson.favorite;
               updatePerson(updatedPerson);
-              trackEvent(nextFavorite ? "person_favorited" : "person_unfavorited");
+              if (nextFavorite) {
+                trackFirstEvent("favorite_added", "first_favorite_added", {
+                  type: "person",
+                });
+              }
+              if (nextFavorite) {
+                trackEvent("person_favorited");
+              }
             }}
             searchQuery={searchQuery}
             distanceLabels={venueDistanceLabels}

@@ -7,6 +7,8 @@ export interface Venue {
   coords?: { lat: number; lon: number };
   favorite: boolean;
   proximityAlertsEnabled?: boolean;
+  proximityEnterCount?: number;
+  proximityLastEnterAt?: number;
 }
 
 export interface Person {

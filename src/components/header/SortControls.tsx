@@ -2,8 +2,8 @@ import React from "react";
 import { MapPin, Users, Check } from "lucide-react";
 import { triggerImpact, ImpactStyle } from "../../utils/haptics";
 import type { SortKey, VenueSortKey } from "../../utils/sortHelpers";
-import { useAnalytics } from "../../context/AnalyticsContext";
 
+// SortControls renders preset sort options for either venues or people.
 type Direction = "asc" | "desc";
 type PersonSortString = `${SortKey}-${Direction}`;
 
@@ -32,7 +32,6 @@ const personPresetOptions: Array<{ value: PersonSortString; label: string; descr
   { value: "dateMet-desc", label: "Newest meetings", description: "People you met most recently" },
   { value: "dateMet-asc", label: "Oldest meetings", description: "Older connections first" },
   { value: "updatedAt-desc", label: "Recently updated", description: "Latest edits to profiles" },
-  { value: "updatedAt-asc", label: "Oldest updates", description: "See older notes again" },
 ];
 
 export default function SortControls({
@@ -44,7 +43,6 @@ export default function SortControls({
   personSort,
   setPersonSort,
 }: Props) {
-  const { trackEvent } = useAnalytics();
   const venueActiveToken = `${venueSortKey}-${venueSortDir}`;
   const isVenue = variant === "venue";
 
@@ -61,9 +59,7 @@ export default function SortControls({
             await triggerImpact(active ? ImpactStyle.Light : ImpactStyle.Medium);
             setVenueSortKey(key);
             setVenueSortDir(dir);
-            if (!active) {
-              trackEvent("venue_sort_changed", { key, direction: dir });
-            }
+            return undefined;
           },
         };
       })
@@ -77,9 +73,7 @@ export default function SortControls({
           onSelect: async () => {
             await triggerImpact(active ? ImpactStyle.Light : ImpactStyle.Medium);
             setPersonSort(value);
-            if (!active) {
-              trackEvent("people_sort_changed", { value });
-            }
+            return undefined;
           },
         };
       });

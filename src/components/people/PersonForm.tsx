@@ -47,7 +47,7 @@ export default function PersonForm({
   globalProximityEnabled,
   onEnableGlobalProximity,
 }: Props) {
-  const { trackEvent } = useAnalytics();
+  const { trackEvent, trackFirstEvent } = useAnalytics();
   // ── Basic fields ──
   const [name, setName] = useState(initialData.name || "");
   const [position, setPosition] = useState(initialData.position || "");
@@ -148,6 +148,7 @@ export default function PersonForm({
   const applyTag = (tagName: string, source: "input" | "suggestion" | "create" | "submit") => {
     commitTag(tagName);
     trackEvent("tag_applied", { source });
+    trackFirstEvent("tag_applied", "first_tag_applied", { source });
   };
 
   const handleTagBlur = () => {
@@ -340,11 +341,15 @@ export default function PersonForm({
           value={name}
           onChange={(e) => setName(e.target.value)}
           onBlur={() => setTouchedName(true)}
+          maxLength={60}
           className={`${inputClass} ${touchedName && !name.trim() ? "border-red-400" : ""}`}
           required
         />
         {touchedName && !name.trim() && (
           <p className="text-red-500 text-xs mt-1">Name is required</p>
+        )}
+        {formErrors.name && name.trim() && (
+          <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>
         )}
       </div>
 
@@ -377,6 +382,7 @@ export default function PersonForm({
           type="text"
           value={position}
           onChange={(e) => setPosition(e.target.value)}
+          maxLength={60}
           className={inputClass}
         />
         {formErrors.position && (
@@ -397,6 +403,7 @@ export default function PersonForm({
           type="text"
           value={venue}
           onChange={(e) => onVenueChange(e.target.value)}
+          maxLength={50}
           className={inputClass}
         />
         {venueTouched && venue.length > 50 && (
@@ -481,6 +488,7 @@ export default function PersonForm({
           id="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+          maxLength={500}
           className={`${inputClass} min-h-[120px]`}
           rows={3}
         />

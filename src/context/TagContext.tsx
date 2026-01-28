@@ -5,6 +5,7 @@ import { sampleTags } from '../data';
 import { Tag } from '../types';
 import { useNotification } from './NotificationContext';
 
+// Public tag store API for creation + lookup helpers.
 interface TagContextType {
   tags: Tag[];
   createTag: (name: string) => Tag;

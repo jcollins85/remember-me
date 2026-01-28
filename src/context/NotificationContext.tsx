@@ -13,6 +13,7 @@ export interface NotificationEntry {
   meta?: Record<string, unknown>;
 }
 
+// Public API for notifications (toasts + history list).
 interface NotificationContextType {
   toasts: NotificationEntry[];
   showNotification: (message: string, type?: NotificationType, meta?: NotificationEntry["meta"]) => void;

@@ -1,21 +1,22 @@
 import React from "react";
 import VenueGroupList from "./VenueGroupList";
 import type { Person } from "../../types";
+import { UNCLASSIFIED } from "../../constants";
 import InlineLogo from "../../assets/brand/MetHere-inline-clean-transparent-tight.svg";
 
 interface Props {
   groupedPeople: Record<string, Person[]>;
   favoriteVenues: string[];
-  visibleVenueNames: string[];
+  visibleVenueIds: string[];
   totalVenueCount: number;
   viewMode: "all" | "favs";
-  venueIdByName: Record<string, string>;
+  venueNameById: Record<string, string>;
   personSort: string;
   activeTags: string[];
   setActiveTags: React.Dispatch<React.SetStateAction<string[]>>;
   getTagNameById: (id: string) => string;
   openGroups: Record<string, boolean>;
-  toggleGroup: (venueName: string) => void;
+  toggleGroup: (venueKey: string) => void;
   setFavoriteVenues: React.Dispatch<React.SetStateAction<string[]>>;
   onEdit: (p: Person) => void;
   onDelete: (id: string, name: string) => void;
@@ -28,10 +29,10 @@ interface Props {
 export default function VenueSections({
   groupedPeople,
   favoriteVenues,
-  visibleVenueNames,
+  visibleVenueIds,
   totalVenueCount,
   viewMode,
-  venueIdByName,
+  venueNameById,
   personSort,
   activeTags,
   setActiveTags,
@@ -56,7 +57,7 @@ export default function VenueSections({
         ? "No venues match your filters. Try clearing search or tags."
         : "Add your first venue to start remembering where you met people.";
 
-  if (visibleVenueNames.length === 0) {
+  if (visibleVenueIds.length === 0) {
     return (
       <div className="glass-panel px-6 py-10 text-center text-[var(--color-text-secondary)] space-y-4">
         <div className="w-full flex items-center justify-center pb-1">
@@ -70,27 +71,34 @@ export default function VenueSections({
 
   return (
     <div className="grid gap-4 md:gap-6 lg:gap-8 md:grid-cols-2">
-      {visibleVenueNames.map((venueName) => (
-        <VenueGroupList
-          key={venueName}
-          venue={venueName}
-          venueId={venueIdByName[venueName]}
-          group={groupedPeople[venueName] ?? []}
+      {visibleVenueIds.map((venueId) => {
+        const venueName =
+          venueId === UNCLASSIFIED
+            ? UNCLASSIFIED
+            : venueNameById[venueId] ?? UNCLASSIFIED;
+        return (
+          <VenueGroupList
+            key={venueId}
+            venue={venueName}
+            venueId={venueId}
+            groupKey={venueId}
+            group={groupedPeople[venueId] ?? []}
           personSort={personSort}
           activeTags={activeTags}
           setActiveTags={setActiveTags}
           getTagNameById={getTagNameById}
           favoriteVenues={favoriteVenues}
           setFavoriteVenues={setFavoriteVenues}
-          isOpen={openGroups[venueName] ?? true}
+          isOpen={openGroups[venueId] ?? true}
           toggleGroup={toggleGroup}
           onEdit={onEdit}
           onDelete={onDelete}
           onToggleFavorite={onToggleFavorite}
           searchQuery={searchQuery}
-          distanceLabel={distanceLabels[venueName]}
+          distanceLabel={distanceLabels[venueId]}
         />
-      ))}
+        );
+      })}
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { useTags } from "../context/TagContext";
 import { useVenues } from "../context/VenueContext";
 import { useNotification } from "../context/NotificationContext";
 import type { Person, Tag, Venue } from "../types";
+import { v4 as uuidv4 } from "uuid";
 
 const BACKUP_VERSION = 1;
 const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
@@ -45,6 +46,13 @@ const isIsoDate = (value: unknown): value is string =>
 
 const truncate = (value: string) =>
   value.length > MAX_FIELD_LENGTH ? value.slice(0, MAX_FIELD_LENGTH) : value;
+
+const createId = () => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return uuidv4();
+};
 
 const sanitizeCoords = (value: unknown) => {
   if (!isRecord(value)) return undefined;
@@ -126,7 +134,7 @@ function sanitizePeople(raw: unknown, venues: Venue[], tags: Tag[]): Person[] {
     const id =
       typeof item.id === "string" && item.id.trim()
         ? item.id
-        : crypto.randomUUID();
+        : createId();
 
     const dateMet = isIsoDate(item.dateMet)
       ? item.dateMet
@@ -181,17 +189,25 @@ function sanitizeVenues(raw: unknown): Venue[] {
     const id =
       typeof item.id === "string" && item.id.trim()
         ? item.id
-        : crypto.randomUUID();
-    return {
-      id,
-      name,
-      locationTag: typeof item.locationTag === "string" ? truncate(item.locationTag) : undefined,
-      coords: sanitizeCoords(item.coords),
-      favorite: Boolean(item.favorite),
-      proximityAlertsEnabled: item.proximityAlertsEnabled !== false,
-    };
-  });
-}
+        : createId();
+      return {
+        id,
+        name,
+        locationTag: typeof item.locationTag === "string" ? truncate(item.locationTag) : undefined,
+        coords: sanitizeCoords(item.coords),
+        favorite: Boolean(item.favorite),
+        proximityAlertsEnabled: item.proximityAlertsEnabled !== false,
+        proximityEnterCount:
+          typeof item.proximityEnterCount === "number" && item.proximityEnterCount >= 0
+            ? Math.floor(item.proximityEnterCount)
+            : 0,
+        proximityLastEnterAt:
+          typeof item.proximityLastEnterAt === "number" && item.proximityLastEnterAt > 0
+            ? Math.floor(item.proximityLastEnterAt)
+            : undefined,
+      };
+    });
+  }
 
 // Tags store usage counts for achievements/filter chips, so keep them sane too.
 function sanitizeTags(raw: unknown): Tag[] {
@@ -208,7 +224,7 @@ function sanitizeTags(raw: unknown): Tag[] {
     const id =
       typeof item.id === "string" && item.id.trim()
         ? item.id
-        : crypto.randomUUID();
+        : createId();
     const name =
       typeof item.name === "string" ? truncate(item.name.trim()) : "";
     if (!name) {
@@ -238,7 +254,8 @@ const sanitizeFavoriteVenues = (value: unknown, venues: Venue[]): string[] => {
     });
 };
 
-function parseBackup(text: string): BackupFile {
+// Exposed for unit tests so we can validate backup safety rails.
+export function parseBackup(text: string): BackupFile {
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
@@ -271,7 +288,8 @@ function parseBackup(text: string): BackupFile {
   };
 }
 
-function parseCsvPeople(text: string) {
+// Exposed for unit tests so we can validate CSV guard rails.
+export function parseCsvPeople(text: string) {
   const { headers, rows } = parseCsv(text);
   const headerIndex = new Map(headers.map((header, index) => [header, index]));
   const nameIndex = headerIndex.get("name");
@@ -303,12 +321,14 @@ function parseCsvPeople(text: string) {
       throw new Error(`CSV has too many venues (max ${MAX_VENUES}).`);
     }
     const venue: Venue = {
-      id: crypto.randomUUID(),
+      id: createId(),
       name: truncate(trimmed),
       locationTag: undefined,
       coords: undefined,
       favorite: false,
       proximityAlertsEnabled: true,
+      proximityEnterCount: 0,
+      proximityLastEnterAt: undefined,
     };
     venues.push(venue);
     venueByName.set(normalized, venue);
@@ -317,10 +337,15 @@ function parseCsvPeople(text: string) {
 
   const getTags = (rawTags: string | undefined) => {
     if (!rawTags) return [];
-    const parts = rawTags
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter(Boolean);
+    const parts = Array.from(
+      new Set(
+        rawTags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean)
+          .map((tag) => tag.toLowerCase())
+      )
+    );
     const tagIds: string[] = [];
     parts.forEach((tagName) => {
       const normalized = tagName.toLowerCase();
@@ -330,7 +355,7 @@ function parseCsvPeople(text: string) {
           throw new Error(`CSV has too many tags (max ${MAX_TAGS}).`);
         }
         tag = {
-          id: crypto.randomUUID(),
+          id: createId(),
           name: truncate(normalized),
           count: 0,
           lastUsed: Date.now(),
@@ -367,7 +392,9 @@ function parseCsvPeople(text: string) {
     const description = values[headerIndex.get("description") ?? -1]?.trim();
     const venueName = values[headerIndex.get("venuename") ?? -1]?.trim();
     const tagsValue = values[headerIndex.get("tags") ?? -1]?.trim();
-    const favoriteValue = values[headerIndex.get("favorite") ?? -1]?.trim().toLowerCase();
+    const favoriteValue = values[headerIndex.get("favorite") ?? -1]
+      ?.trim()
+      ?.toLowerCase();
 
     const venue = getVenue(venueName);
     const tagIds = getTags(tagsValue);
@@ -375,7 +402,7 @@ function parseCsvPeople(text: string) {
       favoriteValue === "true" || favoriteValue === "yes" || favoriteValue === "1";
 
     const dateMet = parsedDate.toISOString();
-    const id = idValue && !seenIds.has(idValue) ? idValue : crypto.randomUUID();
+    const id = idValue && !seenIds.has(idValue) ? idValue : createId();
     if (idValue && seenIds.has(idValue)) {
       errors.push({ line: row.lineNumber, reason: "Duplicate id; generated a new one." });
     }
@@ -642,7 +669,11 @@ export function useDataBackup(
           message += ` (skipped ${payload.skipped} rows)`;
         }
         if (payload.errors.length > 0) {
-          message += ". Check console for details";
+          const example = payload.errors[0];
+          message += `. ${payload.errors.length} issue${payload.errors.length === 1 ? "" : "s"} found`;
+          if (example?.reason) {
+            message += ` (e.g. ${example.reason})`;
+          }
         }
         message += ".";
         showNotification(message, "success");

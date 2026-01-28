@@ -57,6 +57,8 @@ export const sampleVenues: Venue[] = [
     coords: { lat: 43.6557, lon: -79.4111 },
     favorite: false,
     proximityAlertsEnabled: true,
+    proximityEnterCount: 0,
+    proximityLastEnterAt: undefined,
   },
   {
     id: uuidv4(),
@@ -65,6 +67,8 @@ export const sampleVenues: Venue[] = [
     coords: { lat: 43.6424, lon: -79.4254 },
     favorite: false,
     proximityAlertsEnabled: true,
+    proximityEnterCount: 0,
+    proximityLastEnterAt: undefined,
   },
   {
     id: uuidv4(),
@@ -73,6 +77,8 @@ export const sampleVenues: Venue[] = [
     coords: { lat: 43.6479, lon: -79.3947 },
     favorite: false,
     proximityAlertsEnabled: true,
+    proximityEnterCount: 0,
+    proximityLastEnterAt: undefined,
   },
   {
     id: uuidv4(),
@@ -81,6 +87,8 @@ export const sampleVenues: Venue[] = [
     coords: { lat: 43.6593, lon: -79.3511 },
     favorite: false,
     proximityAlertsEnabled: true,
+    proximityEnterCount: 0,
+    proximityLastEnterAt: undefined,
   },
   {
     id: uuidv4(),
@@ -89,6 +97,8 @@ export const sampleVenues: Venue[] = [
     coords: { lat: 43.6419, lon: -79.4036 },
     favorite: false,
     proximityAlertsEnabled: true,
+    proximityEnterCount: 0,
+    proximityLastEnterAt: undefined,
   },
   {
     id: uuidv4(),
@@ -97,6 +107,8 @@ export const sampleVenues: Venue[] = [
     coords: { lat: 43.671, lon: -79.3932 },
     favorite: false,
     proximityAlertsEnabled: true,
+    proximityEnterCount: 0,
+    proximityLastEnterAt: undefined,
   },
 ];
 

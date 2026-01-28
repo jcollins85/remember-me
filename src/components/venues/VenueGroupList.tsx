@@ -12,9 +12,10 @@ import { toggleVenueFavoriteName } from "../../utils/favorites";
 interface VenueGroupListProps {
   venue: string;
   venueId?: string;
+  groupKey: string;
   group: Person[];
   isOpen: boolean;
-  toggleGroup: (venue: string) => void;
+  toggleGroup: (venueKey: string) => void;
   personSort: string;
   onEdit: (person: Person) => void;
   onDelete: (id: string, name: string) => void;
@@ -32,6 +33,7 @@ interface VenueGroupListProps {
 export default function VenueGroupList({
   venue,
   venueId,
+  groupKey,
   group,
   isOpen,
   toggleGroup,
@@ -47,7 +49,7 @@ export default function VenueGroupList({
   searchQuery,
   distanceLabel,
 }: VenueGroupListProps) {
-  const { trackEvent } = useAnalytics();
+  const { trackEvent, trackFirstEvent } = useAnalytics();
   const groupList = Array.isArray(group) ? group : [];
   // Keep favourite folks near the top and then respect the chosen person sort key.
   const sortedGroup = [...groupList].sort((a, b) => {
@@ -86,7 +88,7 @@ export default function VenueGroupList({
       <div className="flex items-center justify-between gap-3 py-1">
         <button
           onClick={() => {
-            toggleGroup(venue);
+            toggleGroup(groupKey);
           }}
           className="text-left text-lg font-semibold text-[var(--color-text-primary)] flex items-center gap-2"
           aria-label={`Toggle ${displayName}`}
@@ -94,7 +96,7 @@ export default function VenueGroupList({
           <span className="text-sm text-[var(--color-text-secondary)]">
             {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </span>
-          {displayName}
+          <span className="line-clamp-1">{displayName}</span>
           <span className="text-sm text-[var(--color-text-secondary)]">({groupList.length})</span>
         </button>
         {!isUnclassified && (
@@ -103,7 +105,14 @@ export default function VenueGroupList({
               e.stopPropagation();
               await triggerImpact(isFavorite ? ImpactStyle.Light : ImpactStyle.Medium);
               setFavoriteVenues((prev) => toggleVenueFavoriteName(prev, venue));
-              trackEvent(isFavorite ? "venue_unfavorited" : "venue_favorited", { venue });
+              if (!isFavorite) {
+                trackFirstEvent("favorite_added", "first_favorite_added", {
+                  type: "venue",
+                });
+              }
+              if (!isFavorite) {
+                trackEvent("venue_favorited", { venue_name: venue });
+              }
             }}
             className={`w-9 h-9 flex items-center justify-center rounded-full border relative overflow-hidden ${
               isFavorite

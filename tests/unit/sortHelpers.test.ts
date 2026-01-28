@@ -62,6 +62,36 @@ describe("sortPeople", () => {
     expect(result.map((p) => p.id)).toEqual(["p1", "p3", "p2"]);
   });
 
+  it("sorts by dateMet ascending", () => {
+    const result = sortPeople(basePeople, "dateMet", true);
+    expect(result.map((p) => p.id)).toEqual(["p2", "p3", "p1"]);
+  });
+
+  it("sorts by dateMet descending", () => {
+    const result = sortPeople(basePeople, "dateMet", false);
+    expect(result.map((p) => p.id)).toEqual(["p1", "p3", "p2"]);
+  });
+
+  it("preserves order when dateMet values are equal", () => {
+    const people: Person[] = [
+      {
+        id: "p1",
+        name: "Alpha",
+        dateMet: "2024-01-01T00:00:00.000Z",
+        createdAt: "2024-01-01T00:00:00.000Z",
+      },
+      {
+        id: "p2",
+        name: "Beta",
+        dateMet: "2024-01-01T00:00:00.000Z",
+        createdAt: "2024-01-02T00:00:00.000Z",
+      },
+    ];
+
+    const result = sortPeople(people, "dateMet", true);
+    expect(result.map((p) => p.id)).toEqual(["p1", "p2"]);
+  });
+
   it("returns an empty list when given empty input", () => {
     expect(sortPeople([], "name", true)).toEqual([]);
   });

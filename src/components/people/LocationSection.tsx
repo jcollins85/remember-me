@@ -10,6 +10,7 @@ import { useNotification } from "../../context/NotificationContext";
 import { useAnalytics } from "../../context/AnalyticsContext";
 import { triggerImpact, ImpactStyle } from "../../utils/haptics";
 
+// LocationSection handles map pin capture, search modal, and per-venue proximity toggles.
 const mapPreviewPlaceholder =
   "data:image/svg+xml,%3Csvg width='640' height='360' viewBox='0 0 640 360' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='640' height='360' fill='%23f8f4ef'/%3E%3Cpath d='M0 40h640M0 120h640M0 200h640M0 280h640' stroke='%23e5dbcf' stroke-width='2'/%3E%3Cpath d='M80 0v360M200 0v360M320 0v360M440 0v360M560 0v360' stroke='%23e5dbcf' stroke-width='2'/%3E%3Cpath d='M0 260l80-40 60 30 100-50 90 60 90-80 120 40 100-70 0 210H0z' fill='%23d5e5f0'/%3E%3Cpath d='M0 300l90-60 120 70 120-70 120 50 190-140V360H0z' fill='%23c7e0da'/%3E%3C/svg%3E";
 
@@ -34,6 +35,8 @@ interface LocationSectionProps {
 }
 
 const defaultSearchPlaceholder = "Search by name or address";
+const MAX_PLACE_QUERY_LENGTH = 80;
+const MAX_LOCATION_TAG_DISPLAY = 160;
 
 type SearchResult = { name: string; address: string; lat: number; lng: number };
 
@@ -73,7 +76,7 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
     onEnableGlobalProximity,
   }) => {
   const { showNotification } = useNotification();
-  const { trackEvent } = useAnalytics();
+  const { trackEvent, trackFirstEvent } = useAnalytics();
   const initialVenue = useMemo(() => getSelectedVenue(), [getSelectedVenue]);
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(
     initialVenue?.coords ?? null
@@ -83,6 +86,8 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
     if (!globalProximityEnabled) return false;
     return initialVenue?.proximityAlertsEnabled !== false;
   });
+  const [hasManualProximityToggle, setHasManualProximityToggle] = useState(false);
+  const lastVenueKeyRef = useRef<string | null>(null);
   const [isCapturingLocation, setIsCapturingLocation] = useState(false);
   const [mapSnapshot, setMapSnapshot] = useState<string | null>(null);
   const [isSnapshotLoading, setIsSnapshotLoading] = useState(false);
@@ -97,7 +102,11 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
   const [placeError, setPlaceError] = useState<string | null>(null);
   const [searchPlaceholder, setSearchPlaceholder] = useState(defaultSearchPlaceholder);
   const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
-  const resultsRef = useRef<HTMLDivElement | null>(null);
+
+  const getDisplayLocationTag = (tag: string) => {
+    if (tag.length <= MAX_LOCATION_TAG_DISPLAY) return tag;
+    return `${tag.slice(0, Math.max(0, MAX_LOCATION_TAG_DISPLAY - 3)).trimEnd()}...`;
+  };
 
   useEffect(() => {
     if (!onValidationCoordsChange) return;
@@ -121,21 +130,25 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
   }, [coords, locationTag, venueProximityEnabled, canUseLocation, onPendingChange]);
 
   useEffect(() => {
-    if (!venueName.trim()) {
-      setVenueProximityEnabled(globalProximityEnabled);
+    const existing = getSelectedVenue();
+    const venueKey = existing?.id || venueName.trim() || "";
+    if (lastVenueKeyRef.current !== venueKey) {
+      lastVenueKeyRef.current = venueKey;
+      setHasManualProximityToggle(false);
+    }
+    if (!globalProximityEnabled) {
+      setVenueProximityEnabled(false);
       return;
     }
-    const existing = getSelectedVenue();
-    if (existing) {
-      if (globalProximityEnabled) {
-        setVenueProximityEnabled(existing.proximityAlertsEnabled !== false);
-      } else {
-        setVenueProximityEnabled(false);
-      }
-    } else {
-      setVenueProximityEnabled(globalProximityEnabled);
+    if (hasManualProximityToggle) {
+      return;
     }
-  }, [venueName, getSelectedVenue, globalProximityEnabled]);
+    if (existing) {
+      setVenueProximityEnabled(existing.proximityAlertsEnabled !== false);
+    } else {
+      setVenueProximityEnabled(true);
+    }
+  }, [venueName, getSelectedVenue, globalProximityEnabled, hasManualProximityToggle]);
 
   useEffect(() => {
     const typed = venueName.trim();
@@ -198,8 +211,8 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
           setMapSnapshot(`data:image/png;base64,${result.imageData}`);
           setSnapshotError(null);
           trackEvent("map_snapshot_success", {
-            venueName: venueLabel,
-            hasAddress: Boolean(result.address),
+            venue_name: venueLabel,
+            has_address: Boolean(result.address),
           });
           if (newLabel !== locationTag) {
             setLocationTag(newLabel);
@@ -212,8 +225,8 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
           setSnapshotError("Preview unavailable");
         }
         trackEvent("map_snapshot_error", {
-          venueName: venueName.trim() || "unspecified",
-          message: typeof error?.message === "string" ? error.message : "unknown",
+          venue_name: venueName.trim() || "unspecified",
+          error_code: typeof error?.message === "string" ? error.message : "unknown",
         });
       } finally {
         if (!cancelled) {
@@ -261,10 +274,6 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
         });
         if (!cancelled) {
           setPlaceResults(results);
-          trackEvent("place_search_results", {
-            query_length: trimmed.length,
-            result_count: results.length,
-          });
         }
       } catch (error: any) {
         console.warn("Place search error", error);
@@ -272,7 +281,7 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
           setPlaceError("Couldn't search right now");
         }
         trackEvent("place_search_error", {
-          message: typeof error?.message === "string" ? error.message : "unknown",
+          error_code: typeof error?.message === "string" ? error.message : "unknown",
         });
       } finally {
         if (!cancelled) {
@@ -428,7 +437,8 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
         return;
       }
       await action();
-      trackEvent("venue_pin_captured", { source: "current_location", venueName: venueName });
+      trackEvent("venue_pin_captured", { source: "current_location", venue_name: venueName });
+      trackFirstEvent("venue_pinned", "first_venue_pinned", { source: "current_location" });
     } catch (error: any) {
       console.warn("Location capture error", error);
       const message =
@@ -449,8 +459,9 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
       setCoords(coordsPayload);
       setLocationTag(place.address);
       showNotification(`Location set to ${place.name}`, "info");
-      trackEvent("venue_pin_captured", { source: "search", venueName: venueName });
-      trackEvent("place_selected", { venueName, placeName: place.name });
+      trackEvent("venue_pin_captured", { source: "search", venue_name: venueName });
+      trackFirstEvent("venue_pinned", "first_venue_pinned", { source: "search" });
+      trackEvent("place_selected", { venue_name: venueName, place_name: place.name });
       return Promise.resolve();
     };
     if (maybeConfirmReplace(coordsPayload, action)) {
@@ -461,6 +472,7 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
 
   const toggleVenueProximityAlerts = () => {
     const next = !venueProximityEnabled;
+    setHasManualProximityToggle(true);
     if (!next) {
       setVenueProximityEnabled(false);
       return;
@@ -521,7 +533,7 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
                   return;
                 }
                 trackEvent("place_search_opened", {
-                  venueName: venueName.trim() || "unspecified",
+                  venue_name: venueName.trim() || "unspecified",
                 });
                 setShowPlaceSearch(true);
               }}
@@ -570,6 +582,11 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
                       Generating preview…
                     </div>
                   )}
+                  {snapshotError && !isSnapshotLoading && (
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[var(--color-card)]/60 text-xs font-semibold text-[var(--color-text-secondary)]">
+                      {snapshotError}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-1">
@@ -577,7 +594,9 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
                     {venueName.trim() || "The Broadview Rooftop"}
                   </p>
                   <p className="text-sm text-[var(--color-text-secondary)]">
-                    {locationTag || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`}
+                    {locationTag
+                      ? getDisplayLocationTag(locationTag)
+                      : `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`}
                   </p>
                 </div>
 
@@ -587,13 +606,17 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
                     onClick={() => {
                       const text =
                         locationTag?.trim() || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
+                      if (!navigator.clipboard?.writeText) {
+                        showNotification("Copy not available on this device.", "error");
+                        return;
+                      }
                       navigator.clipboard
-                        ?.writeText(text)
+                        .writeText(text)
                         .then(() => showNotification("Coordinates copied", "info"))
                         .catch(() => showNotification("Unable to copy coordinates.", "error"));
                       trackEvent("copy_address_clicked", {
-                        venueName,
-                        hasAddress: Boolean(locationTag),
+                        venue_name: venueName,
+                        has_address: Boolean(locationTag),
                       });
                     }}
                     className="rounded-full border border-[var(--color-card-border)] px-3 py-1 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
@@ -610,7 +633,7 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
                         } else {
                           window.open(`https://maps.google.com/?q=${coords.lat},${coords.lon}`, "_blank");
                         }
-                        trackEvent("open_in_maps_clicked", { venueName });
+                        trackEvent("open_in_maps_clicked", { venue_name: venueName });
                       }
                     }}
                     className="rounded-full border border-[var(--color-card-border)] px-3 py-1 text-xs font-semibold text-[var(--color-text-primary)] shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
@@ -657,11 +680,11 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
       </AnimatePresence>
 
       {showReplaceModal && replaceVenue && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
           <div
             role="dialog"
             aria-modal="true"
-            className="w-full max-w-sm rounded-[32px] bg-[var(--color-card)] p-6 shadow-[0_20px_50px_rgba(15,23,42,0.4)] text-center space-y-4"
+            className="w-full max-w-sm rounded-[32px] bg-[var(--color-surface)] p-6 shadow-[0_20px_50px_rgba(15,23,42,0.4)] text-center space-y-4"
           >
             <div>
               <p className="text-sm font-semibold text-[var(--color-text-primary)]">
@@ -675,7 +698,7 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
               <button
                 type="button"
                 onClick={handleReplaceCancel}
-                className="rounded-full border border-[var(--color-card-border)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-card)]/80"
+                className="rounded-full border border-[var(--color-card-border)] !bg-[var(--color-card)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] shadow-[0_3px_10px_rgba(15,23,42,0.08)] hover:!bg-[var(--color-card)]/95"
               >
                 Keep existing
               </button>
@@ -731,12 +754,19 @@ const getDistanceMeters = (from: { lat: number; lon: number }, to: { lat: number
               <input
                 type="text"
                 value={placeQuery}
-                onChange={(e) => setPlaceQuery(e.target.value)}
+                onChange={(e) =>
+                  setPlaceQuery(e.target.value.slice(0, MAX_PLACE_QUERY_LENGTH))
+                }
                 placeholder={searchPlaceholder}
                 className="flex-1 bg-transparent text-base text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-secondary)]"
                 autoFocus
               />
             </div>
+            {placeQuery.length >= MAX_PLACE_QUERY_LENGTH && (
+              <p className="text-[11px] text-[var(--color-text-secondary)] px-1">
+                Max {MAX_PLACE_QUERY_LENGTH} characters.
+              </p>
+            )}
             <div
               className="max-h-[55vh] overflow-y-auto pr-1 flex-1 bg-white rounded-[20px] px-1 py-1"
               onWheel={(event) => event.stopPropagation()}

@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { MapPin } from "lucide-react";
 import { triggerImpact, ImpactStyle } from "../../utils/haptics";
 
 interface PermissionPromptModalProps {
@@ -21,7 +20,7 @@ export default function PermissionPromptModal({
       onClick={onCancel}
     >
       <motion.div
-        className="glass-panel w-full max-w-md overflow-hidden flex flex-col shadow-[0_30px_80px_rgba(15,23,42,0.2)]"
+        className="w-full max-w-sm rounded-[32px] bg-[var(--color-surface)] p-6 shadow-[0_20px_50px_rgba(15,23,42,0.4)] text-center space-y-4"
         initial={{ opacity: 0, scale: 0.94, y: 18 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 18 }}
@@ -29,19 +28,12 @@ export default function PermissionPromptModal({
         onClick={(e) => e.stopPropagation()}
         style={{ willChange: "transform, opacity" }}
       >
-        <div className="flex items-center gap-3 px-6 py-5 bg-[var(--color-surface)]/90 backdrop-blur-lg">
-          <div className="w-11 h-11 rounded-2xl bg-[var(--color-accent-muted)] text-[var(--color-accent)] flex items-center justify-center shadow-[0_8px_18px_rgba(15,23,42,0.18)] border border-white/20">
-            <MapPin size={20} />
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Nearby alerts</p>
-            <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
-              Enable location access
-            </h2>
-          </div>
-        </div>
-        <div className="px-6 py-5 bg-[var(--color-card)] text-sm text-[var(--color-text-secondary)] leading-relaxed space-y-2">
-          <p>
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Nearby alerts</p>
+          <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+            Enable location access
+          </h2>
+          <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
             To send nearby venue alerts, MetHere needs access to your location. iOS will ask for
             Location and Notifications permissions next.
           </p>
@@ -49,13 +41,13 @@ export default function PermissionPromptModal({
             You can change this later in iOS Settings.
           </p>
         </div>
-        <div className="flex justify-end gap-2 px-6 py-4 bg-[var(--color-card)]">
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
           <button
             onClick={() => {
               triggerImpact(ImpactStyle.Light);
               onCancel();
             }}
-            className="px-4 py-2 rounded-full border border-white/40 text-sm text-[var(--color-text-secondary)] hover:bg-white/60 hover:text-[var(--color-text-primary)] transition"
+            className="px-4 py-2 rounded-full border border-[var(--color-card-border)] !bg-[var(--color-card)] text-sm text-[var(--color-text-primary)] shadow-[0_3px_10px_rgba(15,23,42,0.08)] hover:!bg-[var(--color-card)]/95 transition"
           >
             Not now
           </button>

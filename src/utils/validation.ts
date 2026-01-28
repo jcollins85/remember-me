@@ -29,10 +29,13 @@ export function validatePersonForm(data: {
 }): ValidationResult {
   const errors: ValidationErrors = {};
   const today = new Date().toISOString().split('T')[0];
+  const trimmedName = data.name.trim();
 
   // Name required
-  if (!data.name.trim()) {
+  if (!trimmedName) {
     errors.name = 'Name is required';
+  } else if (trimmedName.length > 60) {
+    errors.name = 'Name must be 60 characters or fewer';
   }
 
   // Date Met cannot be in future
@@ -52,11 +55,13 @@ export function validatePersonForm(data: {
     errors.tags = 'Maximum of 15 tags allowed';
   }
 
-  if (data.position && data.position.length > 60) {
+  const trimmedPosition = data.position?.trim();
+  if (trimmedPosition && trimmedPosition.length > 60) {
     errors.position = 'Position must be 60 characters or fewer';
   }
 
-  if (data.description && data.description.length > 500) {
+  const trimmedDescription = data.description?.trim();
+  if (trimmedDescription && trimmedDescription.length > 500) {
     errors.description = 'Description must be 500 characters or fewer';
   }
 
