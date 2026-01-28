@@ -9,6 +9,7 @@ import { useTags } from "../context/TagContext";
 import { useVenues } from "../context/VenueContext";
 import { useNotification } from "../context/NotificationContext";
 import type { Person, Tag, Venue } from "../types";
+import { v4 as uuidv4 } from "uuid";
 
 const BACKUP_VERSION = 1;
 const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
@@ -45,6 +46,13 @@ const isIsoDate = (value: unknown): value is string =>
 
 const truncate = (value: string) =>
   value.length > MAX_FIELD_LENGTH ? value.slice(0, MAX_FIELD_LENGTH) : value;
+
+const createId = () => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return uuidv4();
+};
 
 const sanitizeCoords = (value: unknown) => {
   if (!isRecord(value)) return undefined;
@@ -126,7 +134,7 @@ function sanitizePeople(raw: unknown, venues: Venue[], tags: Tag[]): Person[] {
     const id =
       typeof item.id === "string" && item.id.trim()
         ? item.id
-        : crypto.randomUUID();
+        : createId();
 
     const dateMet = isIsoDate(item.dateMet)
       ? item.dateMet
@@ -181,7 +189,7 @@ function sanitizeVenues(raw: unknown): Venue[] {
     const id =
       typeof item.id === "string" && item.id.trim()
         ? item.id
-        : crypto.randomUUID();
+        : createId();
       return {
         id,
         name,
@@ -216,7 +224,7 @@ function sanitizeTags(raw: unknown): Tag[] {
     const id =
       typeof item.id === "string" && item.id.trim()
         ? item.id
-        : crypto.randomUUID();
+        : createId();
     const name =
       typeof item.name === "string" ? truncate(item.name.trim()) : "";
     if (!name) {
@@ -313,7 +321,7 @@ export function parseCsvPeople(text: string) {
       throw new Error(`CSV has too many venues (max ${MAX_VENUES}).`);
     }
     const venue: Venue = {
-      id: crypto.randomUUID(),
+      id: createId(),
       name: truncate(trimmed),
       locationTag: undefined,
       coords: undefined,
@@ -347,7 +355,7 @@ export function parseCsvPeople(text: string) {
           throw new Error(`CSV has too many tags (max ${MAX_TAGS}).`);
         }
         tag = {
-          id: crypto.randomUUID(),
+          id: createId(),
           name: truncate(normalized),
           count: 0,
           lastUsed: Date.now(),
@@ -394,7 +402,7 @@ export function parseCsvPeople(text: string) {
       favoriteValue === "true" || favoriteValue === "yes" || favoriteValue === "1";
 
     const dateMet = parsedDate.toISOString();
-    const id = idValue && !seenIds.has(idValue) ? idValue : crypto.randomUUID();
+    const id = idValue && !seenIds.has(idValue) ? idValue : createId();
     if (idValue && seenIds.has(idValue)) {
       errors.push({ line: row.lineNumber, reason: "Duplicate id; generated a new one." });
     }
