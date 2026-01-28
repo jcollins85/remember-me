@@ -384,7 +384,9 @@ export function parseCsvPeople(text: string) {
     const description = values[headerIndex.get("description") ?? -1]?.trim();
     const venueName = values[headerIndex.get("venuename") ?? -1]?.trim();
     const tagsValue = values[headerIndex.get("tags") ?? -1]?.trim();
-    const favoriteValue = values[headerIndex.get("favorite") ?? -1]?.trim().toLowerCase();
+    const favoriteValue = values[headerIndex.get("favorite") ?? -1]
+      ?.trim()
+      ?.toLowerCase();
 
     const venue = getVenue(venueName);
     const tagIds = getTags(tagsValue);

@@ -415,6 +415,19 @@ describe("parseCsvPeople", () => {
     expect(favorites).toEqual([true, true, true, false]);
   });
 
+  it("defaults favorite to false when the CSV column is missing", () => {
+    const header = ["id", "name", "dateMet"].join(",");
+    const rows = [
+      "1,Alice,2024-01-01",
+      "2,Bob,2024-01-02",
+    ];
+    const csv = [header, ...rows].join("\n");
+
+    const result = parseCsvPeople(csv);
+    const favorites = result.people.map((person) => person.favorite);
+    expect(favorites).toEqual([false, false]);
+  });
+
   it("de-duplicates tags from CSV rows", () => {
     const header = ["id", "name", "dateMet", "tags"].join(",");
     const rows = [

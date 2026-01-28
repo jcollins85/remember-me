@@ -3,7 +3,7 @@ import type { Person, Venue } from "../types";
 import { UNCLASSIFIED } from "../constants";
 
 /**
- * Groups a list of people by their venue name.
+ * Groups a list of people by their venue id.
  * Falls back to UNCLASSIFIED for missing or unknown venues.
  */
 export const groupPeopleByVenue = (
@@ -11,13 +11,12 @@ export const groupPeopleByVenue = (
   venuesById: Record<string, Venue>
 ): Record<string, Person[]> => {
   return people.reduce((groups: Record<string, Person[]>, person) => {
-    const venueName = person.venueId
-      ? venuesById[person.venueId]?.name ?? UNCLASSIFIED
-      : UNCLASSIFIED;
-    if (!groups[venueName]) {
-      groups[venueName] = [];
+    const venueKey =
+      person.venueId && venuesById[person.venueId] ? person.venueId : UNCLASSIFIED;
+    if (!groups[venueKey]) {
+      groups[venueKey] = [];
     }
-    groups[venueName].push(person);
+    groups[venueKey].push(person);
     return groups;
   }, {});
 };

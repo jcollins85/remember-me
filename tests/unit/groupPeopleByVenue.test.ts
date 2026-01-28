@@ -4,7 +4,7 @@ import { groupPeopleByVenue } from "../../src/hooks/useGroupedPeople";
 import { UNCLASSIFIED } from "../../src/constants";
 
 describe("groupPeopleByVenue", () => {
-  it("groups people by venue name and falls back to Unclassified", () => {
+  it("groups people by venue id and falls back to Unclassified", () => {
     const venuesById: Record<string, Venue> = {
       v1: { id: "v1", name: "Cafe" } as Venue,
     };
@@ -16,9 +16,9 @@ describe("groupPeopleByVenue", () => {
 
     const result = groupPeopleByVenue(people, venuesById);
 
-    expect(Object.keys(result)).toEqual(["Cafe", UNCLASSIFIED]);
-    expect(result["Cafe"]).toHaveLength(1);
-    expect(result["Cafe"][0].id).toBe("p1");
+    expect(Object.keys(result)).toEqual(["v1", UNCLASSIFIED]);
+    expect(result["v1"]).toHaveLength(1);
+    expect(result["v1"][0].id).toBe("p1");
     expect(result[UNCLASSIFIED]).toHaveLength(2);
     expect(result[UNCLASSIFIED].map((p) => p.id)).toEqual(["p2", "p3"]);
   });
@@ -39,6 +39,6 @@ describe("groupPeopleByVenue", () => {
     ];
 
     const result = groupPeopleByVenue(people, venuesById);
-    expect(result["Cafe"].map((p) => p.id)).toEqual(["p1", "p2", "p3"]);
+    expect(result["v1"].map((p) => p.id)).toEqual(["p1", "p2", "p3"]);
   });
 });

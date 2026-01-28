@@ -12,9 +12,10 @@ import { toggleVenueFavoriteName } from "../../utils/favorites";
 interface VenueGroupListProps {
   venue: string;
   venueId?: string;
+  groupKey: string;
   group: Person[];
   isOpen: boolean;
-  toggleGroup: (venue: string) => void;
+  toggleGroup: (venueKey: string) => void;
   personSort: string;
   onEdit: (person: Person) => void;
   onDelete: (id: string, name: string) => void;
@@ -32,6 +33,7 @@ interface VenueGroupListProps {
 export default function VenueGroupList({
   venue,
   venueId,
+  groupKey,
   group,
   isOpen,
   toggleGroup,
@@ -86,7 +88,7 @@ export default function VenueGroupList({
       <div className="flex items-center justify-between gap-3 py-1">
         <button
           onClick={() => {
-            toggleGroup(venue);
+            toggleGroup(groupKey);
           }}
           className="text-left text-lg font-semibold text-[var(--color-text-primary)] flex items-center gap-2"
           aria-label={`Toggle ${displayName}`}

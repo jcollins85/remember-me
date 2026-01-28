@@ -11,7 +11,6 @@ import { useVenues } from "./context/VenueContext";
 import { useNotification } from './context/NotificationContext';
 
 import { useGroupedPeople } from './hooks/useGroupedPeople';
-import { useFavoriteSections } from './hooks/useFavouriteSections';
 import { useFavorites } from './hooks/useFavourites';
 import { useAchievements } from "./hooks/useAchievements";
 
@@ -170,8 +169,8 @@ function App() {
     () => Object.fromEntries(venues.map((v) => [v.id, v])) as Record<string, Venue>,
     [venues]
   );
-  const venueIdByName = useMemo(
-    () => Object.fromEntries(venues.map((v) => [v.name, v.id])) as Record<string, string>,
+  const venueNameById = useMemo(
+    () => Object.fromEntries(venues.map((v) => [v.id, v.name])) as Record<string, string>,
     [venues]
   );
 
@@ -252,7 +251,7 @@ function App() {
         distance < 1000
           ? `${Math.round(distance)} m away`
           : `${(distance / 1000).toFixed(1)} km away`;
-      acc[venue.name] = label;
+      acc[venue.id] = label;
       return acc;
     }, {});
   }, [monitoredVenues, userLocation]);
@@ -292,13 +291,13 @@ function App() {
   };
 
   // ── Handlers ──
-  const toggleGroup = (venueName: string) => {
+  const toggleGroup = (venueKey: string) => {
     setOpenGroups((prev: Record<string, boolean>) => {
       // default false if undefined
-      const isOpen = prev[venueName] ?? false;
+      const isOpen = prev[venueKey] ?? false;
       return {
         ...prev,
-        [venueName]: !isOpen,
+        [venueKey]: !isOpen,
       };
     });
   };
@@ -486,11 +485,11 @@ function App() {
   useEffect(() => {
     const groupKeys = Object.keys(
       people.reduce((acc, person) => {
-        // Lookup name by ID, or fall back to UNCLASSIFIED
-        const venueName = person.venueId
-          ? venuesById[person.venueId]?.name ?? UNCLASSIFIED
-          : UNCLASSIFIED;
-        acc[venueName] = true;
+        const venueKey =
+          person.venueId && venuesById[person.venueId]
+            ? person.venueId
+            : UNCLASSIFIED;
+        acc[venueKey] = true;
         return acc;
       }, {} as Record<string, boolean>)
     );
@@ -534,7 +533,7 @@ function App() {
     setVenueView("all");
     setSearchQuery("");
     setActiveTags([]);
-    setOpenGroups((prev) => ({ ...prev, [venue.name]: true }));
+    setOpenGroups((prev) => ({ ...prev, [venue.id]: true }));
     const targetId = `venue-card-${venue.id}`;
     const timer = window.setTimeout(() => {
       const target = document.getElementById(targetId);
@@ -617,14 +616,25 @@ function App() {
     venueSortDir === "asc"
   );
   
-  const sortedVenueNames = sortedVenues
-    .map((v) => v.name)
-    .filter((name) => groupedPeople[name]);
+  const sortedVenueIds = sortedVenues
+    .map((venue) => venue.id)
+    .filter((id) => groupedPeople[id]);
 
-  const favoriteSections = useFavoriteSections(sortedVenueNames, favoriteVenues);
-  const favoriteVenueNames = favoriteSections.favorites;
-  const visibleVenueNames =
-    venueView === "favs" ? favoriteVenueNames : sortedVenueNames;
+  const favoriteVenueIds = sortedVenueIds.filter((id) => {
+    const name = venueNameById[id];
+    return name ? favoriteVenues.includes(name) : false;
+  });
+
+  const baseVenueIds =
+    venueView === "favs" ? favoriteVenueIds : sortedVenueIds;
+
+  const visibleVenueIds = useMemo(() => {
+    if (venueView === "favs") return baseVenueIds;
+    if (groupedPeople[UNCLASSIFIED]) {
+      return [...baseVenueIds, UNCLASSIFIED];
+    }
+    return baseVenueIds;
+  }, [baseVenueIds, groupedPeople, venueView]);
 
   const { achievements, stats, resetAchievements } = useAchievements(
     people,
@@ -789,8 +799,8 @@ function App() {
         getTagNameById={getTagNameById}
         venueView={venueView}
         setVenueView={setVenueView}
-        favoriteVenueCount={favoriteVenueNames.length}
-        totalVenueCount={sortedVenueNames.length}
+        favoriteVenueCount={favoriteVenueIds.length}
+        totalVenueCount={sortedVenueIds.length}
         showSortModal={showSortModal}
         setShowSortModal={setShowSortModal}
       />
@@ -871,10 +881,10 @@ function App() {
           <VenueSections
             groupedPeople={groupedPeople}
             favoriteVenues={favoriteVenues}
-            visibleVenueNames={visibleVenueNames}
+            visibleVenueIds={visibleVenueIds}
             totalVenueCount={venues.length}
             viewMode={venueView}
-            venueIdByName={venueIdByName}
+            venueNameById={venueNameById}
             personSort={personSort}
             activeTags={activeTags}
             setActiveTags={setActiveTags}
