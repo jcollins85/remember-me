@@ -41,6 +41,11 @@ describe("toggleVenueFavoriteName", () => {
     expect(result).toEqual(["Diner"]);
   });
 
+  it("handles empty input list", () => {
+    const result = toggleVenueFavoriteName([], "Cafe");
+    expect(result).toEqual(["Cafe"]);
+  });
+
   it("does not mutate the input array", () => {
     const input = ["Cafe", "Diner"];
     const result = toggleVenueFavoriteName(input, "Cafe");

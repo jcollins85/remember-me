@@ -24,7 +24,7 @@ let regionEnterHandler: ((venueId: string) => void) | null = null;
 const lastAlertTimestamps: Record<string, number> = {};
 let venuesSnapshot: MonitoredVenue[] = [];
 
-const getProximityNotificationId = (venueId: string) => {
+export const getProximityNotificationId = (venueId: string) => {
   let hash = 0;
   for (let i = 0; i < venueId.length; i += 1) {
     hash = (hash * 31 + venueId.charCodeAt(i)) | 0;
@@ -33,7 +33,7 @@ const getProximityNotificationId = (venueId: string) => {
 };
 
 // Builds the native/local notification payload for a venue and rate-limits per venue ID.
-const scheduleNotification = async (venueId: string) => {
+export const scheduleNotification = async (venueId: string) => {
   const venue = venuesSnapshot.find((v) => v.id === venueId);
   if (!venue) return;
   const now = Date.now();
@@ -73,6 +73,29 @@ const scheduleNotification = async (venueId: string) => {
     favorite_count: favoriteNames.length,
   });
 };
+
+// Test-only hook to seed the venue snapshot without starting native monitoring.
+export const __setVenuesSnapshotForTests = (venues: MonitoredVenue[]) => {
+  venuesSnapshot = venues;
+};
+
+// Test-only hook to clear the in-memory cooldown map.
+export const __resetProximityTestState = () => {
+  Object.keys(lastAlertTimestamps).forEach((key) => {
+    delete lastAlertTimestamps[key];
+  });
+};
+
+// Test-only helper to compute which venues should be monitored.
+export const __buildVenuesToMonitorForTests = (venues: MonitoredVenue[]) =>
+  venues
+    .filter((venue) => venue.coords && venue.proximityAlertsEnabled !== false)
+    .map((venue) => ({
+      id: venue.id,
+      lat: venue.coords!.lat,
+      lon: venue.coords!.lon,
+      name: venue.name,
+    }));
 
 export const cancelProximityNotifications = async (venueIds: string[]) => {
   if (!isNative || venueIds.length === 0) return;

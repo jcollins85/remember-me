@@ -246,7 +246,8 @@ const sanitizeFavoriteVenues = (value: unknown, venues: Venue[]): string[] => {
     });
 };
 
-function parseBackup(text: string): BackupFile {
+// Exposed for unit tests so we can validate backup safety rails.
+export function parseBackup(text: string): BackupFile {
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
@@ -279,7 +280,8 @@ function parseBackup(text: string): BackupFile {
   };
 }
 
-function parseCsvPeople(text: string) {
+// Exposed for unit tests so we can validate CSV guard rails.
+export function parseCsvPeople(text: string) {
   const { headers, rows } = parseCsv(text);
   const headerIndex = new Map(headers.map((header, index) => [header, index]));
   const nameIndex = headerIndex.get("name");
@@ -327,10 +329,15 @@ function parseCsvPeople(text: string) {
 
   const getTags = (rawTags: string | undefined) => {
     if (!rawTags) return [];
-    const parts = rawTags
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter(Boolean);
+    const parts = Array.from(
+      new Set(
+        rawTags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean)
+          .map((tag) => tag.toLowerCase())
+      )
+    );
     const tagIds: string[] = [];
     parts.forEach((tagName) => {
       const normalized = tagName.toLowerCase();

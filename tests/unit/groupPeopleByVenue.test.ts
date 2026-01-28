@@ -27,4 +27,18 @@ describe("groupPeopleByVenue", () => {
     const result = groupPeopleByVenue([], {});
     expect(result).toEqual({});
   });
+
+  it("preserves person order within a venue group", () => {
+    const venuesById: Record<string, Venue> = {
+      v1: { id: "v1", name: "Cafe" } as Venue,
+    };
+    const people: Person[] = [
+      { id: "p1", name: "Alex", venueId: "v1" } as Person,
+      { id: "p2", name: "Sam", venueId: "v1" } as Person,
+      { id: "p3", name: "Riley", venueId: "v1" } as Person,
+    ];
+
+    const result = groupPeopleByVenue(people, venuesById);
+    expect(result["Cafe"].map((p) => p.id)).toEqual(["p1", "p2", "p3"]);
+  });
 });
